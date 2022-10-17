@@ -1,1 +1,2 @@
-# Bayesian multilevel models for repeated measures data; A conceptual and practical introduction in R
+# Bayesian multilevel models for repeated measures data: A conceptual and practical introduction in R
+Santiago Barreda & Noah Silbert
