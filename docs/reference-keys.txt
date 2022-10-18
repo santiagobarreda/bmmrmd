@@ -310,7 +310,7 @@ fig:F13-11
 fig:F13-12
 eq:14-1
 eq:14-2
-c1
+introduction-experiments-and-variables
 chapter-pre-cap
 c1-exp-and-effects
 c1-exp-and-inference
@@ -331,7 +331,7 @@ c1-inspecting-quantitative
 c1-inspecting-together
 exercises
 references
-c2
+probabilities-likelihood-and-inference
 chapter-pre-cap-1
 c2-data
 c2-empirical-prob
@@ -351,7 +351,7 @@ c2-chars-of-likelihoods-2
 c2-inference-and-likelihood
 exercises-1
 references-1
-c3
+fitting-bayesian-regression-models-with-brms
 chapter-pre-cap-2
 c3-what-is-reg
 c3-whats-bayes
@@ -376,7 +376,7 @@ c3-frequentist
 c3-vs-ttest
 c3-vs-ols
 exercises-2
-c4
+inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model
 chapter-pre-cap-3
 c4-multilevel
 c4-levels
@@ -403,7 +403,7 @@ c4-frequentist
 c4-vs-lmer
 exercises-3
 references-2
-c5
+comparing-two-groups-of-observations-factors-and-contrasts
 chapter-pre-cap-4
 comparing-two-groups
 distribution-of-repeated-measures-across-factor-levels
@@ -431,7 +431,7 @@ c5-answering-qs
 c5-frequentist
 bayesian-multilevel-models-vs.-lmer
 exercises-4
-c6
+variation-in-parameters-random-effects-and-model-comparison
 chapter-pre-cap-5
 c6-data-and-qs
 c6-variation-sources
