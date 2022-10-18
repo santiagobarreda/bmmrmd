@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Bayesian multilevel models for repeated-measures data: A conceptual and practical introduction in R</title>
+  <meta name="description" content="Bayesian Models for Repeated Measures" />
+  <meta name="generator" content="bookdown 0.29 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Bayesian multilevel models for repeated-measures data: A conceptual and practical introduction in R" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Bayesian Models for Repeated Measures" />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Bayesian multilevel models for repeated-measures data: A conceptual and practical introduction in R" />
+  
+  <meta name="twitter:description" content="Bayesian Models for Repeated Measures" />
+  
+
+<meta name="author" content="Santiago Bareda and Noah Silbert" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+
+<link rel="next" href="c1.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  background-color: #f8f8f8; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Bayesian Models for Linguists</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#bayesian-multilevel-models-and-repeated-measures-data"><i class="fa fa-check"></i>Bayesian Multilevel models and repeated measures data</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#whats-missing-from-this-book"><i class="fa fa-check"></i>What’s missing from this book</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#statistics-as-procedural-knowledge"><i class="fa fa-check"></i>Statistics as Procedural knowledge</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#practice-vs-brain-power"><i class="fa fa-check"></i>Practice vs brain power</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#how-to-use-this-book"><i class="fa fa-check"></i>How to use this book</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#supplemental-resources"><i class="fa fa-check"></i>Supplemental Resources</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#our-target-audience"><i class="fa fa-check"></i>Our target audience</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#the-self-starter"><i class="fa fa-check"></i>The self-starter</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#the-convert"><i class="fa fa-check"></i>The convert</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#the-instructor"><i class="fa fa-check"></i>The instructor</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#what-you-need-installed-to-use-this-book"><i class="fa fa-check"></i>What you need installed to use this book</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#why-go-bayesian"><i class="fa fa-check"></i>Why go Bayesian?</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#why-brms"><i class="fa fa-check"></i>Why brms?</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#it-takes-a-village-of-books"><i class="fa fa-check"></i>It takes a village (of books)</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#acknowledgements"><i class="fa fa-check"></i>Acknowledgements</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="c1.html"><a href="c1.html"><i class="fa fa-check"></i><b>1</b> Introduction: Experiments and Variables</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="c1.html"><a href="c1.html#chapter-pre-cap"><i class="fa fa-check"></i><b>1.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="1.2" data-path="c1.html"><a href="c1.html#c1-exp-and-effects"><i class="fa fa-check"></i><b>1.2</b> Experiments and effects</a>
+<ul>
+<li class="chapter" data-level="1.2.1" data-path="c1.html"><a href="c1.html#c1-exp-and-inference"><i class="fa fa-check"></i><b>1.2.1</b> Experiments and inference</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="c1.html"><a href="c1.html#c1-exp"><i class="fa fa-check"></i><b>1.3</b> Our experiment</a>
+<ul>
+<li class="chapter" data-level="1.3.1" data-path="c1.html"><a href="c1.html#c1-exp-intro"><i class="fa fa-check"></i><b>1.3.1</b> Our experiment: Introduction</a></li>
+<li class="chapter" data-level="1.3.2" data-path="c1.html"><a href="c1.html#c1-methods"><i class="fa fa-check"></i><b>1.3.2</b> Our experimental methods</a></li>
+<li class="chapter" data-level="1.3.3" data-path="c1.html"><a href="c1.html#c1-research-questions"><i class="fa fa-check"></i><b>1.3.3</b> Our research questions</a></li>
+<li class="chapter" data-level="1.3.4" data-path="c1.html"><a href="c1.html#c1-exp-data"><i class="fa fa-check"></i><b>1.3.4</b> Our experimental data</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="c1.html"><a href="c1.html#c1-variables"><i class="fa fa-check"></i><b>1.4</b> Variables</a>
+<ul>
+<li class="chapter" data-level="1.4.1" data-path="c1.html"><a href="c1.html#c1-pops-and-samps"><i class="fa fa-check"></i><b>1.4.1</b> Populations and samples</a></li>
+<li class="chapter" data-level="1.4.2" data-path="c1.html"><a href="c1.html#c1-dep-and-indep"><i class="fa fa-check"></i><b>1.4.2</b> Dependent and Independent Variables</a></li>
+<li class="chapter" data-level="1.4.3" data-path="c1.html"><a href="c1.html#c1-categorical"><i class="fa fa-check"></i><b>1.4.3</b> Categorical variables and ‘factors’</a></li>
+<li class="chapter" data-level="1.4.4" data-path="c1.html"><a href="c1.html#c1-quantitative"><i class="fa fa-check"></i><b>1.4.4</b> Quantitative variables</a></li>
+<li class="chapter" data-level="1.4.5" data-path="c1.html"><a href="c1.html#c1-logical"><i class="fa fa-check"></i><b>1.4.5</b> Logical variables</a></li>
+</ul></li>
+<li class="chapter" data-level="1.5" data-path="c1.html"><a href="c1.html#c1-inspecting"><i class="fa fa-check"></i><b>1.5</b> Inspecting our data</a>
+<ul>
+<li class="chapter" data-level="1.5.1" data-path="c1.html"><a href="c1.html#c1-inspecting-categorical"><i class="fa fa-check"></i><b>1.5.1</b> Inspecting categorical variables</a></li>
+<li class="chapter" data-level="1.5.2" data-path="c1.html"><a href="c1.html#c1-inspecting-quantitative"><i class="fa fa-check"></i><b>1.5.2</b> Inspecting quantitative variables</a></li>
+<li class="chapter" data-level="1.5.3" data-path="c1.html"><a href="c1.html#c1-inspecting-together"><i class="fa fa-check"></i><b>1.5.3</b> Exploring continuous and categorical variables together</a></li>
+</ul></li>
+<li class="chapter" data-level="1.6" data-path="c1.html"><a href="c1.html#exercises"><i class="fa fa-check"></i><b>1.6</b> Exercises</a></li>
+<li class="chapter" data-level="1.7" data-path="c1.html"><a href="c1.html#references"><i class="fa fa-check"></i><b>1.7</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="c2.html"><a href="c2.html"><i class="fa fa-check"></i><b>2</b> Probabilities, likelihood, and inference</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="c2.html"><a href="c2.html#chapter-pre-cap-1"><i class="fa fa-check"></i><b>2.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="2.2" data-path="c2.html"><a href="c2.html#c2-data"><i class="fa fa-check"></i><b>2.2</b> Data and research questions</a></li>
+<li class="chapter" data-level="2.3" data-path="c2.html"><a href="c2.html#c2-empirical-prob"><i class="fa fa-check"></i><b>2.3</b> Empirical Probabilities</a>
+<ul>
+<li class="chapter" data-level="2.3.1" data-path="c2.html"><a href="c2.html#c2-conditional"><i class="fa fa-check"></i><b>2.3.1</b> Conditional and marginal probabilities</a></li>
+<li class="chapter" data-level="2.3.2" data-path="c2.html"><a href="c2.html#c2-joint"><i class="fa fa-check"></i><b>2.3.2</b> Joint probabilities</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="c2.html"><a href="c2.html#c2-theoretical"><i class="fa fa-check"></i><b>2.4</b> Probability distributions</a></li>
+<li class="chapter" data-level="2.5" data-path="c2.html"><a href="c2.html#c2-normal"><i class="fa fa-check"></i><b>2.5</b> The normal distribution</a>
+<ul>
+<li class="chapter" data-level="2.5.1" data-path="c2.html"><a href="c2.html#c2-sample-mean"><i class="fa fa-check"></i><b>2.5.1</b> The sample mean</a></li>
+<li class="chapter" data-level="2.5.2" data-path="c2.html"><a href="c2.html#c2-sample-variance"><i class="fa fa-check"></i><b>2.5.2</b> The sample variance (or standard deviation)</a></li>
+<li class="chapter" data-level="2.5.3" data-path="c2.html"><a href="c2.html#c2-normal-density"><i class="fa fa-check"></i><b>2.5.3</b> The normal density</a></li>
+<li class="chapter" data-level="2.5.4" data-path="c2.html"><a href="c2.html#c2-standard-normal"><i class="fa fa-check"></i><b>2.5.4</b> The standard normal distribution</a></li>
+</ul></li>
+<li class="chapter" data-level="2.6" data-path="c2.html"><a href="c2.html#c2-models-and-inference"><i class="fa fa-check"></i><b>2.6</b> Models and inference</a></li>
+<li class="chapter" data-level="2.7" data-path="c2.html"><a href="c2.html#c2-likelihoods"><i class="fa fa-check"></i><b>2.7</b> Probabilities of events and likelihoods of parameters</a>
+<ul>
+<li class="chapter" data-level="2.7.1" data-path="c2.html"><a href="c2.html#c2-chars-of-likelihoods"><i class="fa fa-check"></i><b>2.7.1</b> Characteristics of likelihoods</a></li>
+<li class="chapter" data-level="2.7.2" data-path="c2.html"><a href="c2.html#c2-logarithms"><i class="fa fa-check"></i><b>2.7.2</b> A brief aside on logarithms</a></li>
+<li class="chapter" data-level="2.7.3" data-path="c2.html"><a href="c2.html#c2-chars-of-likelihoods-2"><i class="fa fa-check"></i><b>2.7.3</b> Characteristics of likelihoods, continued</a></li>
+</ul></li>
+<li class="chapter" data-level="2.8" data-path="c2.html"><a href="c2.html#c2-inference-and-likelihood"><i class="fa fa-check"></i><b>2.8</b> Answering our research questions</a></li>
+<li class="chapter" data-level="2.9" data-path="c2.html"><a href="c2.html#exercises-1"><i class="fa fa-check"></i><b>2.9</b> Exercises</a></li>
+<li class="chapter" data-level="2.10" data-path="c2.html"><a href="c2.html#references-1"><i class="fa fa-check"></i><b>2.10</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="c3.html"><a href="c3.html"><i class="fa fa-check"></i><b>3</b> Fitting Bayesian regression models with <em>brms</em></a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="c3.html"><a href="c3.html#chapter-pre-cap-2"><i class="fa fa-check"></i><b>3.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="3.2" data-path="c3.html"><a href="c3.html#c3-what-is-reg"><i class="fa fa-check"></i><b>3.2</b> What are regression models?</a></li>
+<li class="chapter" data-level="3.3" data-path="c3.html"><a href="c3.html#c3-whats-bayes"><i class="fa fa-check"></i><b>3.3</b> What’s ‘Bayesian’ about these models?</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="c3.html"><a href="c3.html#c3-priors"><i class="fa fa-check"></i><b>3.3.1</b> Prior probabilities</a></li>
+<li class="chapter" data-level="3.3.2" data-path="c3.html"><a href="c3.html#c3-posterior"><i class="fa fa-check"></i><b>3.3.2</b> Posterior distributions</a></li>
+<li class="chapter" data-level="3.3.3" data-path="c3.html"><a href="c3.html#c3-characteristics-posteriors"><i class="fa fa-check"></i><b>3.3.3</b> Posterior distributions and shrinkage</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="c3.html"><a href="c3.html#c3-sampling"><i class="fa fa-check"></i><b>3.4</b> Sampling from the posterior using <em>Stan</em> and <em>brms</em></a></li>
+<li class="chapter" data-level="3.5" data-path="c3.html"><a href="c3.html#c3-estimating"><i class="fa fa-check"></i><b>3.5</b> Estimating a single mean with the <code>brms</code> package</a>
+<ul>
+<li class="chapter" data-level="3.5.1" data-path="c3.html"><a href="c3.html#c3-data-qs-1"><i class="fa fa-check"></i><b>3.5.1</b> Data and Research Questions</a></li>
+<li class="chapter" data-level="3.5.2" data-path="c3.html"><a href="c3.html#c3-description-1"><i class="fa fa-check"></i><b>3.5.2</b> Description of the model</a></li>
+<li class="chapter" data-level="3.5.3" data-path="c3.html"><a href="c3.html#c3-errors-and-residuals"><i class="fa fa-check"></i><b>3.5.3</b> Errors and residuals</a></li>
+<li class="chapter" data-level="3.5.4" data-path="c3.html"><a href="c3.html#c3-model-formula"><i class="fa fa-check"></i><b>3.5.4</b> The model formula</a></li>
+<li class="chapter" data-level="3.5.5" data-path="c3.html"><a href="c3.html#c3-calling-brm"><i class="fa fa-check"></i><b>3.5.5</b> Fitting the model: Calling the <em>brm</em> function</a></li>
+<li class="chapter" data-level="3.5.6" data-path="c3.html"><a href="c3.html#c3-interpreting-print"><i class="fa fa-check"></i><b>3.5.6</b> Interpreting the model: The print statement</a></li>
+<li class="chapter" data-level="3.5.7" data-path="c3.html"><a href="c3.html#c3-seeing-samples"><i class="fa fa-check"></i><b>3.5.7</b> Seeing the samples</a></li>
+<li class="chapter" data-level="3.5.8" data-path="c3.html"><a href="c3.html#c3-getting-residuals"><i class="fa fa-check"></i><b>3.5.8</b> Getting the residuals</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="c3.html"><a href="c3.html#c3-checking-convergence"><i class="fa fa-check"></i><b>3.6</b> Checking model convergence</a></li>
+<li class="chapter" data-level="3.7" data-path="c3.html"><a href="c3.html#c3-specifying-priors"><i class="fa fa-check"></i><b>3.7</b> Specifying prior probabilities</a></li>
+<li class="chapter" data-level="3.8" data-path="c3.html"><a href="c3.html#c3-log-posterior"><i class="fa fa-check"></i><b>3.8</b> The log prior and log posterior densities</a></li>
+<li class="chapter" data-level="3.9" data-path="c3.html"><a href="c3.html#c3-answering-qs"><i class="fa fa-check"></i><b>3.9</b> Answering our research questions</a></li>
+<li class="chapter" data-level="3.10" data-path="c3.html"><a href="c3.html#c3-frequentist"><i class="fa fa-check"></i><b>3.10</b> ‘Traditionalists’ corner</a>
+<ul>
+<li class="chapter" data-level="3.10.1" data-path="c3.html"><a href="c3.html#c3-vs-ttest"><i class="fa fa-check"></i><b>3.10.1</b> One-sample t-test vs. intercept-only Bayesian models</a></li>
+<li class="chapter" data-level="3.10.2" data-path="c3.html"><a href="c3.html#c3-vs-ols"><i class="fa fa-check"></i><b>3.10.2</b> Intercept-only ordinary-least-squares regression vs. intercept-only Bayesian models</a></li>
+</ul></li>
+<li class="chapter" data-level="3.11" data-path="c3.html"><a href="c3.html#exercises-2"><i class="fa fa-check"></i><b>3.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="c4.html"><a href="c4.html"><i class="fa fa-check"></i><b>4</b> Inspecting a ‘single group’ of observations using a Bayesian multilevel model</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="c4.html"><a href="c4.html#chapter-pre-cap-3"><i class="fa fa-check"></i><b>4.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="4.2" data-path="c4.html"><a href="c4.html#c4-multilevel"><i class="fa fa-check"></i><b>4.2</b> Repeated measures data</a>
+<ul>
+<li class="chapter" data-level="4.2.1" data-path="c4.html"><a href="c4.html#c4-levels"><i class="fa fa-check"></i><b>4.2.1</b> Multilevel models and ‘levels’ of variation</a></li>
+</ul></li>
+<li class="chapter" data-level="4.3" data-path="c4.html"><a href="c4.html#c4-many-levels"><i class="fa fa-check"></i><b>4.3</b> Representing predictors with many levels</a></li>
+<li class="chapter" data-level="4.4" data-path="c4.html"><a href="c4.html#c4-strategies"><i class="fa fa-check"></i><b>4.4</b> Strategies for estimating factors with many levels</a>
+<ul>
+<li class="chapter" data-level="4.4.1" data-path="c4.html"><a href="c4.html#c4-complete-pooling"><i class="fa fa-check"></i><b>4.4.1</b> Complete pooling</a></li>
+<li class="chapter" data-level="4.4.2" data-path="c4.html"><a href="c4.html#c4-no-pooling"><i class="fa fa-check"></i><b>4.4.2</b> No pooling</a></li>
+<li class="chapter" data-level="4.4.3" data-path="c4.html"><a href="c4.html#c4-partial-pooling"><i class="fa fa-check"></i><b>4.4.3</b> (Adaptive) Partial pooling</a></li>
+<li class="chapter" data-level="4.4.4" data-path="c4.html"><a href="c4.html#hyperpriors"><i class="fa fa-check"></i><b>4.4.4</b> Hyperpriors</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="c4.html"><a href="c4.html#c4-estimating1"><i class="fa fa-check"></i><b>4.5</b> Estimating a multilevel model with <code>brms</code></a>
+<ul>
+<li class="chapter" data-level="4.5.1" data-path="c4.html"><a href="c4.html#c4-data-and-qs-1"><i class="fa fa-check"></i><b>4.5.1</b> Data and Research questions</a></li>
+<li class="chapter" data-level="4.5.2" data-path="c4.html"><a href="c4.html#description-of-the-model"><i class="fa fa-check"></i><b>4.5.2</b> Description of the model</a></li>
+<li class="chapter" data-level="4.5.3" data-path="c4.html"><a href="c4.html#c4-fitting-1"><i class="fa fa-check"></i><b>4.5.3</b> Fitting the model</a></li>
+<li class="chapter" data-level="4.5.4" data-path="c4.html"><a href="c4.html#interpreting-the-model"><i class="fa fa-check"></i><b>4.5.4</b> Interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="c4.html"><a href="c4.html#c4-random-effects"><i class="fa fa-check"></i><b>4.6</b> ‘Random’ Effects</a>
+<ul>
+<li class="chapter" data-level="4.6.1" data-path="c4.html"><a href="c4.html#c4-inspecting-random-effects"><i class="fa fa-check"></i><b>4.6.1</b> Inspecting the random effects</a></li>
+</ul></li>
+<li class="chapter" data-level="4.7" data-path="c4.html"><a href="c4.html#c4-simulating"><i class="fa fa-check"></i><b>4.7</b> Simulating data using our model parameters</a></li>
+<li class="chapter" data-level="4.8" data-path="c4.html"><a href="c4.html#c4-second-random-effect"><i class="fa fa-check"></i><b>4.8</b> Adding a second random effect</a>
+<ul>
+<li class="chapter" data-level="4.8.1" data-path="c4.html"><a href="c4.html#c4-updating-model"><i class="fa fa-check"></i><b>4.8.1</b> Updating the model description</a></li>
+<li class="chapter" data-level="4.8.2" data-path="c4.html"><a href="c4.html#fitting-and-interpreting-the-model"><i class="fa fa-check"></i><b>4.8.2</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="4.9" data-path="c4.html"><a href="c4.html#c4-investigating-shrinkage"><i class="fa fa-check"></i><b>4.9</b> Investigating ‘shrinkage’</a></li>
+<li class="chapter" data-level="4.10" data-path="c4.html"><a href="c4.html#c4-answering-question"><i class="fa fa-check"></i><b>4.10</b> Answering our research questions</a></li>
+<li class="chapter" data-level="4.11" data-path="c4.html"><a href="c4.html#c4-frequentist"><i class="fa fa-check"></i><b>4.11</b> ‘Traditionalists’ corner</a>
+<ul>
+<li class="chapter" data-level="4.11.1" data-path="c4.html"><a href="c4.html#c4-vs-lmer"><i class="fa fa-check"></i><b>4.11.1</b> Bayesian multilevel models vs. lmer</a></li>
+</ul></li>
+<li class="chapter" data-level="4.12" data-path="c4.html"><a href="c4.html#exercises-3"><i class="fa fa-check"></i><b>4.12</b> Exercises</a></li>
+<li class="chapter" data-level="4.13" data-path="c4.html"><a href="c4.html#references-2"><i class="fa fa-check"></i><b>4.13</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="c5.html"><a href="c5.html"><i class="fa fa-check"></i><b>5</b> Comparing two groups of observations: Factors and contrasts</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="c5.html"><a href="c5.html#chapter-pre-cap-4"><i class="fa fa-check"></i><b>5.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="5.2" data-path="c5.html"><a href="c5.html#comparing-two-groups"><i class="fa fa-check"></i><b>5.2</b> Comparing two groups</a></li>
+<li class="chapter" data-level="5.3" data-path="c5.html"><a href="c5.html#distribution-of-repeated-measures-across-factor-levels"><i class="fa fa-check"></i><b>5.3</b> Distribution of repeated measures across factor levels</a></li>
+<li class="chapter" data-level="5.4" data-path="c5.html"><a href="c5.html#c5-data-and-qs"><i class="fa fa-check"></i><b>5.4</b> Data and research questions</a></li>
+<li class="chapter" data-level="5.5" data-path="c5.html"><a href="c5.html#c5-two-means"><i class="fa fa-check"></i><b>5.5</b> Estimating the difference between two means with ‘brms’</a>
+<ul>
+<li class="chapter" data-level="5.5.1" data-path="c5.html"><a href="c5.html#fitting-the-model"><i class="fa fa-check"></i><b>5.5.1</b> Fitting the model</a></li>
+<li class="chapter" data-level="5.5.2" data-path="c5.html"><a href="c5.html#interpreting-the-model-1"><i class="fa fa-check"></i><b>5.5.2</b> Interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="5.6" data-path="c5.html"><a href="c5.html#c5-contrasts"><i class="fa fa-check"></i><b>5.6</b> Contrasts</a>
+<ul>
+<li class="chapter" data-level="5.6.1" data-path="c5.html"><a href="c5.html#c5-treatment-coding"><i class="fa fa-check"></i><b>5.6.1</b> Treatment coding</a></li>
+<li class="chapter" data-level="5.6.2" data-path="c5.html"><a href="c5.html#c5-sum-coding"><i class="fa fa-check"></i><b>5.6.2</b> Sum coding</a></li>
+<li class="chapter" data-level="5.6.3" data-path="c5.html"><a href="c5.html#c5-comparison-sum-treatment"><i class="fa fa-check"></i><b>5.6.3</b> Comparison of sum and treatment coding</a></li>
+</ul></li>
+<li class="chapter" data-level="5.7" data-path="c5.html"><a href="c5.html#c5-refittin-sum"><i class="fa fa-check"></i><b>5.7</b> Sum coding and the decomposition of variation</a>
+<ul>
+<li class="chapter" data-level="5.7.1" data-path="c5.html"><a href="c5.html#c5-description-1"><i class="fa fa-check"></i><b>5.7.1</b> Description of the model</a></li>
+<li class="chapter" data-level="5.7.2" data-path="c5.html"><a href="c5.html#fitting-the-model-1"><i class="fa fa-check"></i><b>5.7.2</b> Fitting the model</a></li>
+<li class="chapter" data-level="5.7.3" data-path="c5.html"><a href="c5.html#comparison-of-sum-and-treatment-coding"><i class="fa fa-check"></i><b>5.7.3</b> Comparison of sum and treatment coding</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="c5.html"><a href="c5.html#c5-working-with-posteriors"><i class="fa fa-check"></i><b>5.8</b> Inspecting and manipulating the posterior samples</a>
+<ul>
+<li class="chapter" data-level="5.8.1" data-path="c5.html"><a href="c5.html#c5-using-hypothesis"><i class="fa fa-check"></i><b>5.8.1</b> Using the <em>hypothesis</em> function</a></li>
+<li class="chapter" data-level="5.8.2" data-path="c5.html"><a href="c5.html#c5-manipulating-random-effects"><i class="fa fa-check"></i><b>5.8.2</b> Working with the random effects</a></li>
+</ul></li>
+<li class="chapter" data-level="5.9" data-path="c5.html"><a href="c5.html#c5-robustness"><i class="fa fa-check"></i><b>5.9</b> Making our models more robust: The (non-standardized) t distribution</a></li>
+<li class="chapter" data-level="5.10" data-path="c5.html"><a href="c5.html#re-fitting-with-t-distributed-errors."><i class="fa fa-check"></i><b>5.10</b> Re-fitting with t-distributed errors</a>
+<ul>
+<li class="chapter" data-level="5.10.1" data-path="c5.html"><a href="c5.html#description-of-the-model-1"><i class="fa fa-check"></i><b>5.10.1</b> Description of the model</a></li>
+<li class="chapter" data-level="5.10.2" data-path="c5.html"><a href="c5.html#fitting-and-interpreting-the-model-1"><i class="fa fa-check"></i><b>5.10.2</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="5.11" data-path="c5.html"><a href="c5.html#c5-simulating"><i class="fa fa-check"></i><b>5.11</b> Simulating the two-group model</a></li>
+<li class="chapter" data-level="5.12" data-path="c5.html"><a href="c5.html#c5-answering-qs"><i class="fa fa-check"></i><b>5.12</b> Answering our research questions</a></li>
+<li class="chapter" data-level="5.13" data-path="c5.html"><a href="c5.html#c5-frequentist"><i class="fa fa-check"></i><b>5.13</b> ‘Traditionalists’ corner</a>
+<ul>
+<li class="chapter" data-level="5.13.1" data-path="c5.html"><a href="c5.html#bayesian-multilevel-models-vs.-lmer"><i class="fa fa-check"></i><b>5.13.1</b> Bayesian multilevel models vs. lmer</a></li>
+</ul></li>
+<li class="chapter" data-level="5.14" data-path="c5.html"><a href="c5.html#exercises-4"><i class="fa fa-check"></i><b>5.14</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="c6.html"><a href="c6.html"><i class="fa fa-check"></i><b>6</b> Variation in parameters (‘random effects’) and model comparison</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="c6.html"><a href="c6.html#chapter-pre-cap-5"><i class="fa fa-check"></i><b>6.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="6.2" data-path="c6.html"><a href="c6.html#c6-data-and-qs"><i class="fa fa-check"></i><b>6.2</b> Data and research questions</a></li>
+<li class="chapter" data-level="6.3" data-path="c6.html"><a href="c6.html#c6-variation-sources"><i class="fa fa-check"></i><b>6.3</b> Variation in parameters across sources of data</a>
+<ul>
+<li class="chapter" data-level="6.3.1" data-path="c6.html"><a href="c6.html#description-of-our-model"><i class="fa fa-check"></i><b>6.3.1</b> Description of our model</a></li>
+<li class="chapter" data-level="6.3.2" data-path="c6.html"><a href="c6.html#c6-correlations"><i class="fa fa-check"></i><b>6.3.2</b> Correlations between random parameters</a></li>
+<li class="chapter" data-level="6.3.3" data-path="c6.html"><a href="c6.html#c6-random-and-mvn"><i class="fa fa-check"></i><b>6.3.3</b> Random effects and the multivariate normal distribution</a></li>
+<li class="chapter" data-level="6.3.4" data-path="c6.html"><a href="c6.html#c6-mvn-priors"><i class="fa fa-check"></i><b>6.3.4</b> Specifying priors for a multivariate normal distribution</a></li>
+<li class="chapter" data-level="6.3.5" data-path="c6.html"><a href="c6.html#updating-our-model-description"><i class="fa fa-check"></i><b>6.3.5</b> Updating our model description</a></li>
+<li class="chapter" data-level="6.3.6" data-path="c6.html"><a href="c6.html#c6-fitting"><i class="fa fa-check"></i><b>6.3.6</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="c6.html"><a href="c6.html#c6-model-comparison"><i class="fa fa-check"></i><b>6.4</b> Model Comparison</a>
+<ul>
+<li class="chapter" data-level="6.4.1" data-path="c6.html"><a href="c6.html#c6-in-and-out-prediction"><i class="fa fa-check"></i><b>6.4.1</b> In-sample and out-of-sample prediction</a></li>
+<li class="chapter" data-level="6.4.2" data-path="c6.html"><a href="c6.html#c6-out-sample-adjust"><i class="fa fa-check"></i><b>6.4.2</b> Out-of-sample prediction: Adjusting predictive accuracy</a></li>
+<li class="chapter" data-level="6.4.3" data-path="c6.html"><a href="c6.html#c6-out-sample-crossval"><i class="fa fa-check"></i><b>6.4.3</b> Out-of-sample prediction: Cross validation</a></li>
+<li class="chapter" data-level="6.4.4" data-path="c6.html"><a href="c6.html#selecting-a-model"><i class="fa fa-check"></i><b>6.4.4</b> Selecting a model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="c6.html"><a href="c6.html#c6-answering"><i class="fa fa-check"></i><b>6.5</b> Answering our research questions</a></li>
+<li class="chapter" data-level="6.6" data-path="c6.html"><a href="c6.html#c6-frequentist"><i class="fa fa-check"></i><b>6.6</b> ‘Traditionalists’ corner</a>
+<ul>
+<li class="chapter" data-level="6.6.1" data-path="c6.html"><a href="c6.html#c6-vs-lmer"><i class="fa fa-check"></i><b>6.6.1</b> Bayesian multilevel models vs. lmer</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="c6.html"><a href="c6.html#exercises-5"><i class="fa fa-check"></i><b>6.7</b> Exercises</a></li>
+<li class="chapter" data-level="6.8" data-path="c6.html"><a href="c6.html#references-3"><i class="fa fa-check"></i><b>6.8</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><i class="fa fa-check"></i><b>7</b> Comparing many groups, interactions, and posterior predictive checks</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#chapter-pre-cap-6"><i class="fa fa-check"></i><b>7.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="7.2" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#comparing-four-or-any-number-of-groups"><i class="fa fa-check"></i><b>7.2</b> Comparing four (or any number of) groups</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#data-and-research-questions"><i class="fa fa-check"></i><b>7.2.1</b> Data and research questions</a></li>
+<li class="chapter" data-level="7.2.2" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#c7-description-1"><i class="fa fa-check"></i><b>7.2.2</b> Description of our model</a></li>
+<li class="chapter" data-level="7.2.3" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#fitting-and-interpreting-the-model-2"><i class="fa fa-check"></i><b>7.2.3</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#investigating-multiple-factors-simultaneously"><i class="fa fa-check"></i><b>7.3</b> Investigating multiple factors simultaneously</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#data-and-research-questions-1"><i class="fa fa-check"></i><b>7.3.1</b> Data and research questions</a></li>
+<li class="chapter" data-level="7.3.2" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#description-of-the-model-2"><i class="fa fa-check"></i><b>7.3.2</b> Description of the model</a></li>
+<li class="chapter" data-level="7.3.3" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#fitting-and-interpreting-the-model-3"><i class="fa fa-check"></i><b>7.3.3</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#c7-posterior-prediction"><i class="fa fa-check"></i><b>7.4</b> Posterior prediction: Using our models to predict new data</a></li>
+<li class="chapter" data-level="7.5" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#c7-interactions-and-plots"><i class="fa fa-check"></i><b>7.5</b> Interactions and interaction plots</a></li>
+<li class="chapter" data-level="7.6" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#investigating-interactions-with-a-model"><i class="fa fa-check"></i><b>7.6</b> Investigating interactions with a model</a>
+<ul>
+<li class="chapter" data-level="7.6.1" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#data-and-research-questions-2"><i class="fa fa-check"></i><b>7.6.1</b> Data and research questions</a></li>
+<li class="chapter" data-level="7.6.2" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#model-formulas"><i class="fa fa-check"></i><b>7.6.2</b> Model formulas</a></li>
+<li class="chapter" data-level="7.6.3" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#description-of-our-model-1"><i class="fa fa-check"></i><b>7.6.3</b> Description of our model</a></li>
+<li class="chapter" data-level="7.6.4" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#fitting-and-interpreting-the-model-4"><i class="fa fa-check"></i><b>7.6.4</b> Fitting and interpreting the model</a></li>
+<li class="chapter" data-level="7.6.5" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#c7-calc-means"><i class="fa fa-check"></i><b>7.6.5</b> Caulculating group means in the presence of interactions</a></li>
+<li class="chapter" data-level="7.6.6" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#calculating-simple-effects-in-the-presence-of-interactions"><i class="fa fa-check"></i><b>7.6.6</b> Calculating simple effects in the presence of interactions</a></li>
+<li class="chapter" data-level="7.6.7" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#assessing-model-fit-bayesian-r2"><i class="fa fa-check"></i><b>7.6.7</b> Assessing model fit: Bayesian <span class="math inline">\(R^2\)</span></a></li>
+</ul></li>
+<li class="chapter" data-level="7.7" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#c7-answering"><i class="fa fa-check"></i><b>7.7</b> Answering our research questions</a></li>
+<li class="chapter" data-level="7.8" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#factors-with-more-than-two-levels"><i class="fa fa-check"></i><b>7.8</b> Factors with more than two levels</a></li>
+<li class="chapter" data-level="7.9" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#c7-frequentist"><i class="fa fa-check"></i><b>7.9</b> ‘Traditionalists’ corner</a>
+<ul>
+<li class="chapter" data-level="7.9.1" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#bayesian-multilevel-models-vs.-lmer-1"><i class="fa fa-check"></i><b>7.9.1</b> Bayesian multilevel models vs. lmer</a></li>
+</ul></li>
+<li class="chapter" data-level="7.10" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#exercises-6"><i class="fa fa-check"></i><b>7.10</b> Exercises</a></li>
+<li class="chapter" data-level="7.11" data-path="comparing-many-groups-interactions-and-posterior-predictive-checks.html"><a href="comparing-many-groups-interactions-and-posterior-predictive-checks.html#references-4"><i class="fa fa-check"></i><b>7.11</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html"><i class="fa fa-check"></i><b>8</b> Varying variances, more about priors, and prior predictive checks</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#chapter-pre-cap-7"><i class="fa fa-check"></i><b>8.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="8.2" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#data-and-research-questions-3"><i class="fa fa-check"></i><b>8.2</b> Data and Research questions</a></li>
+<li class="chapter" data-level="8.3" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#more-about-priors"><i class="fa fa-check"></i><b>8.3</b> More about priors</a>
+<ul>
+<li class="chapter" data-level="8.3.1" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#c8-prior-prediction"><i class="fa fa-check"></i><b>8.3.1</b> Prior predictive checks</a></li>
+<li class="chapter" data-level="8.3.2" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#more-specific-priors"><i class="fa fa-check"></i><b>8.3.2</b> More specific priors</a></li>
+</ul></li>
+<li class="chapter" data-level="8.4" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#heteroskedasticity-and-distributional-or-mixture-models"><i class="fa fa-check"></i><b>8.4</b> Heteroskedasticity and distributional (or mixture) models</a></li>
+<li class="chapter" data-level="8.5" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#a-simple-model-error-varies-according-to-a-single-fixed-effect"><i class="fa fa-check"></i><b>8.5</b> A ‘simple’ model: Error varies according to a single fixed effect</a>
+<ul>
+<li class="chapter" data-level="8.5.1" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#description-of-our-model-2"><i class="fa fa-check"></i><b>8.5.1</b> Description of our model</a></li>
+<li class="chapter" data-level="8.5.2" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#prior-predictive-checks"><i class="fa fa-check"></i><b>8.5.2</b> Prior predictive checks</a></li>
+<li class="chapter" data-level="8.5.3" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#fitting-and-interpreting-the-model-5"><i class="fa fa-check"></i><b>8.5.3</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="8.6" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#a-complex-model-error-varies-according-to-fixed-and-random-effects"><i class="fa fa-check"></i><b>8.6</b> A ‘complex’ model: Error varies according to fixed and random effects</a>
+<ul>
+<li class="chapter" data-level="8.6.1" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#c8-description-2"><i class="fa fa-check"></i><b>8.6.1</b> Description of our model</a></li>
+<li class="chapter" data-level="8.6.2" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#fitting-and-interpreting-the-model-6"><i class="fa fa-check"></i><b>8.6.2</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="8.7" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#answering-our-research-questions"><i class="fa fa-check"></i><b>8.7</b> Answering our research questions</a></li>
+<li class="chapter" data-level="8.8" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#c8-identifiability"><i class="fa fa-check"></i><b>8.8</b> Building identifiable and supportable models</a>
+<ul>
+<li class="chapter" data-level="8.8.1" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#collinearity"><i class="fa fa-check"></i><b>8.8.1</b> Collinearity</a></li>
+<li class="chapter" data-level="8.8.2" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#predictable-values-of-categorical-predictors"><i class="fa fa-check"></i><b>8.8.2</b> Predictable values of categorical predictors</a></li>
+<li class="chapter" data-level="8.8.3" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#saturated-and-nearly-saturated-models"><i class="fa fa-check"></i><b>8.8.3</b> Saturated, and ‘nearly-saturated’, models</a></li>
+</ul></li>
+<li class="chapter" data-level="8.9" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#exercises-7"><i class="fa fa-check"></i><b>8.9</b> Exercises</a></li>
+<li class="chapter" data-level="8.10" data-path="varying-variances-more-about-priors-and-prior-predictive-checks.html"><a href="varying-variances-more-about-priors-and-prior-predictive-checks.html#references-5"><i class="fa fa-check"></i><b>8.10</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html"><i class="fa fa-check"></i><b>9</b> Quantitative predictors and their interactions with factors</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#chapter-pre-cap-8"><i class="fa fa-check"></i><b>9.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="9.2" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#data-and-research-questions-4"><i class="fa fa-check"></i><b>9.2</b> Data and research questions</a></li>
+<li class="chapter" data-level="9.3" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#modeling-variation-along-lines"><i class="fa fa-check"></i><b>9.3</b> Modeling variation along lines</a>
+<ul>
+<li class="chapter" data-level="9.3.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#description-of-the-model-3"><i class="fa fa-check"></i><b>9.3.1</b> Description of the model</a></li>
+<li class="chapter" data-level="9.3.2" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#c9-centering"><i class="fa fa-check"></i><b>9.3.2</b> Centering quantitative predictors</a></li>
+<li class="chapter" data-level="9.3.3" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#fitting-an-interpreting-the-model"><i class="fa fa-check"></i><b>9.3.3</b> Fitting an interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="9.4" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#models-with-group-dependent-intercepts-but-shared-slopes"><i class="fa fa-check"></i><b>9.4</b> Models with group-dependent intercepts, but shared slopes</a>
+<ul>
+<li class="chapter" data-level="9.4.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#description-of-the-model-4"><i class="fa fa-check"></i><b>9.4.1</b> Description of the model</a></li>
+<li class="chapter" data-level="9.4.2" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#fitting-and-interpreting-the-model-7"><i class="fa fa-check"></i><b>9.4.2</b> Fitting and interpreting the model</a></li>
+<li class="chapter" data-level="9.4.3" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#interpreting-group-effects-in-the-presence-of-shared-non-zero-slopes"><i class="fa fa-check"></i><b>9.4.3</b> Interpreting group effects in the presence of shared (non-zero) slopes</a></li>
+</ul></li>
+<li class="chapter" data-level="9.5" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#models-with-group-dependent-slopes-and-intercepts"><i class="fa fa-check"></i><b>9.5</b> Models with group-dependent slopes and intercepts</a>
+<ul>
+<li class="chapter" data-level="9.5.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#description-of-the-model-5"><i class="fa fa-check"></i><b>9.5.1</b> Description of the model</a></li>
+<li class="chapter" data-level="9.5.2" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#c9-fitting-3"><i class="fa fa-check"></i><b>9.5.2</b> Fitting and interpreting the model</a></li>
+<li class="chapter" data-level="9.5.3" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#interpreting-group-effects-in-the-presence-of-varying-slopes"><i class="fa fa-check"></i><b>9.5.3</b> Interpreting group effects in the presence of varying slopes</a></li>
+</ul></li>
+<li class="chapter" data-level="9.6" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#answering-our-research-questions-interim-discussion"><i class="fa fa-check"></i><b>9.6</b> Answering our research questions: Interim discussion</a></li>
+<li class="chapter" data-level="9.7" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#data-and-research-questions-updated"><i class="fa fa-check"></i><b>9.7</b> Data and research questions: Updated</a></li>
+<li class="chapter" data-level="9.8" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#models-with-intercepts-and-slopes-for-each-level-of-a-grouping-factor-i.e.-random-slopes"><i class="fa fa-check"></i><b>9.8</b> Models with intercepts and slopes for each level of a grouping factor (i.e. ‘random slopes’)</a>
+<ul>
+<li class="chapter" data-level="9.8.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#description-of-the-model-6"><i class="fa fa-check"></i><b>9.8.1</b> Description of the model</a></li>
+<li class="chapter" data-level="9.8.2" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#fitting-and-interpreting-the-model-8"><i class="fa fa-check"></i><b>9.8.2</b> Fitting and interpreting the model</a></li>
+</ul></li>
+<li class="chapter" data-level="9.9" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#models-with-multiple-predictors-for-each-level-of-a-grouping-factor"><i class="fa fa-check"></i><b>9.9</b> Models with multiple predictors for each level of a grouping factor</a>
+<ul>
+<li class="chapter" data-level="9.9.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#description-of-the-model-7"><i class="fa fa-check"></i><b>9.9.1</b> Description of the model</a></li>
+<li class="chapter" data-level="9.9.2" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#c9-fitting-5"><i class="fa fa-check"></i><b>9.9.2</b> Fitting and interpreting the model</a></li>
+<li class="chapter" data-level="9.9.3" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#model-selection"><i class="fa fa-check"></i><b>9.9.3</b> Model selection</a></li>
+</ul></li>
+<li class="chapter" data-level="9.10" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#answering-our-research-questions-updated"><i class="fa fa-check"></i><b>9.10</b> Answering our research questions: Updated</a>
+<ul>
+<li class="chapter" data-level="9.10.1" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#a-word-on-causality"><i class="fa fa-check"></i><b>9.10.1</b> A word on causality</a></li>
+</ul></li>
+<li class="chapter" data-level="9.11" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#exercises-8"><i class="fa fa-check"></i><b>9.11</b> Exercises</a></li>
+<li class="chapter" data-level="9.12" data-path="quantitative-predictors-and-their-interactions-with-factors.html"><a href="quantitative-predictors-and-their-interactions-with-factors.html#references-6"><i class="fa fa-check"></i><b>9.12</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html"><i class="fa fa-check"></i><b>10</b> Logistic regression and signal detection theory models</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#chapter-pre-cap-9"><i class="fa fa-check"></i><b>10.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="10.2" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#c10-dichotomous"><i class="fa fa-check"></i><b>10.2</b> Dichotomous variables and data</a></li>
+<li class="chapter" data-level="10.3" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#generalizing-our-linear-models"><i class="fa fa-check"></i><b>10.3</b> Generalizing our linear models</a></li>
+<li class="chapter" data-level="10.4" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#logistic-regression"><i class="fa fa-check"></i><b>10.4</b> Logistic Regression</a>
+<ul>
+<li class="chapter" data-level="10.4.1" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#logits"><i class="fa fa-check"></i><b>10.4.1</b> Logits</a></li>
+<li class="chapter" data-level="10.4.2" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#c10-inverse-logit"><i class="fa fa-check"></i><b>10.4.2</b> The inverse logit link function</a></li>
+<li class="chapter" data-level="10.4.3" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#building-intuitions-about-logits-and-the-inverse-logit-function"><i class="fa fa-check"></i><b>10.4.3</b> Building intuitions about logits and the inverse logit function</a></li>
+</ul></li>
+<li class="chapter" data-level="10.5" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#logistic-regression-with-one-quantitative-predictor"><i class="fa fa-check"></i><b>10.5</b> Logistic regression with one quantitative predictor</a>
+<ul>
+<li class="chapter" data-level="10.5.1" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#data-and-research-questions-5"><i class="fa fa-check"></i><b>10.5.1</b> Data and research questions</a></li>
+<li class="chapter" data-level="10.5.2" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#description-of-the-model-8"><i class="fa fa-check"></i><b>10.5.2</b> Description of the model</a></li>
+<li class="chapter" data-level="10.5.3" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#c10-fitting-0"><i class="fa fa-check"></i><b>10.5.3</b> Fitting the model</a></li>
+<li class="chapter" data-level="10.5.4" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#c10-fitting-1"><i class="fa fa-check"></i><b>10.5.4</b> Interpreting the model</a></li>
+<li class="chapter" data-level="10.5.5" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#c10-classification"><i class="fa fa-check"></i><b>10.5.5</b> Using logistic models to understand classification</a></li>
+<li class="chapter" data-level="10.5.6" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#answering-our-research-question"><i class="fa fa-check"></i><b>10.5.6</b> Answering our research question</a></li>
+</ul></li>
+<li class="chapter" data-level="10.6" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#measuring-sensitivity-and-bias"><i class="fa fa-check"></i><b>10.6</b> Measuring sensitivity and bias</a>
+<ul>
+<li class="chapter" data-level="10.6.1" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#data-and-research-questions-6"><i class="fa fa-check"></i><b>10.6.1</b> Data and research questions</a></li>
+<li class="chapter" data-level="10.6.2" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#description-of-the-model-9"><i class="fa fa-check"></i><b>10.6.2</b> Description of the model</a></li>
+<li class="chapter" data-level="10.6.3" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#fitting-and-interpreting-the-model-9"><i class="fa fa-check"></i><b>10.6.3</b> Fitting and interpreting the model</a></li>
+<li class="chapter" data-level="10.6.4" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#answering-our-research-questions-1"><i class="fa fa-check"></i><b>10.6.4</b> Answering our research questions</a></li>
+</ul></li>
+<li class="chapter" data-level="10.7" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#exercises-9"><i class="fa fa-check"></i><b>10.7</b> Exercises</a></li>
+<li class="chapter" data-level="10.8" data-path="logistic-regression-and-signal-detection-theory-models.html"><a href="logistic-regression-and-signal-detection-theory-models.html#references-7"><i class="fa fa-check"></i><b>10.8</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><i class="fa fa-check"></i><b>11</b> Multiple quantitative predictors, dealing with large models, and Bayesian ANOVA</a>
+<ul>
+<li class="chapter" data-level="11.1" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#chapter-pre-cap-10"><i class="fa fa-check"></i><b>11.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="11.2" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#models-with-multiple-quantitative-predictors"><i class="fa fa-check"></i><b>11.2</b> Models with multiple quantitative predictors</a></li>
+<li class="chapter" data-level="11.3" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#interactions-between-quantitative-predictors"><i class="fa fa-check"></i><b>11.3</b> Interactions between quantitative predictors</a>
+<ul>
+<li class="chapter" data-level="11.3.1" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#centering-quantitative-predictors-when-including-interactions"><i class="fa fa-check"></i><b>11.3.1</b> Centering quantitative predictors when including interactions</a></li>
+<li class="chapter" data-level="11.3.2" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#data-and-research-questions-7"><i class="fa fa-check"></i><b>11.3.2</b> Data and research questions</a></li>
+<li class="chapter" data-level="11.3.3" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#c11-description-1"><i class="fa fa-check"></i><b>11.3.3</b> Description of the model</a></li>
+<li class="chapter" data-level="11.3.4" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#fitting-the-model-2"><i class="fa fa-check"></i><b>11.3.4</b> Fitting the model</a></li>
+<li class="chapter" data-level="11.3.5" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#advantages-of-bayesian-multilevel-models-for-large-models"><i class="fa fa-check"></i><b>11.3.5</b> Advantages of Bayesian multilevel models for large models</a></li>
+</ul></li>
+<li class="chapter" data-level="11.4" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#c11-BANOVA"><i class="fa fa-check"></i><b>11.4</b> Bayesian Analysis of Variance</a>
+<ul>
+<li class="chapter" data-level="11.4.1" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#getting-the-standard-deviations-from-our-models-manually"><i class="fa fa-check"></i><b>11.4.1</b> Getting the standard deviations from our models ‘manually’</a></li>
+<li class="chapter" data-level="11.4.2" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#using-the-banova-function"><i class="fa fa-check"></i><b>11.4.2</b> Using the <code>banova</code> function</a></li>
+<li class="chapter" data-level="11.4.3" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#fitting-and-comparing-the-reduced-model"><i class="fa fa-check"></i><b>11.4.3</b> Fitting and comparing the reduced model</a></li>
+</ul></li>
+<li class="chapter" data-level="11.5" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#a-logistic-regression-model-with-multiple-quantitative-predictors"><i class="fa fa-check"></i><b>11.5</b> A logistic regression model with multiple quantitative predictors</a>
+<ul>
+<li class="chapter" data-level="11.5.1" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#data-and-research-questions-8"><i class="fa fa-check"></i><b>11.5.1</b> Data and research questions</a></li>
+<li class="chapter" data-level="11.5.2" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#description-of-the-model-10"><i class="fa fa-check"></i><b>11.5.2</b> Description of the model</a></li>
+<li class="chapter" data-level="11.5.3" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#fitting-and-the-model-and-applying-a-bayesian-anova"><i class="fa fa-check"></i><b>11.5.3</b> Fitting and the model and applying a Bayesian ANOVA</a></li>
+<li class="chapter" data-level="11.5.4" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#c12-2d-categorization"><i class="fa fa-check"></i><b>11.5.4</b> Categorization in two dimensions</a></li>
+<li class="chapter" data-level="11.5.5" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#model-selection-and-misspecification"><i class="fa fa-check"></i><b>11.5.5</b> Model selection and misspecification</a></li>
+</ul></li>
+<li class="chapter" data-level="11.6" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#exercises-10"><i class="fa fa-check"></i><b>11.6</b> Exercises</a></li>
+<li class="chapter" data-level="11.7" data-path="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html"><a href="multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova.html#references-8"><i class="fa fa-check"></i><b>11.7</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html"><i class="fa fa-check"></i><b>12</b> Multinomial and Ordinal regression</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#chapter-pre-cap-11"><i class="fa fa-check"></i><b>12.1</b> Chapter pre-cap</a></li>
+<li class="chapter" data-level="12.2" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#multinomial-logistic-regression"><i class="fa fa-check"></i><b>12.2</b> Multinomial logistic regression</a>
+<ul>
+<li class="chapter" data-level="12.2.1" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#multinomial-logits-and-the-softmax-function"><i class="fa fa-check"></i><b>12.2.1</b> Multinomial logits and the softmax function</a></li>
+<li class="chapter" data-level="12.2.2" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#comparison-to-logistic-regression"><i class="fa fa-check"></i><b>12.2.2</b> Comparison to logistic regression</a></li>
+<li class="chapter" data-level="12.2.3" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#data-and-research-questions-9"><i class="fa fa-check"></i><b>12.2.3</b> Data and research questions</a></li>
+<li class="chapter" data-level="12.2.4" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#description-of-our-model-3"><i class="fa fa-check"></i><b>12.2.4</b> Description of our model</a></li>
+<li class="chapter" data-level="12.2.5" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#fitting-the-model-3"><i class="fa fa-check"></i><b>12.2.5</b> Fitting the model</a></li>
+<li class="chapter" data-level="12.2.6" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#interpreting-the-model-2"><i class="fa fa-check"></i><b>12.2.6</b> Interpreting the model</a></li>
+<li class="chapter" data-level="12.2.7" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#c12-multinomial-territorial-maps"><i class="fa fa-check"></i><b>12.2.7</b> Multinomial models and territorial maps</a></li>
+<li class="chapter" data-level="12.2.8" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#refitting-the-model-without-speaker-random-effects"><i class="fa fa-check"></i><b>12.2.8</b> Refitting the model without speaker random effects</a></li>
+<li class="chapter" data-level="12.2.9" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#answering-our-research-questions-2"><i class="fa fa-check"></i><b>12.2.9</b> Answering our research questions</a></li>
+</ul></li>
+<li class="chapter" data-level="12.3" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#ordinal-logistic-regression"><i class="fa fa-check"></i><b>12.3</b> Ordinal (logistic) regression</a>
+<ul>
+<li class="chapter" data-level="12.3.1" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#c12-cumulative-density"><i class="fa fa-check"></i><b>12.3.1</b> Cumulative distribution functions</a></li>
+<li class="chapter" data-level="12.3.2" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#data-and-research-questions-10"><i class="fa fa-check"></i><b>12.3.2</b> Data and research questions</a></li>
+<li class="chapter" data-level="12.3.3" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#description-of-the-model-11"><i class="fa fa-check"></i><b>12.3.3</b> Description of the model</a></li>
+<li class="chapter" data-level="12.3.4" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#fitting-and-interpreting-the-model-10"><i class="fa fa-check"></i><b>12.3.4</b> Fitting and interpreting the model</a></li>
+<li class="chapter" data-level="12.3.5" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#listener-specific-discrimination-terms"><i class="fa fa-check"></i><b>12.3.5</b> Listener-specific discrimination terms</a></li>
+<li class="chapter" data-level="12.3.6" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#answering-our-research-questions-3"><i class="fa fa-check"></i><b>12.3.6</b> Answering our research questions</a></li>
+</ul></li>
+<li class="chapter" data-level="12.4" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#exercises-11"><i class="fa fa-check"></i><b>12.4</b> Exercises</a></li>
+<li class="chapter" data-level="12.5" data-path="multinomial-and-ordinal-regression.html"><a href="multinomial-and-ordinal-regression.html#references-9"><i class="fa fa-check"></i><b>12.5</b> References</a></li>
+</ul></li>
+<li class="chapter" data-level="13" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><i class="fa fa-check"></i><b>13</b> Writing up experiments: An investigation of the perception of apparent speaker characteristics from speech acoustics</a>
+<ul>
+<li class="chapter" data-level="13.1" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#introduction"><i class="fa fa-check"></i><b>13.1</b> Introduction</a>
+<ul>
+<li class="chapter" data-level="13.1.1" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#fundamental-frequency-and-voice-pitch"><i class="fa fa-check"></i><b>13.1.1</b> Fundamental frequency and voice pitch</a></li>
+<li class="chapter" data-level="13.1.2" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#variation-in-fundamental-frequency-between-speakers"><i class="fa fa-check"></i><b>13.1.2</b> Variation in fundamental frequency between speakers</a></li>
+<li class="chapter" data-level="13.1.3" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#voice-resonance-and-vocal-tract-length"><i class="fa fa-check"></i><b>13.1.3</b> Voice resonance and vocal-tract length</a></li>
+<li class="chapter" data-level="13.1.4" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#c13-estimating-vtl"><i class="fa fa-check"></i><b>13.1.4</b> Estimating vocal-tracts length from speech</a></li>
+<li class="chapter" data-level="13.1.5" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#variation-in-vocal-tract-length-between-speakers"><i class="fa fa-check"></i><b>13.1.5</b> Variation in vocal-tract length between speakers</a></li>
+<li class="chapter" data-level="13.1.6" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#c13-perception-of-chars"><i class="fa fa-check"></i><b>13.1.6</b> Perception of age, gender and size</a></li>
+<li class="chapter" data-level="13.1.7" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#category-dependent-behavior"><i class="fa fa-check"></i><b>13.1.7</b> Category-dependent behavior</a></li>
+<li class="chapter" data-level="13.1.8" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#the-current-experiment"><i class="fa fa-check"></i><b>13.1.8</b> The current experiment</a></li>
+</ul></li>
+<li class="chapter" data-level="13.2" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#methods"><i class="fa fa-check"></i><b>13.2</b> Methods</a>
+<ul>
+<li class="chapter" data-level="13.2.1" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#participants"><i class="fa fa-check"></i><b>13.2.1</b> Participants</a></li>
+<li class="chapter" data-level="13.2.2" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#c13-stimuli"><i class="fa fa-check"></i><b>13.2.2</b> Stimuli</a></li>
+<li class="chapter" data-level="13.2.3" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#procedure"><i class="fa fa-check"></i><b>13.2.3</b> Procedure</a></li>
+<li class="chapter" data-level="13.2.4" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#data-screening"><i class="fa fa-check"></i><b>13.2.4</b> Data screening</a></li>
+<li class="chapter" data-level="13.2.5" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#loading-the-data-and-packages"><i class="fa fa-check"></i><b>13.2.5</b> Loading the data and packages</a></li>
+<li class="chapter" data-level="13.2.6" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#statistical-analysis-apparent-height"><i class="fa fa-check"></i><b>13.2.6</b> Statistical Analysis: Apparent height</a></li>
+<li class="chapter" data-level="13.2.7" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#statistical-analysis-apparent-gender"><i class="fa fa-check"></i><b>13.2.7</b> Statistical Analysis: Apparent gender</a></li>
+</ul></li>
+<li class="chapter" data-level="13.3" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#results-apparent-height-judgments"><i class="fa fa-check"></i><b>13.3</b> Results: Apparent height judgments</a></li>
+<li class="chapter" data-level="13.4" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#discussion-apparent-height"><i class="fa fa-check"></i><b>13.4</b> Discussion: Apparent height</a>
+<ul>
+<li class="chapter" data-level="13.4.1" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#age-dependent-use-of-vtl-cues-on-apparent-height"><i class="fa fa-check"></i><b>13.4.1</b> Age-dependent use of VTL cues on apparent height</a></li>
+<li class="chapter" data-level="13.4.2" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#the-effect-for-apparent-gender-on-apparent-height"><i class="fa fa-check"></i><b>13.4.2</b> The effect for apparent gender on apparent height</a></li>
+</ul></li>
+<li class="chapter" data-level="13.5" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#conclusion-apparent-height-judgments"><i class="fa fa-check"></i><b>13.5</b> Conclusion: Apparent height judgments</a></li>
+<li class="chapter" data-level="13.6" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#results-apparent-gender-judgments"><i class="fa fa-check"></i><b>13.6</b> Results: Apparent gender judgments</a></li>
+<li class="chapter" data-level="13.7" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#discussion-apparent-gender-judgments"><i class="fa fa-check"></i><b>13.7</b> Discussion: Apparent gender judgments</a>
+<ul>
+<li class="chapter" data-level="13.7.1" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#effect-of-apparent-age-on-the-perception-of-femaleness"><i class="fa fa-check"></i><b>13.7.1</b> Effect of apparent age on the perception of femaleness</a></li>
+<li class="chapter" data-level="13.7.2" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#between-listener-variation-in-gender-perception"><i class="fa fa-check"></i><b>13.7.2</b> Between-listener variation in gender perception</a></li>
+<li class="chapter" data-level="13.7.3" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#beyond-gross-acoustic-cues-in-gender-perception"><i class="fa fa-check"></i><b>13.7.3</b> Beyond gross acoustic cues in gender perception</a></li>
+</ul></li>
+<li class="chapter" data-level="13.8" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#conclusion-apparent-gender"><i class="fa fa-check"></i><b>13.8</b> Conclusion: Apparent gender</a></li>
+<li class="chapter" data-level="13.9" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#next-steps"><i class="fa fa-check"></i><b>13.9</b> Next steps</a>
+<ul>
+<li class="chapter" data-level="13.9.1" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#research-design-variable-selection-etc."><i class="fa fa-check"></i><b>13.9.1</b> Research design, variable selection, etc.</a></li>
+<li class="chapter" data-level="13.9.2" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#non-linear-models"><i class="fa fa-check"></i><b>13.9.2</b> Non-linear models</a></li>
+<li class="chapter" data-level="13.9.3" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#other-data-distributions"><i class="fa fa-check"></i><b>13.9.3</b> Other data distributions</a></li>
+<li class="chapter" data-level="13.9.4" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#multivariate-analyses"><i class="fa fa-check"></i><b>13.9.4</b> Multivariate analyses</a></li>
+</ul></li>
+<li class="chapter" data-level="13.10" data-path="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html"><a href="writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics.html#references-10"><i class="fa fa-check"></i><b>13.10</b> References</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="http://www.santiagobarreda.com" target="blank">Written by Santiago Barreda</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Bayesian multilevel models for repeated-measures data: A conceptual and practical introduction in R</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="header">
+<h1 class="title">Bayesian multilevel models for repeated-measures data: A conceptual and practical introduction in R</h1>
+<p class="author"><em>Santiago Bareda and Noah Silbert</em></p>
+</div>
+<div id="preface" class="section level1 unnumbered hasAnchor">
+<h1>Preface<a href="index.html#preface" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>This book presents an introduction to the statistical analysis of repeated measures data using Bayesian multilevel regression models. Our approach is to fit these models using the <code>brms</code> package and the <em>Stan</em> programming language in R. This book introduces mathematical and modeling concepts in plain English, and focuses on understanding the visual/geometric consequences of different regression model structures rather than on rigorous mathematical explanations of these.</p>
+<p>Statistical modeling is as much a coding challenge as it is a mathematical challenge. As any programmer with some experience knows, copying existing scripts and modifying them slightly is an excellent way to learn to code, and often a new skill can be learned shortly after an understandable example can be found. To that end, rather than use a different toy data set for every new topic introduced, this book presents a set of fully worked analyses involving increasingly complicated models fit to the same experimental data.</p>
+<p>We were both trained as linguists and the experiment we analyze in this book is an experiment investigating a ‘linguistic’ research question (kind of). However, the sorts of models described in this book are useful for researchers in psychology, cognitive science, and many related (and unrelated) disciplines. In general, the information in this book will be useful to anyone that has similar sorts of data that they want to analyze regardless of the specifics of their research areas, and it should be straightforward to extend the concepts outlined in this book to models that predict different sorts of data.</p>
+<div id="bayesian-multilevel-models-and-repeated-measures-data" class="section level2 unnumbered hasAnchor">
+<h2>Bayesian Multilevel models and repeated measures data<a href="index.html#bayesian-multilevel-models-and-repeated-measures-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>A more complete explanation of the following is presented in chapters 2 to 4, however, we can say something about this here. A Bayesian model is one which bases reasoning on <em>posterior probabilities</em> rather than <em>likelihoods</em>. A multilevel model is one in which you simultaneously model variation in your data, and in your parameters. There a ‘multi(ple) levels’ because there is variation in the data (conceptually ‘below’), and in the parameters of the probability distributions generating this data (conceptually ‘above’). A Bayesian multilevel model puts these concepts together and uses posterior probabilities to make inferences about variation in data and in parameters.</p>
+<p>Repeated measures data is data where multiple observations come from the same ‘source’ (discussed in more detail in section <a href="c4.html#c4-multilevel">4.2</a>). Basically, any time you have data with more than one observation from any given source, you have repeated measures data. Repeated measures data is very common in linguistics, and the norm in many areas of research. For example, you might ask participants in an experiment to hit a button as soon as they hear a buzz, and repeat this for 100 trials per participant. Repeated measures data can naturally lead to independent data-level variation (the lower level) and parameter level variation (the upper level). For example, reaction times to hit a button vary within-participants (the data/lower level), but average reaction times will also likely vary between participants (the upper/parameter level) in a systematic manner. Using multilevel models to analyze repeated measures data lets you independently model these two levels of variation. Using a <em>Bayesian</em> multilevel model allows you to build flexible models that provide you with all sorts of useful information.</p>
+<p>One obstacle to the proper analysis of repeated measures data is that this requires models that are relatively ‘complicated’ and therefore usually not taught at the beginner level. In order to learn how to model repeated measures data, a student is often first expected to learn ‘traditional’ statistical approaches and designs. After this foundation is laid, the student can then move to the sorts of models they can <em>actually</em> use for their work, mainly multilevel models that can handle repeated measures data. This approach has several drawbacks: It takes a long time, spends substantial energy on statistical approaches that most will rarely if ever use in their work, and front-loads difficult and abstract concepts before students can start working with data they really understand. As a result, students may become discouraged, become convinced that they’re ‘not good at math’, and may not realize how much they already intuitively understand about statistics.</p>
+<p>This book starts with multilevel models and doesn’t look back. It focuses on a realistic and complicated data set, and focuses from (nearly) the start (chapter 4) on realistic models that could actually be used in modern, publishable research.</p>
+</div>
+<div id="whats-missing-from-this-book" class="section level2 unnumbered hasAnchor">
+<h2>What’s missing from this book<a href="index.html#whats-missing-from-this-book" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>There was a time when every other Spider-Man movie started with Peter Parker being bitten by the spider and getting his powers, costume, etc. Filmmakers didn’t trust that viewers know how Spider-Man got his powers, or that they could easily get this information somewhere, and so chose to spend precious movie minutes retelling what is perhaps the least interesting Spider-Man story. The problem is, the longer you spend on Peter Parker getting bit, the less time you can spend on Spider-Man swinging between buildings at high velocity. In the same way, many statistics books tell the statistics ‘origin story’ over and over, to the detriment of getting to the sorts of really interesting models people actually need. In other cases, when complicated models are discussed they are presented in a style and language only appropriate for an advanced reader, or with simple examples using toy data.</p>
+<p>This book tries to find the ‘Goldilocks zone’ between too much and too little information: We assume you know who Spider-Man is or can easily find his origin story. This book omits a basic introduction to R in addition to a detailed explanation of how the code used in the book works. It also omits a lot of explanation that is required to ‘really’ understand topics, for example correlation, which we introduce but only spend a few pages on. However, there are hundreds or thousands of excellent introductions to R, and even more places to find good information about basic statistical concepts like correlations. Rather than spend precious book pages on really getting into every topic that comes up, this book aims to spend as much time as possible flying between buildings at high velocity, or the statistical equivalent.</p>
+<p>As a result, this book is narrowly focused on a specific subject: Introduction to Bayesian multilevel models for repeated measures data. It’s not a general introduction to statistics nor to Bayesian models, or any number of other things. This narrow(ish) focus is both a strength and a weakness. We feel that it is a strength because it allows this book to cover material and provide examples of the sorts of models that are frequently needed in many disciplines, but also rarely discussed in statistics textbooks (often missing entirely or featuring in 1-2 chapters tucked away at the back). It’s a weakness because it means the book is to some extent ‘incomplete’ in terms of providing a full introduction to the field of (Bayesian) statistics, as noted above. As a result, the ideal reader will know a little about statistics or have some resources on introductory statistics on hand (e.g. books, Wikipedia, etc.) to look up things they might not know or understand. Similarly, the book does not spend much time explaining how the things we do in R work, though examples of everything are given and the code is commented and made as transparent as we could.</p>
+<p>At the other end of the spectrum, this book is also missing many ‘more complicated’ but useful topics. For example, the book is entirely focused on linear modeling and does not discuss non-linear modeling. We also do not discuss missing data, multivariate dependent variables, or transformations of the dependent variables, among other topics. However, all of these things, and more, are easily doable using <em>Stan</em> and <code>brms</code>.</p>
+</div>
+<div id="statistics-as-procedural-knowledge" class="section level2 unnumbered hasAnchor">
+<h2>Statistics as Procedural knowledge<a href="index.html#statistics-as-procedural-knowledge" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Although statistical knowledge might seem like declarative knowledge, in many ways it is much more similar to procedural knowledge. You would never read a chapter from a French textbook once and expect to have memorized all the vocabulary and irregular forms. Similarly, you would never practice a piano piece a single time and assume that you are just ‘bad at the piano’ because you can’t play it flawlessly. And yet a student may read a chapter from this book once and feel disappointed that they do not already understand the concepts.</p>
+<p>We suggest thinking of acquiring statistical knowledge like learning a language, or musical instrument. It is normal, and in fact should be expected, that the reader will need to read some parts of the text multiple times, and <em>practice</em>, before being able to really <em>understand</em> all of the concepts presented here. We do not think getting good at statistics is about ‘brain power’ (whatever that is), as much as it is about a desire to learn, a genuine interest in the topic, and perseverance. In this way, learning statistics is very much like learning a language or an instrument. Buying a piano doesn’t make you good at the piano, only practice does. Reading a grammar of Spanish or even moving to Spain will not teach you Spanish, only getting out there and talking to people will. To get good at statistics, you need to practice using statistics.</p>
+<p>To that end, this book provides examples of analyses and data that can be re-analyzed in many similar yet different ways. As a result, readers have an opportunity to fit several parallel models, interpret them, make sure they understand them, and so on. In doing so, and in returning to challenging content periodically to ‘practice’, we hope that readers will be able to support their understanding of the content in the book.</p>
+<div id="practice-vs-brain-power" class="section level3 unnumbered hasAnchor">
+<h3>Practice vs brain power<a href="index.html#practice-vs-brain-power" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>John von Neumann was perhaps the greatest mathematical mind the world has ever seen. A glance at his contributions to mathematics on his Wikipedia page reveals an astonishing breadth and depth of mathematical abilities. Some quotes from his contemporaries about von Neumann (from his Wikipedia page):</p>
+<ul>
+<li><p>“I have sometimes wondered whether a brain like von Neumann’s does not indicate a species superior to that of man” - Hans Bethe</p></li>
+<li><p>“Johnny was the only student I was ever afraid of. If in the course of a lecture I stated an unsolved problem, the chances were he’d come to me at the end of the lecture with the complete solution scribbled on a slip of paper.” - George Pólya</p></li>
+</ul>
+<p>And yet when a graduate student complained about not <em>understanding</em> some mathematical abstraction, von Neumann is said to have replied:</p>
+<ul>
+<li>“Young man, in mathematics you don’t <em>understand</em> things. You just get <em>used to them</em>” - John von Neumann</li>
+</ul>
+<p>This was von Neumann’s experience, it has certainly been our experience, and it will likely be yours. Some things will make no sense the first, second, third, …, maybe even the tenth time you see them. And then one day they will. It won’t be clear when or why they changed from confusing to sensible, but all of the sudden a combination of repetition, practice and <em>time</em> will make the difference. It is likely that no amount of thinking and raw brain power alone will help you <em>understand</em> statistics right away on a first pass.</p>
+<p>That being said, many of the things we talk about in this book will come up in every chapter, so if things don’t all make sense right away that’s fine, since you will have plenty of chances to <em>get used to them</em>. Things will make more sense bit by bit as we learn how to use more and more complicated models. After reading a few chapters you should come back and read earlier chapters again (and again). You may notice that a lot of things are discussed in an earlier chapter that you did not notice the first time you read it.</p>
+</div>
+</div>
+<div id="how-to-use-this-book" class="section level2 unnumbered hasAnchor">
+<h2>How to use this book<a href="index.html#how-to-use-this-book" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>The chapters of this book, from chapter 3 on, are organized in terms of regression model components, e.g., intercepts, slopes, interactions, ‘random’ effects, and so on. We will discuss how these relate to experimental designs, statistical concepts, and the geometry of figures based on the data and model coefficients. In each chapter, we will learn how to use these components to ‘build’ progressively more complicated models to answer more complicated research questions. An analogy may be drawn to learning to be a carpenter. A chair is usually not carved out of a single block of wood, but rather assembled out of several discrete components (i.e., the flat seat, the cylindrical legs, supports for stability, etc.). As a result, learning to build a chair requires that the carpenter first learn to make the individual components and then learns to put them together in a specific way.</p>
+<p>The example analyses in each chapter are presented with the general structure of a lab report or academic write up. This is done as a pedagogical tool to help readers ‘copy’ the work they see in each chapter and modify this to suit their needs. The general structure for the presentation of new model components: 1) Introduce a type of research question (e.g., are the means of these groups the same?). Explain how this relates to model design concepts and give an example of real-world data associated with this sort of design. 2) Present the structure of a model that can be used to analyze the data, and to answer this sort of research question. Fit the model. 3) Interpret the model output and coefficients. Explain what all the information presented in the model output means, explain how coefficients relate to our research question. 4) Beyond coefficient values, discuss what the model ‘means’ and attempt to provide an answer to our research questions based on the model. These chapter components correspond approximately to the 1) introduction, 2) methods, 3) results, and 4) discussion/conclusion sections found in a typical research paper.</p>
+<p>Since we think learning statistics requires practice and repetition, this book is intended to allow readers to follow along with the analyses in the book, and to modify these to fit and interpret their own models. A possible sequence might be: 1) Repeat the exact analyses in a chapter, 2) Modify the model in the chapter slightly and interpret it, 3) Fit new data using a model structure like that included in each chapter. Of course, step two above can be extended indefinitely for most chapters because in each case we present only a very small set of the very large number of possible models that could be fit to the data in each chapter.</p>
+<div id="supplemental-resources" class="section level3 unnumbered hasAnchor">
+<h3>Supplemental Resources<a href="index.html#supplemental-resources" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The code needed to follow along with all the analyses presented in the book is provided in each chapter. There is also a book website that presents an online version of the book, and the code necessary to make all the plots in the book. Finally, the book GitHub page contains <code>.Rmd</code> files containing all the code chunks, and the code to make the figures in the book. The book GitHub page also contains all the models referred to in the book, which can be downloaded using the <code>bmmb::get_models</code> function.</p>
+</div>
+</div>
+<div id="our-target-audience" class="section level2 unnumbered hasAnchor">
+<h2>Our target audience<a href="index.html#our-target-audience" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Although we think no statistical background is needed to use this book, readers with some statistical background will be in a better position to take full advantage. This book does assume a basic familiarity with R. However, the book provides fully worked examples of all analyses (including the scripts to generate all figures) so that readers only need to know enough R to follow along. We identify a few (non-exhaustive) types of people who might get good use out of this book: The self-starter, the convert, and the instructor.</p>
+<div id="the-self-starter" class="section level3 unnumbered hasAnchor">
+<h3>The self-starter<a href="index.html#the-self-starter" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The self-starter is a person interested in multilevel models, who has little to no background in statistics, and perhaps little to no knowledge of R. However, the self-starter enjoys learning on their own, and is motivated to use Wikipedia, Stack overflow, Google, and so on in order to supplement the information in this book. In particular, self starters may benefit by ‘going along for the ride’ to some extent, and focusing on practicing and working through examples without expecting to <em>understand</em> everything the first time.</p>
+</div>
+<div id="the-convert" class="section level3 unnumbered hasAnchor">
+<h3>The convert<a href="index.html#the-convert" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Converts are readers who are already proficient with more ‘traditional’ analysis methods, and may want to ‘translate’ their skills over to a Bayesian framework. As much as possible, this book adopts the jargon of more ‘traditional’ methods, and we also provide explicit comparisons with other sorts of models at the end of several chapters. If this sort of reader is reasonably familiar with R, and in particular if they are familiar with the <code>lme4</code> package, the content and examples in this book should be very accessible.</p>
+</div>
+<div id="the-instructor" class="section level3 unnumbered hasAnchor">
+<h3>The instructor<a href="index.html#the-instructor" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Linguistics, and many disciplines with similar sorts of data, are in the early stages of a paradigm shift towards Bayesian statistical methods. Although we don’t include many of the smaller exercises found in the typical statistics textbook, the book was written for use as a (semi) introductory book for a senior undergraduate or graduate statistics class. In addition, the data and scripts provided allow for a broad range of in class activities and out of class assignments to be easily created based on the topics covered in each chapter. The exercises suggested at the end of each chapter involve the analysis and interpretation of models similar in structure to what is presented in each chapter. The result of this is that the exercises we suggest resemble the actual analyses that students will need to carry out when they eventually analyze their own data.</p>
+<p>For example, students can be asked to replicate an analysis from a chapter but to make some modification, analyzing a different dependent variable or re-parameterizing the model in some way. Because of the open-ended nature of the data exploration and the incredible customizability of Bayesian multilevel models, assignments using the same data set and analysis scripts can easily vary from very simple to quite sophisticated. In addition, since usable models are presented from the fourth chapter on, students can use the course to analyze their own repeated measures data, building and interpreting progressively more complicated models as the course progresses.</p>
+</div>
+</div>
+<div id="what-you-need-installed-to-use-this-book" class="section level2 unnumbered hasAnchor">
+<h2>What you need installed to use this book<a href="index.html#what-you-need-installed-to-use-this-book" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In order to use this book, you need to install R, which you can get for free online. If your R installation is more than 1 year old you may want to consider updating R right now, and will also want to update R periodically. That’s because some of the packages we will use in this book sometimes don’t play nice with ‘older’ (relatively speaking) versions of R. If you’re trying to do something and R crashes for no apparent reason, it may be time to update R and all your packages. You will also need to install (minimally) the <code>brms</code>, <code>devtools</code>, and <code>bmmb</code> packages. You can get the first two by running <code>install.packages('packageName')</code>. You can get the <code>bmmb</code> package from the package GitHub by running:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="index.html#cb1-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;santiagobarreda/bmmb&quot;</span>)</span></code></pre></div>
+<p>After installing <code>devtools</code> of course. We also recommend installing RStudio, an integrated development environment (IDE) for R. This is basically just software that makes it more convenient to use R, and it honestly <em>does</em> make it very convenient. Installing RStudio is only recommend it but we recommend it like we recommend indoor plumbing: After trying it we think you will not want to live without it.</p>
+</div>
+<div id="why-go-bayesian" class="section level2 unnumbered hasAnchor">
+<h2>Why go Bayesian?<a href="index.html#why-go-bayesian" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>We do not use Bayesian statistics because of an affinity for Bayesian arguments regarding the philosophy of knowledge gathering, although we do think these topics are very interesting. Instead, we use Bayesian statistics, and suggest you should also use them, because it lets you do things that are difficult to do with other approaches, gives you information that other approaches don’t, and gives you a flexibility and resilience that may be difficult to find elsewhere. Even though we think Bayesian modeling has its advantages, we are not like the proverbial man with the hammer, we do not think that every problem requires a Bayesian solution. Instead, you may find that the models in this book are best for some situations, and other sorts of models are best for other situations.</p>
+<p>That being said, the flexibility provided by Bayesian modeling is an enormous advantage, and it is difficult to find through other approaches. Returning to the woodworking analogy, learning to ‘build’ Bayesian models from their components lets you build exactly the ‘furniture’ (model) you want. In contrast, working with some traditional models feels more like going to Ikea, you can pick from a set of predetermined models, but are often constrained in terms of how these pre-built pieces can be modified.</p>
+<div id="why-brms" class="section level3 unnumbered hasAnchor">
+<h3>Why brms?<a href="index.html#why-brms" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The <code>brms</code> package is a useful way for us to use the <em>Stan</em> programming language, the real star of the show. We could write our own models for all of the analyses presented in this book and fit them directly in <em>Stan</em>. However, <code>brms</code> will do this for us more quickly, more easily, and with fewer mistakes. It also writes highly efficient models that fit quickly in <em>Stan</em>. In addition, the helper functions in the package make working with the posterior samples very simple and work well with a wide range of other packages related to <em>Stan</em>. However, despite the fact that this book uses <code>brms</code> exclusively for model building and fitting, we don’t really think of this book as being <em>about</em> <code>brms</code>. The information presented in this book applies to modeling more generally, and is also useful for people that write their own models directly in <em>Stan</em>. The main difference is these readers would need to do a lot of things ‘by hand’ or find other solutions to many of the things the <code>brms</code> package makes it very simple to do.</p>
+</div>
+</div>
+<div id="it-takes-a-village-of-books" class="section level2 unnumbered hasAnchor">
+<h2>It takes a village (of books)<a href="index.html#it-takes-a-village-of-books" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>As noted above, this book omits some basic information that can be found in many places online. It also does not get into some more-complicated topics or in-depth explanations of some aspects of statistical modeling more generally. We recommend the following books to provide information that readers may want, but that is not present in this book.</p>
+<p><em>Before this book</em></p>
+<p>These books introduce more ‘classic’ (non-Bayesian) models and traditional statistical approaches. Such models are usually not multilevel models and often cannot handle repeated measures data.</p>
+<p>Myers, J. L., Well, A. D., &amp; Lorch, R. F. (2013). Research design and statistical analysis. Routledge.</p>
+<p>Winter, B. (2019). Statistics for linguists: An introduction using R. Routledge.</p>
+<p><em>During this book</em></p>
+<p>These books provide a lot of additional information about Bayesian statistics and modeling in general, and discuss many things not covered in this book. However, they spend very little time on repeated measures data.</p>
+<p>Kruschke, J. (2014). Doing Bayesian data analysis: A tutorial with R, JAGS, and Stan.</p>
+<p>Gelman, A., Hill, J., &amp; Vehtari, A. (2020). Regression and other stories. Cambridge University Press.</p>
+<p>Gelman, A., &amp; Hill, J. (2006). Data analysis using regression and multilevel/hierarchical models. Cambridge university press.</p>
+<p><em>After this book</em></p>
+<p>If you finish this book and think most of it made sense, you may find these books useful.</p>
+<p>McElreath, R. (2020). Statistical rethinking: A Bayesian course with examples in R and Stan. Chapman and Hall/CRC.</p>
+<p>Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., &amp; Rubin, D. B. (2013). Bayesian Data Analysis.</p>
+</div>
+<div id="acknowledgements" class="section level2 unnumbered hasAnchor">
+<h2>Acknowledgements<a href="index.html#acknowledgements" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>We would like to thank Sunny Zhou, Scott Perry, Michelle Cohn, and Mike Stuart, for their helpful comments and suggestions. I (Santiago) would also like to thank Terry Nearey for introducing Noah and me, and for always insisting that things be done properly. I would also like to thank my parents for too many things to list, my daughters for keeping me company while I worked on the book, and my wife for all her encouragement and support; the book wouldn’t exist without her.</p>
+
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<!-- Default Statcounter code for statsbook
+https://santiagobarreda.github.io/stats-class/ -->
+<script type="text/javascript">
+var sc_project=12454226; 
+var sc_invisible=1; 
+var sc_security="a1959418"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js"
+async></script>
+<noscript><div class="statcounter"><a title="Web Analytics"
+href="https://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="https://c.statcounter.com/12454226/0/a1959418/1/"
+alt="Web Analytics"></a></div></noscript>
+<!-- End of Statcounter Code -->
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+<a href="c1.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
