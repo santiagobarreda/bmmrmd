@@ -331,6 +331,7 @@ c1-inspecting-quantitative
 c1-inspecting-together
 exercises
 references
+plot-code
 probabilities-likelihood-and-inference
 chapter-pre-cap-1
 c2-data
@@ -351,6 +352,7 @@ c2-chars-of-likelihoods-2
 c2-inference-and-likelihood
 exercises-1
 references-1
+plot-code-1
 fitting-bayesian-regression-models-with-brms
 chapter-pre-cap-2
 c3-what-is-reg
@@ -376,6 +378,7 @@ c3-frequentist
 c3-vs-ttest
 c3-vs-ols
 exercises-2
+plot-code-2
 inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model
 chapter-pre-cap-3
 c4-multilevel
@@ -403,6 +406,7 @@ c4-frequentist
 c4-vs-lmer
 exercises-3
 references-2
+plot-code-3
 comparing-two-groups-of-observations-factors-and-contrasts
 chapter-pre-cap-4
 comparing-two-groups
@@ -431,6 +435,7 @@ c5-answering-qs
 c5-frequentist
 bayesian-multilevel-models-vs.-lmer
 exercises-4
+plot-code-4
 variation-in-parameters-random-effects-and-model-comparison
 chapter-pre-cap-5
 c6-data-and-qs
@@ -451,6 +456,7 @@ c6-frequentist
 c6-vs-lmer
 exercises-5
 references-3
+plot-code-5
 comparing-many-groups-interactions-and-posterior-predictive-checks
 chapter-pre-cap-6
 comparing-four-or-any-number-of-groups
@@ -477,6 +483,7 @@ c7-frequentist
 bayesian-multilevel-models-vs.-lmer-1
 exercises-6
 references-4
+plot-code-6
 varying-variances-more-about-priors-and-prior-predictive-checks
 chapter-pre-cap-7
 data-and-research-questions-3
@@ -498,6 +505,7 @@ predictable-values-of-categorical-predictors
 saturated-and-nearly-saturated-models
 exercises-7
 references-5
+plot-code-7
 quantitative-predictors-and-their-interactions-with-factors
 chapter-pre-cap-8
 data-and-research-questions-4
@@ -526,6 +534,7 @@ answering-our-research-questions-updated
 a-word-on-causality
 exercises-8
 references-6
+plot-code-8
 logistic-regression-and-signal-detection-theory-models
 chapter-pre-cap-9
 c10-dichotomous
@@ -548,6 +557,7 @@ fitting-and-interpreting-the-model-9
 answering-our-research-questions-1
 exercises-9
 references-7
+plot-code-9
 multiple-quantitative-predictors-dealing-with-large-models-and-bayesian-anova
 chapter-pre-cap-10
 models-with-multiple-quantitative-predictors
@@ -569,6 +579,7 @@ c12-2d-categorization
 model-selection-and-misspecification
 exercises-10
 references-8
+plot-code-10
 multinomial-and-ordinal-regression
 chapter-pre-cap-11
 multinomial-logistic-regression
@@ -590,6 +601,7 @@ listener-specific-discrimination-terms
 answering-our-research-questions-3
 exercises-11
 references-9
+plot-code-11
 writing-up-experiments-an-investigation-of-the-perception-of-apparent-speaker-characteristics-from-speech-acoustics
 introduction
 fundamental-frequency-and-voice-pitch
@@ -625,3 +637,4 @@ non-linear-models
 other-data-distributions
 multivariate-analyses
 references-10
+plot-code-12
