@@ -83,38 +83,39 @@ pre.numberSource code > span > a:first-child::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  background-color: #f8f8f8; }
+  {   }
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-code span.al { color: #ef2929; } /* Alert */
-code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #c4a000; } /* Attribute */
-code span.bn { color: #0000cf; } /* BaseN */
-code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4e9a06; } /* Char */
-code span.cn { color: #000000; } /* Constant */
-code span.co { color: #8f5902; font-style: italic; } /* Comment */
-code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
-code span.dt { color: #204a87; } /* DataType */
-code span.dv { color: #0000cf; } /* DecVal */
-code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
-code span.fl { color: #0000cf; } /* Float */
-code span.fu { color: #000000; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
-code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
-code span.ot { color: #8f5902; } /* Other */
-code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
-code span.sc { color: #000000; } /* SpecialChar */
-code span.ss { color: #4e9a06; } /* SpecialString */
-code span.st { color: #4e9a06; } /* String */
-code span.va { color: #000000; } /* Variable */
-code span.vs { color: #4e9a06; } /* VerbatimString */
-code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
 
@@ -690,7 +691,7 @@ Figure 4.1: (left) Distribution of all apparent height judgments for adult male 
 <p>A <strong>multilevel model</strong> is a special kind of regression model that’s able to simultaneously estimate random variation at multiple ‘levels’. A multilevel model fit to our height judgments would be able to estimate the average reported by each listener, the variation in listener means, and the random within-listener variation, all at the same time. Model parameters describe some tendency in the data. For now we’re just talking about average values. So, our model describes listeners in terms of their average response, which it encodes using parameters related to the listener means. As a result, when we say “the distribution of parameters” to refer to the distribution of listener means, we’re really saying “the distribution of listener characteristics”. So, when we say “multilevel models model variation at the data level and the parameter level”, we’re basically saying “multilevel models allow us to model the variation of data within listeners, and of parameters/characteristics between listeners”.</p>
 <p>Figure <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#fig:F4-2">4.2</a> compares visual representations of the same data, the points <span class="math inline">\(y_{[1]} \dots y_{[6]}\)</span>, represented as unilevel or multilevel models. In the unilevel model there is only one distribution, the data distribution, and a single random source of variation, the data-level error <span class="math inline">\(\sigma\)</span>. Since there is no ‘upper’ level describing between-listener variation, our model doesn’t ‘know’ our data contains repeated observations from a small number of listeners. In addition, our model has no mechanism by which to explain, for example, why <span class="math inline">\(y_{[1]}\)</span> and <span class="math inline">\(y_{[2]}\)</span> have such low values. This model treats all deviations from the mean as random and therefore acts as if systematic between-listener variation did not exist. It also treats all variation around the mean as totally independent, which we know it is not.</p>
 <div class="figure"><span style="display:block;" id="fig:F4-2"></span>
-<img src="_main_files/figure-html/Figure 4.2.jpg" alt="Comparison of the structure of a statistical model with only a single level of variation (a 'unilevel model', left), to a model with multiple levels of variation (a multilevel model, right)." width="100%" />
+<img src="_main_files/figure-html/Figure%204.2.jpg" alt="Comparison of the structure of a statistical model with only a single level of variation (a 'unilevel model', left), to a model with multiple levels of variation (a multilevel model, right)." width="100%" />
 <p class="caption">
 Figure 4.2: Comparison of the structure of a statistical model with only a single level of variation (a ‘unilevel model’, left), to a model with multiple levels of variation (a multilevel model, right).
 </p>
@@ -819,8 +820,8 @@ L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\
 \begin{equation}
 \begin{split}
 P(L_{[\bullet]}|y) = \frac{P(y|L_{[\bullet]}) \cdot P(L_{[\bullet]})}{P(y)}
-\tag{4.7}
 \end{split}
+\tag{4.7}
 \end{equation}
 \]</span></p>
 <p>If we want to consider the posterior probability of <span class="math inline">\(\sigma_L\)</span> given the data, we can add <span class="math inline">\(\sigma_L\)</span> to every term that previously included <span class="math inline">\(L_{[\bullet]}\)</span> in <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#eq:4-6">(4.7)</a>. Basically, we’re saying <span class="math inline">\(\sigma_L\)</span> <em>and</em> <span class="math inline">\(L_{[\bullet]}\)</span>, instead of just <span class="math inline">\(L_{[\bullet]}\)</span>. Equation <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#eq:4-7">(4.8)</a> can be read aloud as “the posterior probability of observing a certain listener effect <em>and</em> a certain amount of between-listener variation given some data (<span class="math inline">\(P(L_{[\bullet]},\sigma_L|y)\)</span>) is equal to the likelihood of the data given the listener effect and the amount of variation between listeners (<span class="math inline">\(P(y|L_{[\bullet]} , \sigma_L)\)</span>), times the joint prior probability of the listener effect and the amount of variation between listeners (<span class="math inline">\(P(L_{[\bullet]},\sigma_L)\)</span>), divided by the marginal probability of the data (<span class="math inline">\(P(y)\)</span>)”.</p>
@@ -828,8 +829,8 @@ P(L_{[\bullet]}|y) = \frac{P(y|L_{[\bullet]}) \cdot P(L_{[\bullet]})}{P(y)}
 \begin{equation}
 \begin{split}
 P(L_{[\bullet]},\sigma_L|y) = \frac{P(y|L_{[\bullet]} , \sigma_L) \cdot P(L_{[\bullet]},\sigma_L)}{P(y)}
-\tag{4.8}
 \end{split}
+\tag{4.8}
 \end{equation}
 \]</span></p>
 <p>We know that we can represent the joint probability of a listener effect and the listener standard deviation, <span class="math inline">\(P(L_{[\bullet]},\sigma_L)\)</span>, using normalized conditional probabilities as in <span class="math inline">\(P(L_{[\bullet]}|\sigma_L) \cdot P(\sigma_L)\)</span> (see chapter 2). We can also remove the listener standard deviation (<span class="math inline">\(\sigma_L\)</span>) from the likelihood of <span class="math inline">\(L_{[\bullet]}\)</span> given the data (<span class="math inline">\(P(y|L_{[\bullet]})\)</span>), because we know that the probability of any given data point in a normal distribution depends only on the mean of the distribution and not the standard deviation of means <em>between</em> distributions (i.e. <span class="math inline">\(\sigma_L\)</span>). These two changes are reflected in <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#eq:4-8">(4.9)</a>. The first term in the numerator on the right hand side is the likelihood, this was in our original equation in <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#eq:4-6">(4.7)</a>. The second term is the prior distribution of listener effects. This also appeared in <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#eq:4-6">(4.7)</a>, however, this distribution now allows for variation in the value of <span class="math inline">\(\sigma_L\)</span>. Finally, the third term (<span class="math inline">\(P(\sigma_L)\)</span>) represents the hyperprior, the prior distribution of one of the parameters of another prior distribution.</p>
@@ -837,8 +838,8 @@ P(L_{[\bullet]},\sigma_L|y) = \frac{P(y|L_{[\bullet]} , \sigma_L) \cdot P(L_{[\b
 \begin{equation}
 \begin{split}
 P(L_{[\bullet]},\sigma_L|y) = \frac{P(y|L_{[\bullet]})  \cdot P(L_{[\bullet]}|\sigma_L)  \cdot P(\sigma_L)}{P(y)}
-\tag{4.9}
 \end{split}
+\tag{4.9}
 \end{equation}
 \]</span></p>
 <p>Our posterior estimates of <span class="math inline">\(L_{[\bullet]}\)</span> may differ from our no pooling estimates of the listener effects. This is because in addition to the individual parameter likelihoods, the posterior probability of <span class="math inline">\(L_{[\bullet]}\)</span> in <a href="inspecting-a-single-group-of-observations-using-a-bayesian-multilevel-model.html#eq:4-8">(4.9)</a> takes into account the estimates of <span class="math inline">\(\sigma_L\)</span>. When our posterior estimates of the listener (or any other) effects are more similar to the population average, and to each other, than the no pooling estimates, <em>regularization</em> has occurred. Importantly, the amount of pooling/shrinkage that will occur will be determined by <span class="math inline">\(\sigma_L\)</span>, which is estimated from the data itself.</p>

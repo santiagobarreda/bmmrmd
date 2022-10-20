@@ -83,38 +83,39 @@ pre.numberSource code > span > a:first-child::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  background-color: #f8f8f8; }
+  {   }
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-code span.al { color: #ef2929; } /* Alert */
-code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #c4a000; } /* Attribute */
-code span.bn { color: #0000cf; } /* BaseN */
-code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4e9a06; } /* Char */
-code span.cn { color: #000000; } /* Constant */
-code span.co { color: #8f5902; font-style: italic; } /* Comment */
-code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
-code span.dt { color: #204a87; } /* DataType */
-code span.dv { color: #0000cf; } /* DecVal */
-code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
-code span.fl { color: #0000cf; } /* Float */
-code span.fu { color: #000000; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
-code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
-code span.ot { color: #8f5902; } /* Other */
-code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
-code span.sc { color: #000000; } /* SpecialChar */
-code span.ss { color: #4e9a06; } /* SpecialString */
-code span.st { color: #4e9a06; } /* String */
-code span.va { color: #000000; } /* Variable */
-code span.vs { color: #4e9a06; } /* VerbatimString */
-code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
 
@@ -1270,7 +1271,7 @@ R \sim \mathrm{LKJCorr} (2)
 <span id="cb362-6"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb362-6" aria-hidden="true" tabindex="-1"></a><span class="do">## H18    11.84    0.5667  10.71  12.95       (vtl) = 0     3</span></span></code></pre></div>
 <p>In figure <a href="quantitative-predictors-and-their-interactions-with-factors.html#fig:F9-6">9.6</a> we see the distribution of apparent height as a function of speaker VTL individually for each listener. Clearly, there is a general tendency shared by all listeners: Each listener-dependent line is reasonably similar to the line drawn using the marginal intercept and slope terms (the broken line in each plot). However, although there are general similarities between listeners there is also noticeable between-listener variation such that the listener-specific lines do a much better job of representing each listener’s behavior than the overall line.</p>
 <div class="figure"><span style="display:block;" id="fig:F9-6"></span>
-<img src="_main_files/figure-html/Figure 9.6.jpg" alt="Each plot shows responses from a single subject. The line with matched color represents the listener-specific line. The broken black line in each plot is the average 'main effects' line."  />
+<img src="../wrong_plots/Figure 9.6.jpg" alt="Each plot shows responses from a single subject. The line with matched color represents the listener-specific line. The broken black line in each plot is the average 'main effects' line."  />
 <p class="caption">
 Figure 9.6: Each plot shows responses from a single subject. The line with matched color represents the listener-specific line. The broken black line in each plot is the average ‘main effects’ line.
 </p>
@@ -1359,7 +1360,7 @@ Figure 9.7: (left) Estimates and 95% credible intervals for model fixed effects 
 <span id="cb368-12"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb368-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">scope =</span> <span class="st">&quot;coef&quot;</span>,<span class="at">group=</span><span class="st">&quot;L&quot;</span>)</span></code></pre></div>
 <p>The listener-dependent, group-specific lines are presented in figure <a href="quantitative-predictors-and-their-interactions-with-factors.html#fig:F9-8">9.8</a>. Two things are clear from this figure. First, there is substantial variation in lines across apparent speaker categories. Second, there is substantial variation in the lines representing each category across different listeners. In both cases, this suggests that this model is preferable to <code>model_random_slopes_simple</code> since that model included only a single intercept and VTL slope for each listener.</p>
 <div class="figure"><span style="display:block;" id="fig:F9-8"></span>
-<img src="_main_files/figure-html/Figure 9.8.jpg" alt="Each plot shows responses from a single subject. Lines indicate listener-specific relationships between VTL and apparent height for each speaker category."  />
+<img src="../wrong_plots/Figure 9.8.jpg" alt="Each plot shows responses from a single subject. Lines indicate listener-specific relationships between VTL and apparent height for each speaker category."  />
 <p class="caption">
 Figure 9.8: Each plot shows responses from a single subject. Lines indicate listener-specific relationships between VTL and apparent height for each speaker category.
 </p>
@@ -1765,7 +1766,7 @@ Figure 9.9: (left) Group-specific intercepts from <code>model_random_slopes_comp
 <span id="cb374-228"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-228" aria-hidden="true" tabindex="-1"></a><span class="do">### Figure 9.6</span></span>
 <span id="cb374-229"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-229" aria-hidden="true" tabindex="-1"></a><span class="do">################################################################################</span></span>
 <span id="cb374-230"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-230" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb374-231"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-231" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">&quot;_main_files/figure-html/Figure 9.6.jpg&quot;</span>)</span>
+<span id="cb374-231"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-231" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">&quot;../wrong_plots/Figure 9.6.jpg&quot;</span>)</span>
 <span id="cb374-232"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-232" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb374-233"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-233" aria-hidden="true" tabindex="-1"></a><span class="co"># jpeg (&quot;Figure 9.6.jpg&quot;,4800,3000,res=600)</span></span>
 <span id="cb374-234"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-234" aria-hidden="true" tabindex="-1"></a><span class="co"># yaxts = c(&#39;s&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;s&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;s&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;)</span></span>
@@ -1804,9 +1805,9 @@ Figure 9.9: (left) Group-specific intercepts from <code>model_random_slopes_comp
 <span id="cb374-267"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-267" aria-hidden="true" tabindex="-1"></a><span class="do">### Figure 9.8</span></span>
 <span id="cb374-268"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-268" aria-hidden="true" tabindex="-1"></a><span class="do">################################################################################</span></span>
 <span id="cb374-269"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb374-270"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-270" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">&quot;_main_files/figure-html/Figure 9.8.jpg&quot;</span>)</span>
+<span id="cb374-270"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-270" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">&quot;../wrong_plots/Figure 9.8.jpg&quot;</span>)</span>
 <span id="cb374-271"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-271" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb374-272"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-272" aria-hidden="true" tabindex="-1"></a><span class="co"># jpeg (&quot;_main_files/figure-html/Figure 9.8.jpg&quot;,4800,3000,res=600)</span></span>
+<span id="cb374-272"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-272" aria-hidden="true" tabindex="-1"></a><span class="co"># jpeg (&quot;../wrong_plots/Figure 9.8.jpg&quot;,4800,3000,res=600)</span></span>
 <span id="cb374-273"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-273" aria-hidden="true" tabindex="-1"></a><span class="co"># par (mar = c(.25,.25,.25,.25), mfrow = c(3,5), oma = c(4.3,4.3,1,1))</span></span>
 <span id="cb374-274"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-274" aria-hidden="true" tabindex="-1"></a><span class="co"># yaxts = c(&#39;s&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;s&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;s&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;)</span></span>
 <span id="cb374-275"><a href="quantitative-predictors-and-their-interactions-with-factors.html#cb374-275" aria-hidden="true" tabindex="-1"></a><span class="co"># xaxts = c(&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;n&#39;,&#39;s&#39;,&#39;s&#39;,&#39;s&#39;,&#39;s&#39;,&#39;s&#39;)</span></span>
