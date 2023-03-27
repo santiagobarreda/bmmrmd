@@ -1,0 +1,703 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+```
+
+# Fitting Bayesian regression models with *brms* 
+
+## Chapter pre-cap
+
+## What are regression models? {#c3-what-is-reg}
+
+$$
+\begin{equation}
+y_{[i]} \sim \mathrm{N}(\mu,\sigma)
+(\#eq:3-1)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+y_{[i]} = \mu + \mathrm{N}(0,\sigma)
+(\#eq:3-2)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mu = x_{1} + x_{2} + x_{3}
+(\#eq:3-3)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mu_{[i]} = x_{1[i]} + x_{2[i]} + x_{3[i]}
+(\#eq:3-4)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mu_{[i]} = \alpha_1 \cdot x_{1[i]} + \alpha_2 \cdot x_{2[i]} + \alpha_3 \cdot x_{3[i]}  
+(\#eq:3-5)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+y_{[i]} =  (\alpha_1 \cdot x_{1[i]} + \alpha_2 \cdot x_{2[i]} + \alpha_3 \cdot x_{3[i]} ) + \mathrm{N}(0,\sigma)  
+(\#eq:3-6)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+y_{[i]} = \alpha_1 \cdot x_{1[i]} + \alpha_2 \cdot x_{2[i]} + \alpha_3 \cdot x_{3[i]}+ \varepsilon_{[i]}
+(\#eq:3-7)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+y_{[i]} \sim \mathrm{N}(\mu,\sigma)\\
+\mu_{[i]} = \alpha_1 \cdot x_{1[i]} + \alpha_2 \cdot x_{2[i]} + \alpha_3 \cdot x_{3[i]} 
+\end{split}
+(\#eq:3-8)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+P(A \,\&\, B) = P(B \,\&\, A)
+(\#eq:3-9)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+P(A|B) \cdot P(B) = P(B|A) \cdot P(A) 
+(\#eq:3-10)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+P(\mu|y) \cdot P(y) = P(y|\mu) \cdot P(\mu)
+(\#eq:3-11)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+P(\mu|y) = \frac{P(y|\mu) \cdot P(\mu)}{P(y)}
+(\#eq:3-12)
+\end{equation}
+$$
+
+### Prior probabilities {#c3-priors}
+
+### Posterior distributions {#c3-posterior}
+
+```{r F3-1, echo = FALSE, fig.height = 5, fig.width = 8, fig.cap='Demonstration of the effect of different prior probabilities and number of observations on resulting posterior distributions. In each case, the posterior is the product of the likelihood and the prior. All curves have been scaled to have the same height in the figure. This makes the figures visually interpretable but does not affect any of the points made in the discussion.', cache = FALSE}
+
+################################################################################
+### Figure 3.1
+################################################################################
+
+library (bmmb)
+# load and subset experimental data
+data (exp_data, package = "bmmb")
+men = exp_data[exp_data$C_v=='m',]
+mens_height = men$height
+
+par(mfcol = c(3,3), mar =c(.1,.25,.1,.25), oma = c(4,3,3,1))  
+
+x = seq (135, 210, 0.05)
+####
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 3 ) )
+prior = dnorm (x, 180, 100) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='Density',lwd=4,yaxs='i', 
+      xlim = c(140, 210), ylim = c(0,1.1),xlab='',xaxt='n',cex.axis=1.3,yaxt='n',
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+mtext (side=3,outer=FALSE,text="Observations = 3",line=1)
+mtext (side=2,outer=FALSE,text=expression(paste("P(", mu,") = N(180,100)")),
+       line=1,cex=0.9)
+
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 3 ) )
+prior = dnorm (x, 180, 15) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='',lwd=4,yaxs='i', 
+      xlim = c(140, 210), ylim = c(0,1.1),xaxt='n',cex.axis=1.3,yaxt='n',
+      col=bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+mtext (side=2,outer=FALSE,text=expression(paste("P(", mu,") = N(180,15)")),
+       line=1,cex=0.9)
+
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 3 ) )
+prior = dnorm (x, 180, 1) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='',lwd=4,yaxs='i', 
+      xlim = c(140, 210), ylim = c(0,1.1),cex.axis=1.3,yaxt='n',
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+mtext (side=2,outer=FALSE,text=expression(paste("P(", mu,") = N(180,1)")),
+       line=1,cex=0.9)
+
+####
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 10 ) )
+prior = dnorm (x, 180, 100) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='Density',lwd=4,yaxs='i', 
+      xlim = c(160, 185), ylim = c(0,1.1),xlab='',yaxt='n',xaxt='n',
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior) ,col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+mtext (side=3,outer=FALSE,text="Observations = 10",line=1)
+
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 10 ) )
+prior = dnorm (x, 180, 15) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='',lwd=4,yaxs='i', 
+      xlim = c(160, 185), ylim = c(0,1.1),yaxt='n',xaxt='n',
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 10 ) )
+prior = dnorm (x, 180, 1) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='',lwd=4,yaxs='i', 
+      xlim = c(160, 185), ylim = c(0,1.1),yaxt='n',cex.axis=1.3,
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+####
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 675 ) )
+prior = dnorm (x, 180, 100) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='Density',lwd=4,yaxs='i', 
+      xlim = c(170, 183), ylim = c(0,1.1),xlab='',yaxt='n',xaxt='n',
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+mtext (side=3,outer=FALSE,text="Observations = 675",line=1)
+
+legend (174.75,.9,legend=c(expression(paste("Prior  ","P(",mu,")")),
+                        expression(paste("Likelihood  ","P(y|",mu,")")),
+                        expression(paste("Posterior  ","P(",mu,"|y)"))),
+        lwd=4,lty=c(1,1,4),
+        col=c(bmmb::cols[4],bmmb::cols[3],bmmb::cols[7]),bty = "n",cex=1.2)
+
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 675 ) )
+prior = dnorm (x, 180, 15) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='',lwd=4,yaxs='i', 
+      xlim = c(170, 183), ylim = c(0,1.1),yaxt='n',xaxt='n',
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+likelihood = dnorm (x, mean (mens_height), sd (mens_height) / sqrt ( 675 ) )
+prior = dnorm (x, 180, 1) ; posterior = likelihood * prior
+plot (x, likelihood / max(likelihood), type = 'l', ylab='',lwd=4,yaxs='i', 
+      xlim = c(170, 183), ylim = c(0,1.1),yaxt='n',cex.axis=1.3,
+      col = bmmb::cols[3])
+grid()
+lines (x, prior / max(prior),col=bmmb::cols[4],lwd=4)
+lines (x, posterior / max (posterior),col=bmmb::cols[7], lty=2,lwd=4)
+
+mtext (side = 1, outer = TRUE, text = "Apparent height (cm)", line = 2.5)
+
+```
+
+
+### Posterior distributions and shrinkage {#c3-characteristics-posteriors}
+
+## Sampling from the posterior using *Stan* and *brms* {#c3-sampling}
+
+## Estimating a single mean with the `brms` package {#c3-estimating}
+
+### Data and Research Questions {#c3-data-qs-1}
+
+```{r warning=FALSE,message=FALSE}
+# load book package and brms
+library (bmmb)
+library (brms)
+
+# load and subset experimental data
+data (exp_data)
+men = exp_data[exp_data$C_v=='m',]
+mens_height = men$height
+```
+
+### Description of the model {#c3-description-1}
+
+$$
+\begin{equation}
+y_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma)
+(\#eq:3-13)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+y_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma)
+(\#eq:3-14)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+y_{[i]} = \mu_{[i]} + \varepsilon_{[i]}
+(\#eq:3-15)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mu_{[i]} = \alpha_1 \cdot 1
+(\#eq:3-16)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} \\
+\end{split}
+(\#eq:3-17)
+\end{equation}
+$$
+
+### Errors and residuals {#c3-errors-and-residuals}
+
+$$
+\begin{equation}
+\varepsilon_{[i]} \sim \mathrm{N}(0,\sigma)
+(\#eq:3-18)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\varepsilon_{[i]} = y_{[i]} - \mu_{[i]} 
+(\#eq:3-19)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\hat{\varepsilon}_{[i]} = y_{[i]} - \hat{\mu}_{[i]}
+(\#eq:3-20)
+\end{equation}
+$$
+
+### The model formula {#c3-model-formula}
+
+### Fitting the model: Calling the *brm* function {#c3-calling-brm}
+
+```{r, warning = FALSE, cache = TRUE, collapse = TRUE, eval = FALSE}
+model = brms::brm (height ~ 1, data = men, chains = 1, cores = 1)
+
+## Compiling Stan program...
+## Start sampling
+## 
+## SAMPLING FOR MODEL '03859e54349182b6cd9cd51aa7ca25d3' NOW (CHAIN 1).
+## Chain 1: 
+## Chain 1: Gradient evaluation took 0 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0 seconds.
+## Chain 1: Adjust your expectations accordingly!
+## Chain 1: 
+## Chain 1: 
+## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 1: 
+## Chain 1:  Elapsed Time: 0.103 seconds (Warm-up)
+## Chain 1:                0.057 seconds (Sampling)
+## Chain 1:                0.16 seconds (Total)
+```
+```{r, include = FALSE}
+# saveRDS (model, '../models/3_model.RDS')
+model = readRDS ('../models/3_model.RDS')
+```
+
+```{r, eval = FALSE}
+# Download the model above from the GitHub page.
+# File names are in the formant: 'chapterNumber_modelName'
+model = bmmb::get_model ('3_model.RDS')
+```
+
+### Interpreting the model: The print statement {#c3-interpreting-print}
+
+```{r, collapse = TRUE, eval = FALSE}
+# inspect model
+model
+```
+
+```{r}
+## Family: gaussian 
+##  Links: mu = identity; sigma = identity 
+##Formula: height ~ 1 
+##   Data: men (Number of observations: 675) 
+##  Draws: 1 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##         total post-warmup draws = 1000
+```
+
+```{r}
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept   173.78      0.30   173.16   174.33 1.00     1055      714
+```
+
+```{r}
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     7.77      0.22     7.37     8.21 1.00     1139      741
+```
+
+```{r}
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).
+```
+
+### Seeing the samples {#c3-seeing-samples}
+
+```{r, collapse = TRUE}
+# get posterior samples from model
+samples = bmmb::get_samples (model)
+
+# check number of samples
+nrow (samples)
+
+# see first six samples
+head (samples)
+```
+
+```{r F3-2, fig.width = 8, fig.height = 2.75, fig.cap = "(left) Individual samples from the posterior distribution of the model intercept parameter. (right) A histogram of the samples on the left. The curve shows the density of a normal distribution with a mean of 173.8 and a standard deviation of 0.30.", echo = FALSE}
+
+################################################################################
+### Figure 3.2
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+plot (samples[,1], xlab = 'Sample number',ylab = 'Apparent height (cm)',col=teal,pch=16)
+abline (h = mean (samples[,1]), lwd=4,col=yellow)
+hist (samples[,1], freq = FALSE, breaks = 15,main='',xlab='Apparent height (cm)',col=maroon,ylim=c(0,1.3))
+curve (dnorm (x, 173.80, 0.30), xlim = c(172,175), lwd=4,add=TRUE,col=darkorange)
+```
+
+```{r, collapse = TRUE}
+quantile (samples[,"b_Intercept"], c(.025, .975))
+```
+
+```{r, collapse = TRUE}
+quantile (samples[,"b_Intercept"], c(.25, .75))
+```
+
+```{r, collapse = TRUE}
+# probability that the intercept is less than 174 cm
+mean (samples[,"b_Intercept"] < 174)
+```
+
+### Getting the residuals {#c3-getting-residuals}
+
+```{r, collapse = TRUE}
+model_residuals = residuals (model, )
+head (model_residuals)
+```
+
+```{r, collapse = TRUE}
+model_residuals = residuals (model, summary=FALSE)
+dim (model_residuals)
+```
+
+```{r F3-3, fig.height = 2.75, fig.width = 8, fig.cap='(left) Histogram of the residuals for `model`. (right) A comparison of our residuals and centered height judgments shows that these are nearly equal.', echo = FALSE}
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+hist(model_residuals[1,],main="", col = bmmb::cols[14], 
+     freq=FALSE, xlim = c(-35,30),xlab="Model Residuals")
+curve (dnorm (x,0,7.8), xlim=c(-40,45),add=TRUE,lwd=4,col=bmmb::cols[9])
+
+centered_height = mens_height - mean(mens_height)
+plot (model_residuals[1,], centered_height,lwd=2,col=bmmb::cols[4],cex=1.5,
+      xlab="Model Residuals",ylab="Centered apparent height")
+abline (0,1,col=bmmb::cols[3],lwd=2)
+```
+
+## Checking model convergence {#c3-checking-convergence}
+
+```{r}
+## Warning messages:
+## 1: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and  
+## medians may be unreliable. Running the chains for more iterations may help. See:
+## http://mc-stan.org/misc/warnings.html#bulk-ess
+## 2: Tail Effective Samples Size (ESS) is too low, indicating posterior variances 
+## and tail quantiles may be unreliable.
+## Running the chains for more iterations may help. See
+## http://mc-stan.org/misc/warnings.html#tail-ess
+```
+
+```{r, eval = FALSE}
+parallel::detectCores()
+```
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_multicore =  
+  brms::brm (height ~ 1, data = men, chains = 4, cores = 4)
+```
+```{r, eval = FALSE}
+# Or download it from the GitHub page:
+model_multicore = bmmb::get_model ('3_model_multicore.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_multicore, '../models/3_model_multicore.RDS')
+model_multicore = readRDS ('../models/3_model_multicore.RDS')
+```
+
+```{r, collapse = TRUE}
+# inspect model
+model_multicore
+```
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_thinned =  
+  brms::brm (height ~ 1, data = men, chains = 4, cores = 4,
+       warmup = 1000, iter = 3000, thin = 2)
+```
+
+```{r, eval = FALSE}
+# Or download it from the GitHub page:
+model_thinned = bmmb::get_model ('3_model_thinned.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_thinned, '../models/3_model_thinned.RDS')
+model_thinned = readRDS ('../models/3_model_thinned.RDS')
+```
+
+```{r, collapse = TRUE}
+# inspect model
+model_thinned
+```
+
+```{r}
+## There were n divergent transitions after warmup. Increasing adapt_delta 
+## above 0.8 may help. See 
+## http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup`
+```
+
+```{r, eval = FALSE}
+brms::brm (height ~ 1, data = men, chains = 4, cores = 4, warmup = 1000, 
+           iter = 3000, thin = 2, control = list(adapt_delta = 0.9))
+```
+
+## Specifying prior probabilities {#c3-specifying-priors}
+
+```{r}
+brms::get_prior (height ~ 1, data = men)[,-c(7:9)]
+```
+
+```{r, eval = FALSE}
+prior = c(brms::set_prior("normal(176, 15)", class = "Intercept"),
+          brms::set_prior("normal(0, 15)", class = "sigma"))
+```
+
+```{r F3-4, fig.height = 3, fig.width = 8, echo = FALSE, fig.cap = "(left) The densities of the prior probability for our model intercept, compared to a histogram of height judgments for male speakers. (right) The distribution of absolute deviations from the mean height judgment, compared to the prior distribution for the error parameter ($\\sigma$) in our model."}
+
+################################################################################
+### Figure 3.4
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+
+## plot prior for mean
+hist (mens_height, xlim = c(140,200), freq = FALSE, col = deepgreen, ylab = 'Density', xlab = 'Apparent height (cm)',
+      ylim = c(0,0.07), main="")
+curve (dnorm(x,176,15),lwd = 2, col = 4, add = TRUE)
+
+## plot prior for standard deviations
+hist (abs (mens_height - mean (mens_height)), freq = FALSE, col = yellow, main="",
+      ylab = 'Density', xlab = 'Centimeters',ylim = c(0,0.12), xlim = c(0,50))
+curve (dnorm(x,0,15),lwd = 2, col = 4, add = TRUE)
+
+```
+
+$$
+\begin{equation}
+\begin{split}
+\\
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} \\
+\\
+\textrm{Priors:} \\
+\mathrm{Intercept} \sim \mathrm{N}(176, 15) \\
+\sigma \sim \mathrm{N}(0, 15) \\ 
+\end{split}
+(\#eq:3-21)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+# Fit the model yourself, or
+model_priors =  
+  brms::brm (height ~ 1, data = men, chains = 4, cores = 4,
+       warmup = 1000, iter = 3500, thin = 2,
+       prior = c(brms::set_prior("normal(176, 15)", class = "Intercept"),
+                 brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+
+```{r, eval = FALSE}
+# Download the model above from the GitHub page.
+model_priors = bmmb::get_model ('3_model_priors.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_priors, '../models/3_model_priors.RDS')
+model_priors = readRDS ('../models/3_model_priors.RDS')
+```
+
+```{r, collapse = TRUE}
+# inspect model
+bmmb::short_summary (model_thinned)
+```
+
+```{r}
+bmmb::short_summary (model_priors)
+```
+
+## The log prior and log posterior densities {#c3-log-posterior}
+
+```{r}
+samples = bmmb::get_samples (model_priors)
+head (samples)
+```
+
+$$
+\begin{equation}
+P(\theta|y) = \frac{P(y|\theta) \cdot P(\theta)}{P(y)}
+(\#eq:3-22)
+\end{equation}
+$$
+
+```{r}
+model_priors$prior
+```
+
+```{r}
+dnorm (173.4,176,15,log=TRUE) + dnorm (8.041,0,15,log=TRUE) + log(2)
+dnorm (174.8,176,15,log=TRUE) + dnorm (7.936,0,15,log=TRUE) + log(2)
+```
+
+$$
+\begin{equation}
+\begin{split}
+P(\theta|y) \propto P(y|\theta) \cdot P(\theta)
+\end{split}
+(\#eq:3-23)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+P(\theta|y) = [P(y|\theta) \cdot P(\theta)] \cdot C
+\end{split}
+(\#eq:3-23a)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\log (P(\theta|y)) = \log (P(y|\theta)) + \log(P(\theta)) + \log(C)
+(\#eq:3-24)
+\end{equation}
+$$
+
+
+```{r, collapse = TRUE}
+# density over the first 6 observations
+head (dnorm (mens_height, 173.8, 7.77))
+
+# log density over first 6 observations
+head (dnorm (mens_height, 173.8, 7.77, log = TRUE))
+```
+
+```{r, collapse = TRUE}
+sum (dnorm (mens_height, 173.8, 7.77, log = TRUE))
+```
+
+```{r}
+sum (dnorm (mens_height, 173.8, 7.78, log = TRUE)) + # the likelihood
+  dnorm (173.8,176,15,log=TRUE) +   # prior probability of mu 
+  dnorm (7.77,0,15,log=TRUE)+log(2) # prior probability of sigma 
+```
+
+```{r}
+mean (samples$lp__)
+```
+
+## Answering our research questions {#c3-answering-qs}
+
+## 'Traditionalists' corner {#c3-frequentist}
+
+### One-sample t-test vs. intercept-only Bayesian models {#c3-vs-ttest}
+
+```{r}
+t.test (mens_height)
+```
+
+### Intercept-only ordinary-least-squares regression vs. intercept-only Bayesian models {#c3-vs-ols} 
+
+```{r}
+ols_model = lm (mens_height ~ 1)
+summary (ols_model)
+```
+
+```{r}
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept   173.78      0.30   173.16   174.33 1.00     1055      714
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     7.77      0.22     7.37     8.21 1.00     1139      741
+```
+
+## Exercises
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
