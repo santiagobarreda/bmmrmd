@@ -1,0 +1,893 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+rm (list=ls())
+```
+
+# Varying variances, more about priors, and prior predictive checks
+
+
+## Chapter pre-cap
+
+## Data and Research questions
+
+```{r, message=FALSE, error=FALSE}
+library (brms)
+library (bmmb)
+data (exp_data)
+options (contrasts = c('contr.sum','contr.sum'))
+```
+
+## More about priors 
+
+### Prior predictive checks {#c8-prior-prediction}
+
+```{r, eval = FALSE, warnings=FALSE,error=FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 1000)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 1000)", class = "b"),
+           brms::set_prior("student_t(3,0, 1000)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (1000)", class = "cor"), 
+           brms::set_prior("student_t(3,0, 1000)", class = "sigma"))
+
+prior_uninformative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             sample_prior="only", data = exp_data, chains = 4, cores = 4, 
+             warmup = 1000, iter = 5000, thin = 4, prior = priors)
+```
+
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+prior_uninformative = bmmb::get_model ('8_prior_uninformative.RDS')
+```
+```{r, include = FALSE}
+#  saveRDS (prior_uninformative,"8_prior_uninformative.RDS")
+prior_uninformative = readRDS ('../models/8_prior_uninformative.RDS')
+```
+
+```{r, cache = TRUE}
+pp_uninformative = predict (prior_uninformative, summary = FALSE)
+```
+
+```{r, eval = FALSE}
+hist (pp_uninformative[1,])
+```
+
+```{r, eval = FALSE}
+bmmb::p_check (pp_uninformative)
+```
+
+```{r F8-1, fig.height = 2.5, fig.width=8, fig.cap = "Densities of 10 prior predictions of apparent height for the uninformative, mildly informative, and conservative priors.", echo = FALSE, cache = FALSE}
+
+###############################################################################
+### Figure 8.1
+###############################################################################
+
+prior_mildly_informative  = readRDS ("../models/8_prior_mildly_informative.RDS")
+prior_conservative = readRDS ("../models/8_prior_conservative.RDS")
+
+par (mfrow = c(1,3), mar = c(4.5,.5,2,1), oma = c(0,2,.1,1))
+p_check (prior_uninformative, xlab="", cex.lab=1.2,yaxt="n", ylab = "Density",
+         samples = seq(1,4000,length.out=10))
+title ("Uinformative")
+p_check (prior_mildly_informative, xlim = c(-100,400), xlab="", ylab="",yaxt="n",
+         samples = seq(1,4000,length.out=10))
+title ("Mildly Informative")
+p_check (prior_conservative, xlim = c(-100,400), xlab="", ylab="",yaxt="n",
+         samples = seq(1,4000,length.out=10))
+title ("Conservative")
+mtext ("Predicted Apparent Height", outer = TRUE, side=1,line=-1.5, cex = 0.8)
+mtext ("Density", outer = TRUE, side=2,line=.7, cex = 0.9, adj = 0.6)
+```
+
+```{r, eval = FALSE, warnings=FALSE,error=FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (12)", class = "cor"), 
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+prior_mildly_informative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             sample_prior="only", data = exp_data, chains = 4, cores = 4, 
+             warmup = 1000, iter = 5000, thin = 4, prior = priors)
+```
+
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+prior_mildly_informative = 
+  bmmb::get_model ('8_prior_mildly_informative.RDS')
+```
+```{r, include = FALSE}
+#  saveRDS (prior_mildly_informative,"8_prior_predictions_mildly_informative.RDS")
+prior_mildly_informative = 
+  readRDS ('../models/8_prior_mildly_informative.RDS')
+```
+
+```{r, eval = FALSE, warnings=FALSE,error=FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 6)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 6)", class = "b"),
+           brms::set_prior("student_t(3,0, 6)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("student_t(3,0, 6)", class = "sigma"))
+
+prior_conservative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             sample_prior="only", data = exp_data, chains = 1, cores = 1, 
+             warmup = 1000, iter = 5000, thin = 1, prior = priors)
+```
+
+
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+prior_conservative = bmmb::get_model ('8_prior_conservative.RDS')
+```
+```{r, include = FALSE}
+#  saveRDS (prior_uninformative,"8_prior_uninformative.RDS")
+prior_conservative = readRDS ('../models/8_prior_conservative.RDS')
+```
+
+```{r, include = FALSE}
+model_uninformative =   readRDS ("../models/8_model_uninformative.RDS")
+model_mildly_informative =   readRDS ("../models/8_model_mildly_informative.RDS")
+model_conservative =   readRDS ("../models/8_model_conservative.RDS")
+```
+```{r, eval = FALSE}
+model_uninformative = 
+  bmmb::get_model ("8_model_uninformative.RDS")
+
+model_mildly_informative = 
+  bmmb::get_model ("8_model_mildly_informative.RDS")
+
+model_conservative = 
+  bmmb::get_model ("8_model_conservative.RDS")
+```
+
+```{r, eval = FALSE, include = FALSE}
+priors = c(brms::set_prior("student_t(3,156, 1000)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 1000)", class = "b"),
+           brms::set_prior("student_t(3,0, 1000)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("student_t(3,0, 1000)", class = "sigma"))
+
+options (contrasts = c('contr.sum','contr.sum'))
+model_uninformative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             data = exp_data, chains = 4, cores = 4, warmup = 1000, 
+             iter = 5000, thin = 4, prior = priors)
+
+#saveRDS (model_uninformative,"../models/8_model_uninformative.RDS")
+
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+options (contrasts = c('contr.sum','contr.sum'))
+model_mildly_informative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             data = exp_data, chains = 4, cores = 4, warmup = 1000, 
+             iter = 5000, thin = 4, prior = priors)
+
+#saveRDS (model_mildly_informative,"../models/8_model_mildly_informative.RDS")
+
+priors = c(brms::set_prior("student_t(3,156, 6)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 6)", class = "b"),
+           brms::set_prior("student_t(3,0, 6)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("student_t(3,0, 6)", class = "sigma"))
+
+options (contrasts = c('contr.sum','contr.sum'))
+model_informative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             data = exp_data, chains = 4, cores = 4, warmup = 1000, 
+             iter = 5000, thin = 4, prior = priors)
+
+#saveRDS (model_informative,"../models/8_model_informative.RDS")
+```
+
+```{r F8-2, fig.height = 2.75, fig.width=8, fig.cap = "Comparison of fixed effects estimates and 95% credible intervals for the uninformative (UI), mildly informative (MI), and conservative (C) models.", echo = FALSE, cache = FALSE}
+
+###############################################################################
+### Figure 8.2
+###############################################################################
+
+model_uninformative = readRDS ("../models/8_model_uninformative.RDS")
+model_mildly_informative = readRDS ("../models/8_model_mildly_informative.RDS")
+model_conservative = readRDS ("../models/8_model_conservative.RDS")
+
+fixef_1 = fixef(model_uninformative)
+fixef_2 = fixef(model_mildly_informative)
+fixef_3 = fixef(model_conservative)
+
+par (mfrow = c(1,4), mar = c(4,4,2.5,1),oma = c(0,1,0,0))
+brmplot (rbind(fixef_1[1,],fixef_2[1,],fixef_3[1,]), ylim = c(154.5,161.5),
+         main = "Intercept",labels = c("UI", "MI", "C"),cex.lab=1.3,cex.axis=1.3)
+brmplot (rbind(fixef_1[2,],fixef_2[2,],fixef_3[2,]), ylim = c(6.5,13.5),
+         main = "A1",labels = c("UI", "MI", "C"),cex.lab=1.3,cex.axis=1.3)
+brmplot (rbind(fixef_1[3,],fixef_2[3,],fixef_3[3,]), ylim = c(-6,1),
+         main = "G1",labels = c("UI", "MI", "C"),cex.lab=1.3,cex.axis=1.3)
+brmplot (rbind(fixef_1[4,],fixef_2[4,],fixef_3[4,]), ylim = c(-6,1),
+         main = "A1:G1",labels = c("UI", "MI", "C"),cex.lab=1.3,cex.axis=1.3)
+mtext (side = 2, outer = TRUE, "Centimeters",adj = .55, cex=0.9, line = -0.5)
+
+```
+
+### More specific priors 
+
+```{r, eval = TRUE}
+# we omit empty columns to let the output fit on the page 
+bmmb::prior_summary(model_mildly_informative)[,-c(5:9)]
+```
+
+```{r, eval = FALSE}
+# we omit the 'brms::' part so that the lines below will fit on the page
+priors = 
+  c(set_prior("student_t(3,156, 6)", class = "Intercept"),
+    set_prior("student_t(3,0, 6)", class = "b"),
+    set_prior("student_t(3,0, 10)", class = "b", coef = "A1"),
+    set_prior("student_t(3,0, 3)", class = "b", coef = "G1"),
+    set_prior("student_t(3,0, 10)", class = "sd"),
+    set_prior("student_t(3,0, 5)", class = "sd", coef = "A1", group="L"),
+    set_prior("student_t(3,0, 1.5)", class = "sd", coef = "G1", group="L"),
+    set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+    set_prior("student_t(3,0, 6)", class = "sigma"))
+
+options (contrasts = c('contr.sum','contr.sum'))
+prior_informative =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             sample_prior = "only", data = exp_data, chains = 1, cores = 1, 
+             warmup = 1000, iter = 5000, thin = 1, prior = priors)
+```
+
+```{r, eval = FALSE}
+bmmb::prior_summary(prior_informative)[,-c(5:8)]
+##                  prior     class      coef group  source
+##      student_t(3,0, 6)         b                    user
+##     student_t(3,0, 10)         b        A1          user
+##     student_t(3,0, 10)         b     A1:G1       default
+##      student_t(3,0, 3)         b        G1          user
+##    student_t(3,156, 6) Intercept                    user
+##  lkj_corr_cholesky (2)         L                    user
+##  lkj_corr_cholesky (2)         L               L default
+##     student_t(3,0, 10)        sd                    user
+##     student_t(3,0, 10)        sd               L default
+##      student_t(3,0, 5)        sd        A1     L    user
+##      student_t(3,0, 5)        sd     A1:G1     L default
+##    student_t(3,0, 1.5)        sd        G1     L    user
+##    student_t(3,0, 1.5)        sd Intercept     L default
+##    student_t(3,0, 1.5)        sd               S default
+##    student_t(3,0, 1.5)        sd Intercept     S default
+##      student_t(3,0, 6)     sigma                    user
+```
+
+## Heteroskedasticity and distributional (or mixture) models
+
+```{r, include = TRUE, eval = FALSE}
+# download model
+model_interaction = bmmb::get_model ('7_model_interaction.RDS')
+```
+```{r, include = FALSE}
+model_interaction = readRDS ('../models/7_model_interaction.RDS')
+```
+
+```{r, cache = TRUE}
+# get residuals
+residuals_interaction = residuals (model_interaction)
+```
+
+```{r F8-3, fig.height = 4, fig.width = 8, fig.cap="(top left) Distribution of residuals for each listener. (top right) Distribution of residuals for apparent adults (a) and apparent children (c). (bottom) Distribution of residuals for each listener, divided according to apparent children and apparent adults. Each color represents a different listener and the left box in each pair represents apparent adults.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 8.3
+################################################################################
+
+par (mar = c(2,3,1,1), oma = c(1,2,.1,1))
+layout (mat = matrix (c(1,3,1,3,2,3),2,3))
+boxplot(residuals_interaction[,1] ~ model_interaction$data$L, cex.lab = 1.3,cex.axis = 1.2,
+        col = cols, ylim = c(-20,20), outline=FALSE,xlab='',ylab='')
+grid()
+boxplot(residuals_interaction[,1] ~ model_interaction$data$L, 
+        col = cols, ylim = c(-20,20), outline=FALSE, add=TRUE,xlab='',ylab='',
+        cex.lab = 1.3,cex.axis = 1.2)
+
+boxplot(residuals_interaction[,1] ~ model_interaction$data$A, 
+        col = cols[2:3], ylim = c(-20,20), outline=FALSE,xlab='',ylab='',
+        cex.lab = 1.3,cex.axis = 1.3)
+grid()
+boxplot(residuals_interaction[,1] ~ model_interaction$data$A, 
+        col = cols[2:3], ylim = c(-20,20), outline=FALSE, add=TRUE,xlab='',ylab='',
+        cex.lab = 1.3,cex.axis = 1.3)
+#axis (side=1, at = 1:2, labels = c()
+boxplot(residuals_interaction[,1] ~ model_interaction$data$A + model_interaction$data$L, 
+        col = rep(cols, each = 2), ylim = c(-32,30), outline=FALSE,xlab='',
+        xaxt='n',ylab='', cex.lab = 1.3,cex.axis = 1.3)
+grid()
+boxplot(residuals_interaction[,1] ~ model_interaction$data$A + model_interaction$data$L,ylab='', 
+        col = rep(cols, each = 2), ylim = c(-32,30), outline=FALSE, add=TRUE,
+        xlab='',xaxt='n', cex.lab = 1.3,cex.axis = 1.3)
+axis (side = 1, at = seq(1.5,29.5,2), labels = 1:15,cex.axis = 1.3)
+
+mtext (side=2, line = 0.3,outer = TRUE, "Residuals (in centimeters)")
+```
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{x}_1 + \mathrm{x}_2+ \dots + \mathrm{x}_p \\ 
+\end{split}
+(\#eq:8-1)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma_{[i]}) \\ 
+\mu_{[i]} = \mathrm{x}_1 + \mathrm{x}_2+ \dots + \mathrm{x}_p \\ 
+\sigma_{[i]} = \mathrm{x}_{\sigma1} + \mathrm{x}_{\sigma2} + \dots + \mathrm{x}_{\sigma p} \\ \\ 
+\end{split}
+(\#eq:8-2)
+\end{equation}
+$$
+
+## A 'simple' model: Error varies according to a single fixed effect
+
+### Description of our model
+
+```{r, eval = FALSE}
+model_formula = brms::bf(height ~ A + (A|L) + (1|S),
+                         sigma ~ A)
+```
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma_{[i]}) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A + G + A \colon G + \\ L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + G \colon L_{[\mathsf{L}_{[i]}]} + A \colon G \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ 
+\\ 
+\log (\sigma_{[i]}) = \mathrm{Intercept_{\sigma}} + A_{\sigma} \\ \\ 
+\mathrm{Priors:} \\ 
+S_{[\bullet]} \sim \mathrm{t}(3,0,\sigma_S) \\
+\begin{bmatrix} L_{[\bullet]} \\ A \colon L_{[\bullet]} \\ G \colon L_{[\bullet]} \\ A \colon G \colon L_{[\bullet]} \end{bmatrix} \sim \mathrm{MVNormal} \left( \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\ 
+\mathrm{Intercept} \sim \mathrm{t}(3,156,12) \\
+A, G, A \colon G \sim \mathrm{t}(3,0,12) \\
+\sigma_L, \sigma_{A \colon L}, \sigma_{G \colon L}, \sigma_{A \colon G \colon L}, \sigma_S \sim \mathrm{t}(3,0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+R \sim \mathrm{LKJCorr} (2) \\ 
+\mathrm{Intercept_{\sigma}} \sim \mathrm{N}(0,1.5) \\
+A_\sigma \sim \mathrm{N}(0,1.5) \\
+\end{split}
+(\#eq:8-3)
+\end{equation}
+$$
+  
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma_{[i]}) \\ 
+\sigma_{[i]} = \mathrm{Intercept_{\sigma}} + A_{\sigma} \\ \\
+\mathrm{Intercept_{\sigma}} \sim \mathrm{t}(3, 0,1.5) \\
+A_\sigma \sim \mathrm{t}(3, 0,1.5) \\
+\end{split}
+(\#eq:8-4)
+\end{equation}
+$$
+
+### Prior predictive checks
+
+```{r, eval = FALSE}
+brms::get_prior (brms::bf(height ~ A*G + (A*G|L) + (1|S),
+                          sigma ~ A),
+                 data = exp_data, family="student")
+```
+
+```{r}
+##                      prior     class      coef group resp  dpar
+##                     (flat)         b                      sigma            
+##                     (flat)         b        A1            sigma            
+##       student_t(3, 0, 2.5) Intercept                      sigma            
+```
+
+```{r, eval = FALSE}
+brms::set_prior("normal(0, 1.5)", class = "Intercept", dpar = "sigma")
+brms::set_prior("normal(0, 1.5)", class = "b", dpar = "sigma")
+```
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_formula = brms::bf(height ~ A*G + (A*G|L) + (1|S),
+                         sigma ~ A)
+priors = 
+  c(set_prior("student_t(3, 156, 12)", class = "Intercept"),
+    set_prior("student_t(3, 0, 12)", class = "b"),
+    set_prior("student_t(3, 0, 12)", class = "sd"),
+    set_prior("gamma(2, 0.1)", class = "nu"),
+    set_prior("normal(0, 1.5)", class = "Intercept", dpar = "sigma"),
+    set_prior("normal(0, 1.5)", class = "b", dpar = "sigma"),
+    set_prior("lkj_corr_cholesky (2)", class = "cor"))
+
+prior_A_sigma = 
+  brms::brm (model_formula, data = exp_data, chains = 4, cores = 4,
+             warmup = 1000, iter = 3500, thin = 2, family="student",
+             prior = priors, sample_prior = "only")
+```
+
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+prior_A_sigma = bmmb::get_model ('8_prior_A_sigma.RDS')
+```
+```{r, include = FALSE}
+#  saveRDS (prior_A_sigma,"8_prior_A_sigma.RDS")
+prior_A_sigma = readRDS ('../models/8_prior_A_sigma.RDS')
+```
+
+```{r, eval = FALSE, cache = TRUE}
+p_check (prior_A_sigma)
+```
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_formula = brms::bf(height ~ A*G + (A*G|L) + (1|S),
+                         sigma ~ A)
+priors = 
+  c(set_prior("student_t(3, 156, 12)", class = "Intercept"),
+    set_prior("student_t(3, 0, 12)", class = "b"),
+    set_prior("student_t(3, 0, 12)", class = "sd"),
+    set_prior("gamma(2, 0.1)", class = "nu"),
+    set_prior("normal(0, 1.5)", class = "Intercept", dpar = "sigma"),
+    set_prior("normal(0, 1.5)", class = "b", dpar = "sigma"),
+    set_prior("lkj_corr_cholesky (2)", class = "cor"))
+
+model_A_sigma = 
+  brms::brm (model_formula, data = exp_data, chains = 4, cores = 4,
+             warmup = 1000, iter = 3500, thin = 2, family="student",
+             prior = priors)
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_A_sigma = bmmb::get_model ('8_model_A_sigma.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_A_sigma, '../models/8_model_A_sigma.RDS')
+model_A_sigma = readRDS ('../models/8_model_A_sigma.RDS')
+```
+
+```{r}
+fixef (model_A_sigma)
+```
+
+```{r}
+sigmas = short_hypothesis(
+  model_A_sigma, 
+  c("exp(sigma_Intercept) = 0",                # overall sigma
+    "exp(sigma_Intercept + sigma_A1) = 0",     # adult sigma
+    "exp(sigma_Intercept - sigma_A1) = 0"))    # child sigma
+sigmas[,-5]
+```
+
+```{r F8-4, fig.height = 2.5, fig.width = 8, fig.cap="(left) Estimates of overall data-level error ($\\sigma$), to estimates of this for apparent adults and for apparent children. (right) Comparison of some fixed-effects parameters shared by our heteroscedastic and homoscedastic models.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 8.4
+################################################################################
+
+par (mfrow = c(1,2), mar = c(2.2,4,0.5,1))
+brmplot (sigmas, col = cols[4:6], labels = c("Overall","Adults","Children"),
+         ylab = "Centimeters", ylim = c(3.7,8))
+brmplot (fixef(model_A_sigma)[c(3:5),], col = cols,nudge= -.1,pch=17,
+         labels = c("A1","G1","A1:G1"),ylab = "Centimeters")
+brmplot (fixef(model_interaction)[2:4,], col = cols, add = TRUE,
+         nudge=.1,labels="")
+#abline (h = 7.71)
+legend (1.7,10, legend = c("Heteroscedastic","Homoscedastic"), pch = c(16,17), bty='n')
+```
+
+```{r, collapse = TRUE, cache = TRUE}
+model_interaction = add_criterion(model_interaction,"loo")
+model_A_sigma = add_criterion(model_A_sigma,"loo")
+
+loo_compare (model_interaction, model_A_sigma)
+```
+
+## A 'complex' model: Error varies according to fixed and random effects
+
+### Description of our model {#c8-description-2}
+
+```{r, eval = FALSE}
+model_formula = brms::bf(height ~ A*G + (A*G|L) + (1|S),
+                         sigma ~ A + (A|L))
+```
+
+```{r, eval = FALSE}
+model_formula = brms::bf(height ~ A*G + (A*G|x|L) + (1|S),
+                         sigma ~ A + (A|x|L))
+```
+
+```{r, eval = FALSE}
+model_formula = brms::bf(height ~ A*G + (A*G|x|L) + (1|y|S),
+                         sigma ~ A + (A|x|L) + (1|y|S))
+```
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma_{[i]}) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A + G + A \colon G + \\ L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + G \colon L_{[\mathsf{L}_{[i]}]} + A \colon G \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\
+\log (\sigma_{[i]}) = \mathrm{Intercept_{\sigma}} + A_\sigma + A_\sigma \colon L_{\sigma[\mathsf{L}_{[i]}]} + L_{\sigma[\mathsf{L}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+\begin{bmatrix} L_{[\bullet]} \\ A \colon L_{[\bullet]} \\ G \colon L_{[\bullet]} \\ A \colon G \colon L_{[\bullet]} \\ L_{\sigma[\bullet]} \\ A_\sigma \colon L_{\sigma[\bullet]} \end{bmatrix} 
+\sim \mathrm{MVNormal} \left( \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ 
+\\
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\ \\
+\mathrm{Intercept} \sim \mathrm{t}(3,156,12) \\
+A \sim \mathrm{t}(3,0,12) \\
+\sigma, \sigma_L, \sigma_{A \colon L}, \sigma_S \sim \mathrm{t}(3,0,12) \\
+\\
+\mathrm{Intercept_{\sigma}} \sim \mathrm{N}(0,1.5) \\
+\mathrm{A_{\sigma}} \sim \mathrm{N}(0,1.5) \\
+\sigma_{L_\sigma}, \sigma_{A_\sigma \colon L_\sigma} \sim \mathrm{N}(0,1.5) \\\\
+R \sim \mathrm{LKJCorr} (2) \\
+\end{split}
+(\#eq:8-5)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_formula = brms::bf(height ~ A*G + (A*G|x|L) + (1|S),
+                         sigma ~ A + (A|x|L))
+priors = 
+  c(set_prior("student_t(3, 156, 12)", class = "Intercept"),
+    set_prior("student_t(3, 0, 12)", class = "b"),
+    set_prior("student_t(3, 0, 12)", class = "sd"),
+    set_prior("gamma(2, 0.1)", class = "nu"),
+    set_prior("normal(0, 1.5)", class = "Intercept", dpar = "sigma"),
+    set_prior("normal(0, 1.5)", class = "b", dpar = "sigma"),
+    set_prior("normal(0, 1.5)", class = "sd", dpar = "sigma"),
+    set_prior("lkj_corr_cholesky (2)", class = "cor"))
+
+model_A_L_sigma = 
+  brms::brm (model_formula, data = exp_data, chains = 4, cores = 4,
+             warmup = 1000, iter = 3500, thin = 2, family="student",
+             prior = priors)
+```
+```{r, include = FALSE, eval = FALSE}
+# Or download it from the GitHub page:
+model_A_L_sigma = bmmb::get_model ('8_model_A_L_sigma.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_A_L_sigma, '../models/8_model_A_L_sigma.RDS')
+model_A_L_sigma = readRDS ('../models/8_model_A_L_sigma.RDS')
+```
+
+```{r, eval = FALSE}
+bmmb::short_summary (model_A_L_sigma)
+## ...
+## sd(sigma_Intercept)                0.36      0.08     0.24     0.54
+## sd(sigma_A1)                       0.17      0.04     0.10     0.27
+## ...
+## cor(A1,sigma_A1)                  -0.29      0.22    -0.67     0.16
+## cor(G1,sigma_A1)                   0.22      0.24    -0.27     0.65
+## cor(A1:G1,sigma_A1)                0.12      0.24    -0.35     0.58
+## cor(sigma_Intercept,sigma_A1)     -0.44      0.21    -0.79     0.05
+## ...
+## 
+## Population-Level Effects:
+##                 Estimate Est.Error l-95% CI u-95% CI
+## Intercept         158.29      1.10   156.15   160.51
+## sigma_Intercept     1.74      0.10     1.55     1.93
+## A1                 11.28      1.18     8.98    13.64
+## G1                 -2.92      0.57    -4.06    -1.80
+## A1:G1              -1.63      0.42    -2.47    -0.77
+## sigma_A1           -0.23      0.05    -0.33    -0.14
+## 
+## Family Specific Parameters:
+##    Estimate Est.Error l-95% CI u-95% CI
+## nu     8.07      1.54     5.71    11.72
+```
+
+```{r}
+# listener random effects for sigma
+log_sigmas_centered = short_hypothesis(model_A_L_sigma, "sigma_Intercept=0", 
+                                   scope = "ranef",group="L")
+
+# the sum of the sigma intercept and the listener sigma random effect
+log_sigmas = short_hypothesis(model_A_L_sigma, "sigma_Intercept=0",
+                              scope = "coef",group="L")
+
+# the exponent of the sum of the sigma intercept 
+# and the listener sigma random effect
+sigmas = short_hypothesis(model_A_L_sigma, "exp(sigma_Intercept)=0",
+                              scope = "coef",group="L")
+```
+
+```{r F8-5, fig.height = 2.75, fig.width = 8, fig.cap="(left) Values of $L_{\\sigma}$, listener-dependent variations from the `sigma` intercept (expressed as a logarithm). (right) Listener-specific sigma parameters. The result of $\\exp(\\mathrm{Intercept}_{\\sigma} + L_{\\sigma[i]})$ for listener $i$. We exponentiate the value in the plot so it reflects `sigma` rather than `log(sigma)`.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 8.5
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,2,1,1),oma=c(0,2,0,0))
+brmplot (log_sigmas_centered, col = cols,labels = "", ylim = c(-0.9,0.8),
+         xlab="Listener")
+axis (side=1, at = 1:15)
+brmplot (sigmas[,1:4], col = cols, ylim = c(1,11),labels="",
+         xlab="Listener")
+abline (h = exp(1.74))
+brmplot (sigmas[,1:4], col = cols, add=TRUE, labels="")
+axis (side=1, at = 1:15)
+mtext (side = 2, outer = TRUE, "Centimeters",adj = .6, cex=1.1, line = 0.75)
+
+```
+
+```{r}
+model_A_L_sigma = add_criterion(model_A_L_sigma, "loo")
+```
+
+```{r}
+loo_compare (model_interaction, model_A_sigma, model_A_L_sigma)
+```
+
+## Answering our research questions
+
+```{r, include = FALSE, cache = TRUE}
+ranefs1 = ranef (model_interaction)
+ranefs2 = ranef (model_A_sigma)
+ranefs3 = ranef (model_A_L_sigma)
+
+fixefs1 = fixef (model_interaction)
+fixefs2 = fixef (model_A_sigma)
+fixefs3 = fixef (model_A_L_sigma)
+
+yhat1 = fitted (model_interaction)
+yhat2 = fitted (model_A_sigma)
+yhat3 = fitted (model_A_L_sigma)
+
+fixefs1[1,c(1,3,4)] = fixefs1[1,c(1,3,4)] - 159
+fixefs2[1,c(1,3,4)] = fixefs2[1,c(1,3,4)] - 159
+fixefs3[1,c(1,3,4)] = fixefs3[1,c(1,3,4)] - 159
+```
+
+```{r F8-6, fig.height = 4, fig.width = 8, fig.cap="(left) Comparison of fixed effect estimates and 95% credible intervals for three models. We subtracted 159 from the model intercept (Int.) so that it would fit on the same scale as the other parameters. (right) Plots comparing parameter estimates, or predictions, for pairs of the models presented in the left plot. Each row compares a different pair of models and each column presents a different set of parameters.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 8.6
+################################################################################
+
+par (mar = c(2,4,1,2.5), oma = c(1,1,1,.1))
+
+layout (m = matrix (c(1,1,1,1,1,1,2,5,8,3,6,9,4,7,10),3,5))
+
+brmplot (fixefs1, col=cols[15],labels = "", nudge= -0.1, ylim = c(-5,15),
+         ylab="Centimeters",cex.lab=1.4)
+brmplot (fixefs2[c(1,3,4,5),], add=TRUE, nudge=0, col=cols[3],labels = "")
+brmplot (fixefs3[c(1,3,4,5),], add=TRUE, nudge=0.1, col=cols[4],labels = "")
+
+axis (side=1,at=1:4,c("Int.","A1","G1","A1:G1"),cex.axis=1.3)
+legend (1.5,6,legend = c("M1:model_interaction", "M2:model_A_sigma", "M3:model_A_L_sigma"), 
+        col = cols[c(15,3,4)], pch=16,pt.cex=1.5, bty = "n",cex=1.2)
+mtext (side=3,outer=FALSE, "Fixed Effects",cex=.9,line=0.9)
+
+par (mar = c(1.5,2,1.3,1))
+
+plot (ranefs1$L[,1,], ranefs2$L[,1,1:4],pch=16,col=bmmb::cols[5],
+      xlim=c(-10,10),ylim=c(-10,10),cex=1.25,lwd=2,xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+mtext (side=3,outer=FALSE, "Listener Effects",cex=.9,line=0.9)
+text (-2,-6,"x=M1,y=M2",pos=4)
+plot (ranefs1$S[,1,], ranefs2$S[,1,], pch=16,col=bmmb::cols[7],
+      xlim=c(-11,5),ylim=c(-11,5),cex=1.25,lwd=2,xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+mtext (side=3,outer=FALSE, "Speaker Effects",cex=.9,line=0.9)
+plot (yhat1[,1],yhat2[,1],pch=16,col=bmmb::cols[8],cex=1.25,
+      xlim=c(120,190), ylim=c(120,190),xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+mtext (side=3,outer=FALSE, "Predictions",cex=.9,line=0.9)
+
+plot (ranefs1$L[,1,], ranefs3$L[,1,1:4], pch=16,col=bmmb::cols[9],
+      xlim=c(-10,10),ylim=c(-10,10),cex=1.25,lwd=2,xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+text (-2,-6,"x=M1,y=M3",pos=4)
+plot (ranefs1$S[,1,], ranefs3$S[,1,], pch=16,col=bmmb::cols[10],
+      xlim=c(-11,5),ylim=c(-11,5),cex=1.25,lwd=2,xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+plot (yhat1[,1],yhat3[,1],pch=16,col=bmmb::cols[2],cex=1.25,
+      xlim=c(120,190), ylim=c(120,190),xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+
+plot (ranefs2$L[,1,1:4], ranefs3$L[,1,1:4], pch=16,col=bmmb::cols[12],
+      xlim=c(-10,10),ylim=c(-10,10),cex=1.25,lwd=2,xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+text (-2,-6,"x=M2,y=M3",pos=4)
+plot (ranefs2$S[,1,], ranefs3$S[,1,], pch=16,col=bmmb::cols[13],
+      xlim=c(-11,5),ylim=c(-11,5),cex=1.25,lwd=2,xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+plot (yhat2[,1],yhat3[,1],pch=16,col=bmmb::cols[14],cex=1.25,
+      xlim=c(120,190), ylim=c(120,190),xlab="",ylab="")
+abline (0,1,col=2,lwd=1,lty=2)
+
+```
+
+```{r, eval = FALSE}
+sigma ~ 1             # model_interaction
+sigma ~ A             # model_A_sigma
+sigma ~ A + (A|L)     # model_A_L_sigma
+```
+
+## Building identifiable and supportable models {#c8-identifiability}
+
+```{r, eval = FALSE}
+bmmb::get_model ('8_badmodels.Rda')
+```
+```{r, include = FALSE}
+load ('../models/8_badmodels.Rda')
+```
+
+### Collinearity
+
+$$
+\begin{equation}
+\begin{split}
+0 = x_1 \cdot a_1 + x_2 \cdot a_2 + \dots + x_n \cdot a_n
+\end{split}
+(\#eq:8-6)
+\end{equation}
+$$
+
+```{r}
+exp_data$vtl_m = exp_data$vtl / 100
+```
+
+```{r, eval = FALSE}
+exp_data$vtl + exp_data$vtl_m * -100
+```
+
+```{r, eval = FALSE}
+model_bad_1 =  
+  brms::brm (height ~ vtl_m + vtl, data = exp_data, chains = 4, cores = 4,
+       warmup = 1000, iter = 3500, thin = 2,
+       prior = c(brms::set_prior("normal(176, 50)", class = "Intercept"),
+                 brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+
+```{r, eval = FALSE}
+## Population-Level Effects: 
+##           Estimate Est.Error   l-95% CI  u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    45.69      2.37      41.17     50.47 1.00     4031     4425
+## vtl_m      1383.91 246800.93 -531293.80 343951.54 2.12        5       13
+## vtl          -5.28   2468.01   -3430.88   5321.56 2.12        5       13
+```
+
+```{r}
+cor (exp_data$vtl_m, exp_data$vtl)
+```
+
+```{r}
+set.seed(1)
+exp_data$vtl_m_noise = exp_data$vtl_m + 
+  rnorm (length(exp_data$vtl_m),0,sd(exp_data$vtl_m)/10)
+
+cor (exp_data$vtl, exp_data$vtl_m_noise)
+```
+
+```{r, eval = FALSE}
+model_bad_2 =  
+  brms::brm (height ~ vtl_m_noise + vtl, data = exp_data, chains = 4, 
+             cores = 4,warmup = 1000, iter = 3500, thin = 2, prior = priors)
+```
+
+```{r, eval = FALSE}
+## Population-Level Effects: 
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept      45.75      2.36    41.16    50.35 1.00     4523     4087
+## vtl_m_noise  -201.86    175.11  -544.11   139.03 1.00     3504     3697
+## vtl            10.57      1.76     7.14    14.01 1.00     3439     3866
+```
+
+```{r, eval = FALSE}
+model_good =  
+  brms::brm (height ~ vtl, data = exp_data, chains = 4, cores = 4,
+       warmup = 1000, iter = 3500, thin = 2,
+       prior = c(brms::set_prior("normal(176, 50)", class = "Intercept"),
+                 brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+
+```{r, eval = FALSE}
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    45.72      2.38    41.04    50.40 1.00     5052     4679
+## vtl           8.55      0.18     8.21     8.90 1.00     5072     4831
+```
+
+### Predictable values of categorical predictors
+
+```{r}
+x = cbind (intercept=rep(1,4), x1=rep(c(1,0),2), x2=rep(c(0,1),2))
+x
+```
+
+```{r}
+x[,1] + x[,2]*(-1) + x[,3]*(-1)
+```
+
+```{r}
+x = cbind (intercept=rep(1,4), C1=c(1,0,0,0), C2=c(0,1,0,0),
+           C3=c(0,0,1,0),C4=c(0,0,0,1))
+x
+```
+
+```{r}
+x[,1] + x[,2]*(-1) + x[,3]*(-1) + x[,4]*(-1) + x[,5]*(-1)
+```
+
+```{r}
+x = cbind (intercept=rep(1,4), C1=c(1,0,0,0), C2=c(0,1,0,0),
+           C3=c(0,0,1,0),A1=c(0,0,1,1), G1=c(0,1,0,1),A1G1=c(1,0,0,1))
+x
+```
+
+```{r}
+x[,1]*1 + x[,2]*(-1) + x[,3]*(-1) + x[,5]*(-1)
+```
+
+```{r}
+x[,1]*1 + x[,3]*(-1) + x[,4]*(-1) + x[,7]*(-1)
+```
+
+```{r, eval = FALSE}
+model_bad_3 =  
+  brms::brm (height ~ C + A*G, data = exp_data, chains = 4, cores = 4,
+       warmup = 1000, iter = 3500, thin = 2,
+       prior = c(brms::set_prior("normal(176, 15)", class = "Intercept"),
+                 brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+
+```{r, eval = FALSE}
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept   157.98      0.20   157.57   158.35 1.06       61       78
+## C1         1066.31   2604.72 -4431.79  5158.68 2.07        5       18
+## C2          496.91   1751.32 -2543.19  3708.83 1.87        6       13
+## C3           74.39   2086.76 -4113.31  2801.74 1.99        5       21
+## A1          793.68   1363.24 -2383.78  3019.96 1.90        6       12
+## G1          567.63   2171.69 -4107.90  3364.23 2.04        5       18
+## A1:G1       283.89   1112.60 -2295.30  2141.73 2.26        5       18
+```
+
+### Saturated, and 'nearly-saturated', models
+
+```{r, eval = FALSE}
+exp_data$S = factor (exp_data$S)
+exp_data$L = factor (exp_data$L)
+
+model_bad_4  =  
+  brms::brm (height ~ S*L, data = exp_data, chains = 4, cores = 4,
+       warmup = 1000, iter = 3500, thin = 2,
+       prior = c(brms::set_prior("normal(176, 15)", class = "Intercept"),
+                 brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+
+## Exercises
+
+## References 
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
