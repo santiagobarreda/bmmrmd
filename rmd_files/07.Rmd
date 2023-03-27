@@ -1,0 +1,843 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+```
+
+# Comparing many groups, interactions, and posterior predictive checks 
+
+## Chapter pre-cap
+
+## Comparing four (or any number of) groups
+
+```{r F7-1, echo = FALSE, out.width = "100%", fig.cap = "Data from a single group of subjects (S) divided according to a single grouping factor A."}
+
+################################################################################
+### Figure 7.1
+################################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 7.1.jpg")
+```
+
+### Data and research questions 
+
+```{r}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+data (exp_data)
+```
+
+```{r F7-2, fig.height = 2.75, fig.width=8, fig.cap = "Distribution of apparent height judgments for boys (b), girls (g), men (m), and women (w) based on apparent speaker category (left) and veridical speaker category (right).", echo = FALSE}
+
+################################################################################
+### Figure 7.2
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+boxplot (height ~ C, data = exp_data, col = bmmb::cols[2:5],ylim=c(100,200), 
+         xlab = "Apparent Category", ylab = "Apparent Height (cm)")
+boxplot (height ~ C_v, data = exp_data, col = bmmb::cols[2:5],ylim=c(100,200),  
+         xlab = "Veridical Category", ylab = "Apparent Height (cm)")
+```
+
+```{r}
+# overall average correct category identification
+mean(exp_data$C == exp_data$C_v)
+
+# average correct category identification by category
+tapply(exp_data$C == exp_data$C_v, exp_data$C_v, mean)
+```
+
+### Description of our model {#c7-description-1}
+
+```{r}
+contr.sum(1:4)
+```
+
+$$
+\begin{equation}
+\begin{split}
+\mathsf{C}_{[1]} = 1, \mathsf{C}_{[2]}=2,\mathsf{C}_{[3]}=3,\mathsf{C}_{[4]}=4  \dots \\
+\mu_{[i]} = x_1 \cdot C1 +  x_2 \cdot C2 + x_3 \cdot C3 \\ \\
+\mu_{[1]} = 1 \cdot C1 +  0 \cdot C2 + 0 \cdot C3 = C1\\
+\mu_{[2]} = 0 \cdot C1 +  1 \cdot C2 + 0 \cdot C3 = C2\\
+\mu_{[3]} = 0 \cdot C1 +  0 \cdot C2 + 1 \cdot C3 = C3\\
+\mu_{[4]} = -1 \cdot C1 - 1 \cdot C2 - 1 \cdot C3 = -(C1 + C2 + C3) = C4\\
+\end{split}
+(\#eq:7-0)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + C_{[\mathsf{C}_{[i]}]}  + L_{[\mathsf{L}_{[i]}]} + C_{[\mathsf{C}_{[i]}]} \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\begin{bmatrix} L_{[\bullet]} \\ C_{[1]} \colon L_{[\bullet]} 
+\\ C_{[2]} \colon L_{[\bullet]} \\ C_{[3]} \colon L_{[\bullet]} \end{bmatrix} \sim \mathrm{MVNormal} \left(\begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+\mathrm{Intercept} \sim \mathrm{N}(156,12) \\
+C_{[\bullet]} \sim \mathrm{N}(0,12) \\
+\sigma_L,\sigma_{C_{[1]} \colon L},\sigma_{C_{[2]} \colon L},\sigma_{C_{[3]} \colon L}, \sigma_S \sim \mathrm{N}(0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+R \sim \mathrm{LKJCorr} (2)
+\end{split}
+(\#eq:7-1)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+
+```{r, eval = FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("gamma(2, 0.1)", class = "nu"),
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+model_four_groups =  
+  brms::brm (height ~ C + (C|L) + (1|S), data = exp_data, chains = 4, 
+             cores = 4, warmup = 1000, iter = 5000, thin = 4, 
+             prior = priors, family = "student")
+```
+```{r, include = TRUE, eval = FALSE}
+# or download it from the GitHub page:
+model_four_groups = bmmb::get_model ('7_model_four_groups.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_four_groups, '../models/7_model_four_groups.RDS')
+model_four_groups = readRDS ('../models/7_model_four_groups.RDS')
+```
+
+```{r}
+brms::fixef(model_four_groups)
+```
+
+```{r, collapse = TRUE}
+# group means
+means = tapply (exp_data$height, exp_data$C, mean)
+
+# Intercept = mean of means
+mean (means)
+
+# Group effects = centered group means
+means - mean (means)
+```
+
+```{r, collapse = TRUE}
+# missing group effect
+bmmb::short_hypothesis (model_four_groups, c("-(C1+C2+C3) = 0"))
+```
+
+```{r, collapse = TRUE}
+# find differences between groups
+comparisons = bmmb::short_hypothesis (model_four_groups, 
+                                      c("C1 = C2", "C3 = -(C1+C2+C3)"))
+```
+
+```{r F7-3, fig.height = 2.75, fig.width=8, fig.cap = "(left) Means and 95% credible intervals for boy (b), girl (g), man (m), and woman (w) effects for our four group model. (right) Means and 95% credible intervals for differences between boys and girls, and men and women.", echo = FALSE}
+
+################################################################################
+### Figure 7.3
+################################################################################
+
+par (mfrow = c(1,2), mar = c(2.5,2,1,1), oma = c(0,2,0,0))
+
+all_groups = bmmb::short_hypothesis (model_four_groups, 
+                                      c("C1 = 0","C2 = 0","C3 = 0", "-(C1+C2+C3)=0"))
+
+brmplot (all_groups, col=bmmb::cols[2:5],ylim=c(-16,19), 
+         labels = c("b","g","m","w"))
+points (means - mean(means), pch=4,lwd=2, col=bmmb::cols[2:5],cex=3)
+brmplot (comparisons, col=bmmb::cols[13:12],labels = c("b-g","m-w"))
+
+mtext (side = 2, outer = TRUE, "Centimeters",adj = .6, cex=1.2, line = 0.8)
+```
+
+## Investigating multiple factors simultaneously
+
+```{r F7-4, echo = FALSE, out.width = "100%", fig.cap = "Data from groups of subjects (S), divided according to two grouping factors A and B."}
+
+################################################################################
+### Figure 7.4
+################################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 7.4.jpg")
+```
+
+```{r F7-5, echo=FALSE,fig.height = 2.5, fig.width = 8, fig.cap = "(left) Distribution of apparent height judgments for apparent boys (b), girls (g), men (m), and women (w). (middle) Comparison of distributions based on whether the speaker is female or male. (right) Comparison distributions based on whether the speaker is an adult or child."}
+
+################################################################################
+### Figure 7.5
+################################################################################
+
+par (mfrow = c(1,3), mar = c(3,2.5,3,1), oma = c(.1,2,.1,.1))
+boxplot (height ~ G+A, data=exp_data, main = "Overall", ylab="Apparent height (cm)",
+         ylim = c(90,200),col=bmmb::cols[c(5,4,3,2)],
+         names  = c("w","m","g","b"),xlab="",cex.lab=1.3,cex.axis=1.3)
+mtext (side=2,"Apparent height (cm)", line = 3, cex = 0.9)
+boxplot (height ~ G, data=exp_data, main="Gender", ylim =c(90,200),
+         col=bmmb::cols[7:8], names  = c("female","male"),xlab="",ylab="",
+         cex.lab=1.3,cex.axis=1.3)
+boxplot (height ~ A, data=exp_data, main="Adultness", ylim = c(90,200),
+         col=bmmb::cols[1:2], names  = c("adult","child"),xlab="",ylab="",
+         cex.lab=1.3, cex.axis=1.3)
+```
+
+### Data and research questions
+
+```{r}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+data (exp_data)
+```
+
+### Description of the model
+
+$$
+\begin{equation}
+\begin{split}
+\mu_{[i]} = \mathrm{Intercept} + (C_{[\mathrm{C}_{[i]}]})
+\end{split}
+(\#eq:7-2)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\mu_{[i]} = \mathrm{Intercept} + (A_{[\mathrm{A}_{[i]}]} + G_{[\mathrm{G}_{[i]}]}) 
+\end{split}
+(\#eq:7-3)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A + G + L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + G \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\begin{bmatrix} L_{[\bullet]} \\ A \colon L_{[\bullet]} \\ G \colon L_{[\bullet]}  \end{bmatrix} \sim \mathrm{MVNormal} \left( \begin{bmatrix} 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+\mathrm{Intercept} \sim \mathrm{N}(156,12) \\
+A, G \sim \mathrm{N}(0,12) \\
+\sigma_L, \sigma_{A \colon L}, \sigma_{G \colon L}, \sigma_S \sim \mathrm{N}(0,12) \\
+\sigma \sim \mathrm{N}(0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+R \sim \mathrm{LKJCorr} (2)
+\end{split}
+(\#eq:7-4)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("gamma(2, 0.1)", class = "nu"),
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+model_both =  
+  brms::brm (height ~ A + G + (A + G|L) + (1|S), data = exp_data, 
+             chains = 4, cores = 4, warmup = 1000, iter = 5000, 
+             thin = 4, prior = priors, family = "student")
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_both = bmmb::get_model ('7_model_both.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_both, '../models/7_model_both.RDS')
+model_both = readRDS ('../models/7_model_both.RDS')
+```
+
+```{r, collapse = TRUE}
+# inspect the fixed effects
+brms::fixef (model_both)
+```
+
+```{r, collapse = TRUE}
+# Intercept
+mean (tapply (exp_data$height, exp_data$C, mean)) 
+```
+
+```{r, collapse = TRUE}
+# Age effect
+diff (tapply (exp_data$height, exp_data$A, mean) ) / -2
+
+# Gender effect
+diff (tapply (exp_data$height, exp_data$G, mean) ) / -2
+```
+
+```{r here, collapse = TRUE}
+means_pred = bmmb::short_hypothesis (model_both, 
+                        c("Intercept + -A1 + -G1 = 0",  # boys
+                          "Intercept + -A1 +  G1 = 0",  # girls 
+                          "Intercept +  A1 + -G1 = 0",  # men
+                          "Intercept +  A1 +  G1 = 0")) # women
+
+means_pred
+```
+
+```{R }
+tapply (exp_data$height, exp_data$C, mean)
+```
+
+## Posterior prediction: Using our models to predict new data {#c7-posterior-prediction}
+
+$$
+\begin{equation}
+\begin{split}
+y_{[i]} \sim N (\mu_{[i]}, \sigma) \\
+\mu_{[i]} = Intercept + A_{[\mathsf{A}_{[i]}]} + B_{[\mathsf{B}_{[i]}]} + C_{[\mathsf{C}_{[i]}]}
+\end{split}
+(\#eq:7-5)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\tilde{y}_{[i]} \sim N (\mu_{[i]}, \sigma) \\
+\end{split}
+(\#eq:7-7)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+brms::pp_check(model_both)
+```
+
+```{r, eval = FALSE}
+y_pred = bmmb::p_check(model_both, show_data = TRUE)
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+# linear predictor
+y_lin_pred = fitted (model_both)
+
+# posterior prediction
+y_post_pred = predict (model_both)
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+# linear predictions
+head (y_lin_pred)
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+# posterior predictions
+head (y_post_pred)
+```
+
+```{r, cache = TRUE}
+y_post_pred_no_re = predict (model_both, re_formula = NA)
+```
+
+```{r, cache = TRUE}
+y_post_pred_some_re = predict (model_both, re_formula = "~(1|L)")
+```
+
+```{r, cache = TRUE}
+y_hat = predict (model_both, ndraws = 1)
+y_hat_no_re = predict (model_both, re_formula = NA, ndraws = 1)
+```
+
+```{r F7-6, echo=FALSE,fig.height = 2.5, fig.width = 8, fig.cap = "(left) Distribution of apparent height judgments according to apparent speaker category (boy, girl, man, woman) for our real data. (middle) Posterior predictions made by `model_both` without random effects (RE). (right) Posterior predictions made by `model_both` with random effects (RE)."}
+
+################################################################################
+### Figure 7.6
+################################################################################
+par (mfrow = c(1,3), mar = c(2.5,4,3,1))
+boxplot (exp_data$height ~ exp_data$C, ylim = c(110,200), 
+         col = bmmb::cols[2:5], main = "Original data",xlab = "", 
+         ylab = "Apparent Height (cm)", outline = FALSE)
+boxplot (y_hat_no_re[,1] ~ exp_data$C, ylim = c(110,200), col = bmmb::cols[2:5],
+         main = "Prediction: No RE",xlab = "", ylab="", outline = FALSE)
+boxplot (y_hat[,1] ~ exp_data$C, ylim = c(110,200), col = bmmb::cols[2:5],
+         main = "Prediction: With RE",xlab = "", ylab="", outline = FALSE)
+```
+
+## Interactions and interaction plots {#c7-interactions-and-plots}
+
+```{r F7-7, fig.height=2.5,fig.width=8,fig.cap="Plots showing different ways to consider average apparent height judgments across levels of apparent age and gender.", echo = FALSE}
+
+################################################################################
+### Figure 7.7
+################################################################################
+
+par (mfrow = c(1,4), mar = c(3,0.5,2,0.5), oma = c(0,4,0,0))
+plot (0:1,tapply (exp_data$height,exp_data$G,mean), ylim = c(140,180),xaxt='n',
+      lwd=10,type='b',pch=16,cex=3,main="Gender",xlim=c(-.2,1.2),
+      ylab='',xlab='',col = bmmb::cols[1])
+axis (at=0:1, labels = c('female','male'), side=1,cex.axis=1.3)
+grid()
+G = exp_data$G
+A = exp_data$A
+mtext ("Apparent Height (cm)", side = 2, outer = TRUE, line = 2.75, cex = 0.9)
+bmmb::interactionplot (G, A, exp_data$height,lwd = 10, leg.y = 170, 
+                  leg.x=1.8,type='b',pch=c(16,16),cex=3, ylim = c(140,180),lty=c(1,1),
+                  main="Gender:Age",ylab='', xlim = c(.8,2.2),
+                  legend =FALSE,yaxt="n",xlab="",cex.axis=1.3,
+                  col = c(bmmb::cols[12],bmmb::cols[10]),xaxt='n')
+grid()
+axis (at=1:2, labels = c('female','male'), side=1,cex.axis=1.3)
+
+plot (0:1,tapply (exp_data$height,exp_data$A,mean), ylim=c(140,180),xaxt='n',lwd=10,
+      type='b',pch=16,cex=3, main = "Age",xlim=c(-.2,1.2),ylab='',xlab='',yaxt="n",
+      col = bmmb::cols[8])
+axis (at=0:1, labels = c('adult','child'),side=1,cex.axis=1.3)
+grid()
+
+bmmb::interactionplot (A, G, exp_data$height,lwd = 10, leg.y = 170, 
+                  leg.x=1.8,type='b',pch=c(16,16),cex=3, ylim = c(140,180),lty=c(1,1),
+                  main="Age:Gender",ylab='',cex.axis=1.3 ,
+                  xlim = c(.8,2.2),legend=FALSE,yaxt="n",xlab="",
+                  col = c(bmmb::cols[11],bmmb::cols[9]),xaxt='n')
+axis (at=1:2, labels = c('adult','child'),side=1,cex.axis=1.3)
+
+grid()
+```
+
+```{r F7-8, fig.height=2.5,fig.width=8,fig.cap="Interaction plots comparing our real data to posterior predictions, with and without random effects (RE). In each case the top line represents height judgments for apparent males.", echo = FALSE}
+
+################################################################################
+### Figure 7.8
+################################################################################
+
+par (mfrow = c(1,3), mar = c(3,0.5,3,0.5), oma = c(0,4,0,0))
+bmmb::interactionplot (exp_data$A,exp_data$G, exp_data$height,lwd = 10, leg.y = 170, 
+                  leg.x=1.8,type='b',pch=c(16,16),cex=3, ylim = c(140,180),lty=c(1,1),
+                  main="Real Data",ylab='', xlim = c(.8,2.2),legend=FALSE,
+                  xlab="", col = c(bmmb::cols[8],bmmb::cols[9]),xaxt='n')
+grid()
+axis (at=1:2, labels = c('adult','child'),side=1,cex.axis=1.3)
+
+mtext ("Apparent Height (cm)", side = 2, outer = TRUE, line = 2.75, cex = 0.9)
+
+bmmb::interactionplot (exp_data$A,exp_data$G, y_post_pred_no_re[,1],lwd = 10, leg.y = 170, 
+                  leg.x=1.8,type='b',pch=c(16,16),cex=3, ylim = c(140,180),lty=c(1,1),
+                  main="Post. Pred: No RE",ylab='', xlim = c(.8,2.2),
+                  legend =FALSE,yaxt="n",xlab="",xaxt='n',
+                  col = c(bmmb::cols[4],bmmb::cols[3]))
+grid()
+axis (at=1:2, labels = c('adult','child'),side=1,cex.axis=1.3)
+
+bmmb::interactionplot (exp_data$A,exp_data$G, y_post_pred[,1],lwd = 10, leg.y = 170, 
+                  leg.x=1.8,type='b',pch=c(16,16),cex=3, ylim = c(140,180),lty=c(1,1),
+                  main="Post. Pred: With RE",ylab='', xlim = c(.8,2.2),legend=FALSE,
+                  yaxt="n",xlab="", col = c(bmmb::cols[15],bmmb::cols[14]),xaxt='n')
+grid()
+axis (at=1:2, labels = c('adult','child'),side=1,cex.axis=1.3)
+
+```
+
+### Data and research questions
+
+```{r}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+data (exp_data)
+```
+
+### Description of our model
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t} (\nu, \mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A + G + A \colon G + \\
+L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + G \colon L_{[\mathsf{L}_{[i]}]} + A \colon G \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+S_{[\bullet]} \sim \mathrm{t}(3,0,\sigma_S) \\
+\begin{bmatrix} L_{[\bullet]} \\ A \colon L_{[\bullet]} \\ G \colon L_{[\bullet]} \\ A \colon G \colon L_{[\bullet]} \end{bmatrix} \sim \mathrm{MVNormal} \left( \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+\\
+\mathrm{Intercept} \sim \mathrm{t}(3,156,12) \\
+A, G, A \colon G \sim \mathrm{t}(3,0,12) \\
+\sigma_L, \sigma_{A \colon L}, \sigma_{G \colon L}, \sigma_{A \colon G \colon L}, \sigma_S \sim \mathrm{t}(3,0,12) \\
+\sigma \sim \mathrm{t}(3,0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+R \sim \mathrm{LKJCorr} (2)
+\end{split}
+(\#eq:7-8)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("gamma(2, 0.1)", class = "nu"),
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+model_interaction =  
+  brms::brm (height ~ A + G + A:G + (A + G + A:G|L) + (1|S), 
+             data = exp_data, chains = 4, cores = 4, warmup = 1000, 
+             iter = 5000, thin = 4, prior = priors, family = "student")
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_interaction = bmmb::get_model ('7_model_interaction.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_interaction, '../models/7_model_interaction.RDS')
+model_interaction = readRDS ('../models/7_model_interaction.RDS')
+```
+
+```{r}
+# inspect fixed effects
+bmmb::short_summary (model_interaction)
+```
+
+```{r F7-9, echo = FALSE, out.width = "100%", fig.cap = "An interaction plot built up from its individual components."}
+
+################################################################################
+### Figure 7.9
+###############################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 7.9.jpg")
+```
+
+### Caulculating group means in the presence of interactions {#c7-calc-means}
+
+```{r, collapse = TRUE}
+# intercept, boys, girls, men, women
+means_pred_interaction = bmmb::short_hypothesis (
+  model_interaction, 
+  c("Intercept + -A1 + -G1 +  A1:G1 = 0",  # boys
+    "Intercept + -A1 +  G1 + -A1:G1 = 0",  # girl
+    "Intercept +  A1 + -G1 + -A1:G1 = 0",  # men
+    "Intercept +  A1 +  G1 +  A1:G1 = 0")) # women
+```
+
+```{r}
+# actual data means
+tapply (exp_data$height, exp_data$C, mean)
+
+# predictions with no interaction term
+means_pred[,1]
+
+# predictions with interaction term
+means_pred_interaction[,1]
+```
+
+### Calculating simple effects in the presence of interactions
+
+```{r, collapse = TRUE}
+# intercept, boys, girls, men, women
+simple_effects = bmmb::short_hypothesis (
+  model_interaction, 
+  c("A1 + A1:G1 = 0",  # effect for apparent age for adults (G1)
+    "A1 - A1:G1 = 0",  # effect for apparent age for children (-G1)
+    "G1 + A1:G1 = 0",  # effect for apparent gender for adults (A1)
+    "G1 - A1:G1 = 0")) # effect for apparent gender for children (-A1)
+
+# predictions with interaction term
+simple_effects
+```
+
+```{r, collapse = TRUE}
+round (brms::fixef (model_interaction))
+```
+
+### Assessing model fit: Bayesian $R^2$
+
+```{r, cache = TRUE, collapse = TRUE}
+y_post_pred_int = predict (model_interaction)
+y_post_pred_no_re_int = predict (model_interaction, re_formula = NA)
+```
+
+```{r F7-10, fig.height=2.5,fig.width=8,fig.cap="Interaction plots comparing observed apparent height judgmentss to different posterior predictions. Posterior predictions with no interaction come from `model_both` and predictions with interactions come from `model_interaction`. With RE (random effects) refers to predictions made using random effects, and no RE refers to predictions made without random effects.", echo = FALSE}
+
+###############################################################################
+### Figure 7.10
+###############################################################################
+
+ps = aggregate (exp_data$height~ exp_data$G+ exp_data$A, FUN=mean)[,3]
+
+par (mfrow = c(1,4), mar = c(2.5,0.2,2.5,0.2), oma = c(0,4,0,0))
+#layout (mat = t(c(1,2,3,4)), widths = c(.28,.28,.28,.16))
+
+
+interactionplot (exp_data$G, exp_data$A, y_post_pred_no_re[,1],
+                 col=bmmb::cols[7], lwd=10,xaxt ='n',
+                 type = 'l', pch = c(16,16), cex = 2, ylim = c(140,180),xlab="",
+                 main="No Interaction, no RE", legend = FALSE,lty=1, 
+                 ylab = 'Apparent Height (cm)', xlim = c(.97,2.03),cex.main=1.1)
+segments (1,ps[1],2,ps[2], col = bmmb::cols[8],lty=1,lwd=4)
+segments (1,ps[3],2,ps[4], col = bmmb::cols[8],lty=1,lwd=4)
+grid()
+mtext ("Apparent Height (cm)", side = 2, outer = TRUE, line = 2.5, cex = 0.9)
+axis (side=1,at=1:2,c("Female","Male"),cex.axis=1.2)
+
+interactionplot (exp_data$G, exp_data$A, y_post_pred[,1],
+                 col=bmmb::cols[7], lwd=10,lty=1,xaxt ='n',
+                 type = 'l', pch = c(16,16), cex = 2, ylim = c(140,180),xlab="",
+                 main="No Interaction, with RE", legend = FALSE,yaxt="n", 
+                 ylab = '',   xlim = c(.97,2.03),cex.main=1.1)
+segments (1,ps[1],2,ps[2], col = bmmb::cols[8],lty=1,lwd=4)
+segments (1,ps[3],2,ps[4], col = bmmb::cols[8],lty=1,lwd=4)
+grid()
+axis (side=1,at=1:2,c("Female","Male"),cex.axis=1.2)
+
+interactionplot (exp_data$G, exp_data$A, y_post_pred_no_re_int[,1],
+                 col=bmmb::cols[7], lwd=10,xaxt ='n',
+                 type = 'l', pch = c(16,16), cex = 2, ylim = c(140,180),xlab="",
+                 main="Interaction, no RE", legend = FALSE,yaxt="n",lty=1, 
+                 ylab = '',  xlim = c(.97,2.03),cex.main=1.1)
+segments (1,ps[1],2,ps[2], col = bmmb::cols[8],lty=1,lwd=4)
+segments (1,ps[3],2,ps[4], col = bmmb::cols[8],lty=1,lwd=4)
+grid()
+axis (side=1,at=1:2,c("Female","Male"),cex.axis=1.2)
+
+interactionplot (exp_data$G, exp_data$A, y_post_pred_int[,1],
+                 col=bmmb::cols[7], lwd=10,lty=1,xaxt ='n',
+                 type = 'l', pch = c(16,16), cex = 2, ylim = c(140,180),xlab="",
+                 main="Interaction, with RE", legend = FALSE, yaxt="n",
+                 ylab = '', xlim = c(.97,2.03),cex.main=1.1)
+segments (1,ps[1],2,ps[2], col = bmmb::cols[8],lty=1,lwd=4)
+segments (1,ps[3],2,ps[4], col = bmmb::cols[8],lty=1,lwd=4)
+grid()
+axis (side=1,at=1:2,c("Female","Male"),cex.axis=1.2)
+
+legend (1.25,165,legend = c("Observed", "Predicted"),bty='n', 
+        lwd=4,col=bmmb::cols[7:8], cex=1.2)
+
+```
+
+```{r, cache = TRUE}
+model_both = brms::add_criterion (model_both, criterion="loo")
+model_interaction = brms::add_criterion (model_interaction, criterion="loo")
+```
+
+```{r, cache = TRUE}
+brms::loo_compare (model_both, model_interaction)
+```
+
+$$
+\begin{equation}
+\sigma^2_{total} = \sigma^2_{explained} + \sigma^2_{error} 
+(\#eq:7-9)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+R^2 = \frac{ \sigma^2_{explained} }{ \sigma^2_{total} } = \frac{ \sigma^2_{explained} }{ \sigma^2_{explained} + \sigma^2_{error} }
+(\#eq:7-10)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+R^2_s = \frac{V_{i=1}^n \; \hat{y}^s_i}{ V_{i=1}^n \; \hat{y}^s_i + V_{i=1}^n \; \hat{e}^s_i}
+(\#eq:7-11)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\hat{e}^s_i = \hat{y}^s_i - y_i
+(\#eq:7-12)
+\end{equation}
+$$
+
+```{r, cache = TRUE}
+r2_both = r2_bayes(model_both)
+r2_interaction = r2_bayes(model_interaction)
+```
+
+
+```{r}
+r2_both
+
+r2_interaction
+```
+
+
+```{r, cache = TRUE}
+r2_both_no_re = r2_bayes(model_both, re_formula = NA)
+r2_interaction_no_re = r2_bayes(model_interaction, re_formula = NA)
+```
+
+
+```{r}
+r2_both_no_re
+
+r2_interaction_no_re
+```
+
+## Answering our research questions {#c7-answering}
+
+```{r F7-11, fig.height=3,fig.width=8,fig.cap="(left) Fixed effect means and 95% credible intervals (minus the intercept) for `model_interaction`. (right) Means and 95% credible intervals for the pairwise differences between predicted means for different apparent speaker categories (boys, girls, men and women).", echo = FALSE}
+
+###############################################################################
+### Figure 7.11
+##############################################################################
+
+C = attributes(means_pred_interaction)$samples
+
+pairwise_diffs = cbind(C[,1]-C[,2],C[,1]-C[,3],C[,1]-C[,4],
+                       C[,2]-C[,3],C[,2]-C[,4],C[,3]-C[,4])
+
+pairwise_diffs_summary = posterior_summary(pairwise_diffs)
+
+par (mfrow = c(1,2), mar = c(4,2,1,1), oma = c(0,2,0,0))
+layout (mat = t(c(1,2)), widths= c(.4,.6))
+brmplot (fixef(model_interaction)[-1,])
+brmplot (pairwise_diffs_summary,labels = c("b-g","b-w","b-m","g-w","g-m","w-m"))
+mtext (side = 2, outer = TRUE, "Centimeters",adj = .6, cex=1.2, line = 0.8)
+
+```
+
+```{r}
+# get group mean predictions
+C = attributes(means_pred_interaction)$samples
+
+# find pairwise differences
+pairwise_diffs = cbind("b-g"=C[,1]-C[,2], "b-w"=C[,1]-C[,3],
+                       "b-m"=C[,1]-C[,4], "g-w"=C[,2]-C[,3],
+                       "g-m"=C[,2]-C[,4], "w-m"=C[,3]-C[,4])
+
+# summarize these
+pairwise_diffs_summary = posterior_summary(pairwise_diffs)
+```
+
+```{r, collapse = TRUE}
+# summary of difference between boy and girl means
+pairwise_diffs_summary[1,]
+
+```
+
+## Factors with more than two levels
+
+```{r}
+A = rep (factor(1:4), each = 60)
+B = rep (factor(1:4), 60)
+
+A_ = c(-2,1,2,-1)
+B_ = c(4,2,-3,-3)
+AB_ = matrix (c(-1,1,-1,1,
+                1,-1,1,-1,
+                -1,1,-1,1,
+                1,-1,1,-1),4,4)
+
+error = rnorm(240)
+
+y = A_[A] + B_[B] + AB_[cbind(A,B)] + error
+
+toy_data = data.frame (y, A, B)
+
+```
+
+```{r, cache = TRUE, echo = TRUE, warning=FALSE, results='hide'}
+toy_model = brm (y ~ A*B, data = toy_data)
+```
+
+```{r}
+fixef (toy_model)
+```
+
+$$
+\begin{equation}
+\begin{split}
+\begin{bmatrix}
+A1 & A2 & A3 & (A4) \\
+\end{bmatrix} \\\\
+\begin{bmatrix}
+B1 & B2 & B3 & (B4) \\
+\end{bmatrix}
+\end{split}
+(\#eq:7-13)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\begin{bmatrix}
+A1 & A2 & A3 & -(A1+A2+A3) \\
+\end{bmatrix} \\\\
+\begin{bmatrix}
+B1 & B2 & B3 & -(B1+B2+B3) \\
+\end{bmatrix}
+\end{split}
+(\#eq:7-13)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{bmatrix}
+A1 \colon B1 & A2 \colon B1 & A3 \colon B1 & (A4 \colon B1)\\
+A1 \colon B2 & A2 \colon B2 & A3 \colon B2 & (A4 \colon B2)\\
+A1 \colon B3 & A2 \colon B3 & A3 \colon B3 & (A4 \colon B3)\\
+(A1 \colon B4) & (A2 \colon B4) & (A3 \colon B4) & (A4 \colon B4)\\
+\end{bmatrix}(\#eq:7-14)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{bmatrix}
+A1 \colon B1 & A2 \colon B1 & A3 \colon B1 & -(A1 \colon B1+A2 \colon B1+A3 \colon B1) \\
+A1 \colon B2 & A2 \colon B2 & A3 \colon B2 & (A4 \colon B2)\\
+A1 \colon B3 & A2 \colon B3 & A3 \colon B3 & (A4 \colon B3)\\
+-(A1 \colon B1+A1 \colon B2+A1 \colon B3) & (A2 \colon B4) & (A3 \colon B4) & (A4 \colon B4)\\
+\end{bmatrix}(\#eq:7-14)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+A4 \colon B4 = -(A4 \colon B1+A4 \colon B2+A4 \colon B3) \\
+A4 \colon B4 = -(A1 \colon B4+A2 \colon B4+A3 \colon B4) \\
+\end{split}
+(\#eq:7-14)
+\end{equation}
+$$
+
+## 'Traditionalists' corner {#c7-frequentist}
+
+### Bayesian multilevel models vs. lmer
+
+```{r, collapse = TRUE, cache = TRUE, warning = FALSE, error = FALSE}
+lmer_four_groups = lme4::lmer (height ~ C + (C|L) + (1|S), data = exp_data)
+summary (lmer_four_groups)$coefficients
+```
+
+```{r, collapse = TRUE}
+brms::fixef (model_four_groups)
+```
+
+## Exercises
+
+## References 
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
