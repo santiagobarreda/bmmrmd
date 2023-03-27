@@ -1,0 +1,1481 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+```
+
+# Multinomial and Ordinal regression
+
+
+## Chapter pre-cap
+
+## Multinomial logistic regression
+
+$$
+\begin{equation}
+y_1, \dots, y_J \sim \mathrm{multinomial}(p_1, \dots, p_J, n)
+(\#eq:12-1)
+\end{equation}
+$$
+
+```{r}
+rmultinom (10, 1, c(.4,.1,.2,.3))
+```
+
+```{r}
+rowMeans (rmultinom (10000, 1, c(.4,.1,.2,.3)))
+```
+
+```{r}
+set.seed (1)
+multinomial_variable = rmultinom (10, 100, c(.4,.1,.2,.3))
+multinomial_variable
+
+# the row means closely approximate p
+rowMeans(multinomial_variable)/100
+```
+
+### Multinomial logits and the softmax function
+
+$$
+\begin{equation}
+\begin{split}
+P(y=1) = \frac{\mathrm{success}}{\mathrm{failure}+\mathrm{success}} = \frac{e^{z}}{1+e^{z}}
+\end{split}
+(\#eq:12-2)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+P(Y=j) = \frac{e^{z_j}}{\sum_{j=1}^{J} e^{z_j}}
+\end{split}
+(\#eq:12-3)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+P(Y=j) = \frac{e^{z_j}}{1 + \sum_{j=2}^{J} e^{z_j}}
+\end{split}
+(\#eq:12-4)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+z_j = \beta_j + \beta_{j1} \cdot x_1 + \beta_{j2} \cdot x_2 + \dots + \beta_{jk} \cdot x_k
+(\#eq:12-5)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+z_1 = \alpha_1 + \beta_{11} \cdot x_1 + \beta_{12} \cdot x_2 + \dots + \beta_{1k} \cdot x_k \\
+z_1 = 0 + 0 \cdot x_1 + 0 \cdot x_2 + \dots + 0 \cdot x_k \\
+z_1 = 0
+\end{split}
+(\#eq:12-6)
+\end{equation}
+$$
+
+### Comparison to logistic regression
+
+$$
+\begin{equation}
+\begin{split}
+z_1= 0 + x \cdot 0
+\\
+z_2= -3 + x \cdot -3
+\end{split}
+(\#eq:12-00)
+\end{equation}
+$$
+
+```{r F12-1, fig.height = 3.5, fig.width=8, fig.cap = "(top left) Lines indicate the logit of the probability of observing a success (blue line), or a failure (black line). (top right) Lines indicate the probabilities associated with observing the outcomes in the top left plot. (bottom left) Lines represent scores for the reference category (black line), the second category (blue line), and the third category (red line). (bottom right) Lines indicate the probabilities associated with observing the categories in the bottom left plot.", echo = FALSE}
+
+################################################################################
+### Figure 12.1
+###############################################################################
+
+x = seq (-3,3,0.1)
+
+z1 = 0 + x*0
+z2 = -3 + x*-3
+z3 =-3 + x*3
+
+scores = cbind (z1,z2,z3)
+
+softmax = function (scores){
+  ps = scores*0
+  for (i in 1:nrow (scores)){
+    ps[i,] = exp(scores[i,]) / sum(exp(scores[i,]))
+  }
+  ps
+}
+
+ps = softmax (scores)
+ps2 = softmax (scores[,-3])
+
+par (mfrow = c(2,2), mar=c(.2,4,.2,1), oma = c(4,1,.5,0))
+plot (x, z2, type = 'l',col=4, ylim = c(-15,8),xlim=c(-3,3),xaxt='n',
+      ylab = "Logit",lwd=3,cex.lab=1.3,xaxs='i')
+grid()
+lines (x,z1,col=1,lwd=3)
+
+plot (x, ps2[,2], type = 'l',col=4, ylim = c(0,1),xlim=c(-3,3),xaxt='n',
+      ylab = "P(Y=C)",lwd=3,cex.lab=1.3,xaxs='i')
+grid()
+lines (x,ps2[,1],col=1, lty=2,lwd=3)
+
+plot (x, z2, type = 'l',col=4, ylim = c(-15,8),xlim=c(-3,3),
+      ylab = "Score",lwd=3,cex.lab=1.3,xaxs='i')
+grid()
+lines (x,z1,col=1,lwd=3)
+lines (x,z3,col=2,lwd=3)
+mtext (side=1, "Predictor", line=2.7,lwd=3)
+
+plot (x, ps[,2], type = 'l',col=4, ylim = c(0,1),xlim=c(-3,3),
+      ylab = "P(Y=C)",lwd=3,cex.lab=1.3,xaxs='i')
+grid()
+lines (x,ps[,1],col=1,lwd=3)
+lines (x,ps[,3], col=2,lwd=3)
+mtext (side=1, "Predictor", line =2.7)
+
+```
+
+$$
+\begin{equation}
+\begin{split}
+P(Y=2) = \frac{e^{z_2}}{e^{z_1} + e^{z_2}} = \frac{e^{z_2}}{1 + e^{z_2}} \\ \\
+P(Y=1) = \frac{e^{z_1}}{e^{z_1} + e^{z_2}} = \frac{1}{1 + e^{z_2}} 
+\end{split}
+(\#eq:12-001)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+# predictor from -3 to 3
+x = seq (-3,3,0.1)
+
+# lines for failures
+z_1 = 0 + x*0
+# line for successes
+z_2 = -3 + x*-3
+
+scores = cbind (z1,z2)
+
+# softmax function, exponentiate and divide by sum
+probabilities = exp (scores) / rowSums (exp (scores))
+
+# simple version of the top right plot in Figure 12.1
+plot (probabilities[,1], type = 'l')
+lines (probabilities[,2], type = 'l')
+```
+
+$$
+\begin{equation}
+\begin{split}
+z_1= 0 + x \cdot 0
+\\
+z_2= -3 + x \cdot -3
+\\
+z_3= -3 + x \cdot 3
+\end{split}
+(\#eq:12-002)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+P(Y=3) = \frac{e^{z_3}}{1 + e^{z_2} + e^{z_3}} 
+\\ \\
+P(Y=2) = \frac{e^{z_2}}{1 + e^{z_2} + e^{z_3}} 
+\\ \\
+P(Y=1) = \frac{1}{1 + e^{z_2} + e^{z_3}} 
+\end{split}
+(\#eq:12-003)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+# predictor from -3 to 3
+x = seq (-3,3,0.1)
+
+# lines for reference category
+z_1 = 0 + x*0
+# line for category two
+z_2 = -3 + x*-3
+# line for category three
+z_2 = -3 + x*3
+
+scores = cbind (z1,z2,z3)
+
+# softmax function, exponentiate and divide by sum
+probabilities = exp (scores) / rowSums (exp (scores))
+
+# simple version of the top right plot in Figure 12.1
+plot (probabilities[,1], type = 'l',ylim=c(0,1))
+lines (probabilities[,2], type = 'l')
+lines (probabilities[,3], type = 'l')
+```
+
+### Data and research questions
+
+```{r, warning=FALSE, message=FALSE}
+library (brms)
+library (bmmb)
+data (exp_data)
+
+# new dependent variable
+exp_data$y = cbind(b = as.numeric(exp_data$C=='b'),
+                   g = as.numeric(exp_data$C=='g'),
+                   m = as.numeric(exp_data$C=='m'),
+                   w = as.numeric(exp_data$C=='w'))
+
+# variable representing the size (n) of each observation. They are all 1.
+exp_data$size = 1
+
+# preparation of quantitative predictors as in previous chapters
+exp_data$vtl_original = exp_data$vtl
+exp_data$vtl = exp_data$vtl - mean (exp_data$vtl)
+
+exp_data$f0_original = exp_data$f0 
+exp_data$f0 = exp_data$f0 - mean(exp_data$f0)
+exp_data$f0 = exp_data$f0 / 100
+```
+
+```{r}
+# first 6 elements of dependent variable
+head (exp_data$y)
+
+# first 6 elements of apparent speaker category factor
+head (exp_data$C)
+```
+
+### Description of our model
+
+$$
+\begin{equation}
+\begin{split}
+y_{1[i]},y_{2[i]},y_{3[i]},y_{4[i]} \sim \mathrm{multinomial}(p_{1[i]},p_{2[i]},p_{3[i]},p_{4[i]}, size_{[i]}) \\ \\
+\mathrm{for} \; j = 1, \dots, 4\\ \\
+p_{j[i]} = \frac{e^{z_{j[i]}}}{\sum_{j=1}^{J} e^{z_{j[i]}}} \\ 
+\\
+z_{j[i]} = \mathrm{a}_j + b_{j[i]} \cdot \mathrm{vtl}_{[i]} + c_{j[i]} \cdot \mathrm{f0}_{[i]}  \\ 
+a_{j[i]} = \mathrm{Intercept}_j + L_{j[\mathsf{L}_{[i]}]} + S_{j[\mathsf{S}_{[i]}]} \\ 
+b_{j[i]} =  VTL_j + VTL_j \colon L_{j[\mathsf{L}_{[i]}]} \\
+c_{j[i]} =  F0_j + F0_j \colon L_{j[\mathsf{L}_{[i]}]} \\ 
+\end{split}
+(\#eq:12-7a)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{for} \; j = 2, \dots, 4\\ 
+\mathrm{Intercept}_j \sim \mathrm{t}(3, 0, 3) \\
+VTL_j, F0_j \sim \mathrm{t}(3, 0, 3) \\
+\sigma_{L_j}, \sigma_{VTL_j \colon L_j}, \sigma_{F0_j \colon L_j}, \sigma_{S_j} \sim \mathrm{t}(3, 0, 3) \\ 
+\\
+\begin{bmatrix} S_{2[\bullet]} \\ S_{3[\bullet]} \\ S_{4[\bullet]} \end{bmatrix}	
+\sim \mathrm{MVNormal} \left(\, \begin{bmatrix} 0\\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma_S} \right) \\
+\\ 
+\begin{bmatrix} 
+L_{2[\bullet]} \\ VTL_2 \colon L_{2[\bullet]} \\F0_2 \colon L_{2[\bullet]} \\
+L_{3[\bullet]} \\ VTL_3 \colon L_{3[\bullet]} \\F0_3 \colon L_{3[\bullet]} \\
+L_{4[\bullet]} \\ VTL_4 \colon L_{4[\bullet]} \\F0_4 \colon L_{4[\bullet]} \\
+\end{bmatrix}	
+\sim \mathrm{MVNormal} \left(\, \begin{bmatrix} 0\\ 0 \\ 0 \\ 0\\ 0 \\ 0 \\
+0\\ 0 \\ 0 \\\end{bmatrix}, \mathrm{\Sigma_L} \right) \\
+R_S \sim \mathrm{LKJCorr} (2) \\
+R_L \sim \mathrm{LKJCorr} (2) 
+\end{split}
+(\#eq:12-7b)
+\end{equation}
+$$
+
+### Fitting the model
+
+```{r}
+colnames (exp_data$y)
+```
+
+```{r}
+multinomial_prior = 
+  c(set_prior("student_t(3, 0, 3)", class = "Intercept",dpar="mug"),
+    set_prior("student_t(3, 0, 3)", class = "b",dpar="mug"),
+    set_prior("student_t(3, 0, 3)", class = "sd",dpar="mug"),
+    set_prior("student_t(3, 0, 3)", class = "Intercept",dpar="mum"),
+    set_prior("student_t(3, 0, 3)", class = "b",dpar="mum"),
+    set_prior("student_t(3, 0, 3)", class = "sd",dpar="mum"),
+    set_prior("student_t(3, 0, 3)", class = "Intercept",dpar="muw"),
+    set_prior("student_t(3, 0, 3)", class = "b",dpar="muw"),
+    set_prior("student_t(3, 0, 3)", class = "sd",dpar="muw"),
+    set_prior("lkj_corr_cholesky (2)", class = "cor"))
+```
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_multinomial = 
+  brms::brm (y|trials(size) ~ vtl+f0 + (vtl+f0|x|L) + (1|y|S), 
+             data=exp_data, family="multinomial", chains=4, cores=4, 
+             warmup=1000, iter = 5000, thin = 4, prior = multinomial_prior)
+```
+```{r, eval = FALSE}
+# Or download it from the GitHub page:
+model_multinomial = bmmb::get_model ("12_model_multinomial.RDS")
+```
+```{r, include = FALSE}
+#save (multi_pred,multi_pred_re, multi_pred_noS,multi_pred_re_noS,
+#      file="../models/12_multinomial_predictions.Rda") 
+load ("../models/12_multinomial_predictions.Rda")
+#  saveRDS (model_multinomial, "../../models/12_model_multinomial_2.RDS")
+model_multinomial = readRDS ("../models/12_model_multinomial.RDS")
+```
+
+```{r, eval = FALSE}
+model_categorical = 
+  brms::brm (C ~ vtl+f0 + (vtl+f0|L) + (1|S), 
+             data=exp_data, family="categorical", chains=4, cores=4, 
+             warmup=1000, iter = 5000, thin = 4, prior = multinomial_prior)
+```
+
+```{r, eval = FALSE}
+brms::brm (C ~ 1+(1|L), family="categorical", data = exp_data)
+```
+
+```{r}
+table (exp_data$C, exp_data$L)
+```
+
+```{r, eval = FALSE}
+new_data = data.frame (size = 139, L = factor(1:15))
+new_data$y = as.matrix(table (exp_data$L, exp_data$C))
+
+brms::brm (y|trials(size) ~ 1+(1|L), family="multinomial", data = new_data)
+```
+
+### Interpreting the model
+
+```{r}
+brms::fixef (model_multinomial)
+```
+
+```{r}
+# difference in VTL slopes between:
+short_hypothesis (model_multinomial, 
+                  c("mug_vtl - mum_vtl = 0",    # girls and men
+                    "mug_vtl -  0 = 0",         # girls and boys  
+                    "mum_vtl - 0 = 0"))         # men and boys
+```
+
+```{r, eval = FALSE}
+multi_pred_re = fitted (model_multinomial)
+```
+
+```{r}
+head(multi_pred_re[,,1])
+```
+
+```{r}
+head(multi_pred_re[,,2])
+```
+
+```{r}
+head(multi_pred_re[,1,])
+```
+
+```{r}
+# find highest posterior probability from each category
+predicted = apply (multi_pred_re[,1,],1,which.max)
+head (predicted)
+
+# use modal category to get a category label
+predicted_category = c("b","g","m","w")[predicted]
+head (predicted_category)
+```
+
+```{r}
+table (observed_category = exp_data$C, predicted_category)
+```
+
+```{r}
+# overall correct
+mean (predicted_category == exp_data$C)
+
+# correct predictions by category
+tab = xtabs (~ exp_data$C + predicted_category)
+diag(tab) / rowSums(tab)
+```
+
+### Multinomial models and territorial maps {#c12-multinomial-territorial-maps}
+
+$$
+\begin{equation}
+\begin{split}
+z_1 = \mathrm{a} + \mathrm{b} \cdot x +  \mathrm{c} \cdot y \\
+z_2 = \mathrm{d} + \mathrm{e} \cdot x +  \mathrm{f} \cdot y
+\end{split}
+(\#eq:12-8)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+z_1 = z_2 \\ 
+\mathrm{a} + \mathrm{b} \cdot x +  \mathrm{c} \cdot y = \mathrm{d} + \mathrm{e} \cdot x +  \mathrm{f} \cdot y
+\end{split}
+(\#eq:12-9)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+y = \frac {-\mathrm{a} + \mathrm{d}}{\mathrm{c} - \mathrm{f}} + \frac{-\mathrm{b} + \mathrm{e}}{\mathrm{c} - \mathrm{f}} \cdot x
+(\#eq:12-10)
+\end{equation}
+$$
+
+```{r F12-2, fig.height = 4, fig.width=8, fig.cap = "Each plot compares a single estimated category boundary between two groups at a time for boys (b), girls (g), men (m), and women (w).", echo = FALSE}
+
+################################################################################
+### Figure 12.2
+###############################################################################
+
+params = fixef (model_multinomial)
+params = fixef (model_multinomial, summary = FALSE)
+params = cbind (colMeans (params[,1:3]), 
+                colMeans (params[,c(4,6,8)]),
+                colMeans (params[,c(5,7,9)]))
+
+params = rbind (c(0,0,0), params[1:3,])
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+par (mfrow = c(2,3), mar = c(0.2,0.2,0.2,0.2), oma = c(4.5,4.5,0.5,0.5))
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],cex=2,
+     xaxt='n')
+abline (find_intersection (params[1,], params[2,]),lwd=2, col = bmmb::cols[7]) # b vs g
+
+text (1.5,1, "boy-girl", cex=1.5)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],cex=2,
+     yaxt='n',xaxt='n')
+abline (find_intersection (params[1,], params[3,]),lwd=2, col = bmmb::cols[8]) # b vs m
+
+text (1.5,1, "boy-man", cex=1.5)
+
+legend (-2.3,-0.00, legend=c("b","g","m","w"),col=bmmb::cols[2:5],
+        pch=16,pt.cex=1.75,bty='n', cex=1.20)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],cex=2,
+     yaxt='n',xaxt='n')
+abline (find_intersection (params[1,], params[4,]),lwd=2, col = bmmb::cols[9]) # b vs w
+
+text (1.5,1, "boy-woman", cex=1.5)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],cex=2)
+abline (find_intersection (params[2,], params[3,]),lwd=2, col = bmmb::cols[10]) # g vs m
+
+text (1.5,1, "girl-man", cex=1.5)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],cex=2,
+     yaxt='n')
+abline (find_intersection (params[2,], params[4,]),lwd=2, col = bmmb::cols[13]) # g vs w
+
+text (1.5,1, "girl-woman", cex=1.5)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],cex=2,
+     yaxt='n')
+abline (find_intersection (params[3,], params[4,]),lwd=2, col = bmmb::cols[14]) # m vs w
+
+text (1.5,1, "man-woman", cex=1.5)
+
+mtext (side=1, "Centered vocal tract length (cm)", outer = TRUE, line=3)
+mtext (side=2, "Centered f0 / 100 (Hz)", outer = TRUE, line=3)
+
+```
+
+```{r F12-3, fig.height = 3, fig.width=8, fig.cap = "(left) Points represent modal classifications for individual speakers. Lines represent the six category boundaries presented in figure \\@ref(fig:F12-2). (right) Territorial map comparing locations associated with the clasification of speakers into boys (b), girls (g), men (m), and women (w).", echo = FALSE}
+
+
+################################################################################
+### Figure 12.3
+################################################################################
+
+
+params = fixef (model_multinomial)
+params = fixef (model_multinomial, summary = FALSE)
+params = cbind (colMeans (params[,1:3]), 
+                colMeans (params[,c(4,6,8)]),
+                colMeans (params[,c(5,7,9)]))
+
+params = rbind (c(0,0,0), params[1:3,])
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+par (mfrow = c(1,2), mar = c(.0,.0,.21,.2),oma=c(4,4,.1,.1))
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat])
+abline (find_intersection (params[1,], params[2,]),lwd=3, col = bmmb::cols[7])
+abline (find_intersection (params[1,], params[3,]),lwd=3, col = bmmb::cols[8])
+abline (find_intersection (params[1,], params[4,]),lwd=3, col = bmmb::cols[9])
+abline (find_intersection (params[2,], params[3,]),lwd=3, col = bmmb::cols[10])
+abline (find_intersection (params[2,], params[4,]),lwd=3, col = bmmb::cols[13])
+abline (find_intersection (params[3,], params[4,]),lwd=3, col = bmmb::cols[14])
+
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat], cex = 2)
+#points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 1, col = 1,
+#     lwd=2, cex=2)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],ylab="",yaxt="n")
+
+maps = make_map (t(params))
+
+plot_map (maps, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat], cex = 2)
+#points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 1, col = 1,
+#     lwd=2, cex=2)
+
+mtext (side=1, "Centered vocal tract length (cm)", outer = TRUE, line=2.5)
+mtext (side=2, "Centered f0 / 100 (Hz)", outer = TRUE, line=2.5)
+
+legend (-0.5,1.3, legend=c("b","g","m","w"),col=bmmb::cols[2:5],
+        pch=16,pt.cex=1.25,bty='n', cex=1.0, horiz = TRUE)
+```
+
+```{r, eval = TRUE}
+parameters = unname (fixef (model_multinomial)[,1])
+
+parameters = cbind(b = c(0, 0, 0),
+                   g = parameters[c(1,4,5)], 
+                   m = parameters[c(2,6,7)],
+                   w = parameters[c(3,8,9)])
+rownames(parameters)=c("Intercept","vtl_slope","f0_slope")
+
+parameters
+```
+
+```{r, eval = FALSE}
+territorial_map = 
+  bmmb::make_map (parameters, points = cbind(exp_data$vtl,exp_data$f0))
+```
+
+```{r, eval = FALSE}
+bmmb::plot_map (territorial_map, colors = bmmb::cols[2:5],xlab="",ylab="")
+```
+
+```{r F12-4, fig.height = 3, fig.width=8, fig.cap = "Territorial maps compared to modal classifications of speakers as boys (b), girls (g), men (m), and women (w). Point colors reflect classifications made by (left) listeners, (middle) predictions including random effects (RE), and (right) predictions excluding random effects.", echo = FALSE}
+
+################################################################################
+### Figure 12.4
+################################################################################
+
+
+params = fixef (model_multinomial)
+params = fixef (model_multinomial, summary = FALSE)
+params = cbind (colMeans (params[,1:3]), 
+                colMeans (params[,c(4,6,8)]),
+                colMeans (params[,c(5,7,9)]))
+
+params = rbind (c(0,0,0), params[1:3,])
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+cats = apply(multi_pred[,1,],1,which.max)
+#table (exp_data$C, cats)
+tab2 = table (exp_data$S, cats)
+mod_cat2 = apply (tab2, 1,which.max)
+
+cats = apply(multi_pred_re[,1,],1,which.max)
+#table (exp_data$C, cats)
+tab2 = table (exp_data$S, cats)
+mod_cat3 = apply (tab2, 1,which.max)
+
+
+par (mfrow = c(1,3), mar = c(.0,.0,.21,.2),oma=c(4,4,2,.1))
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],ylab="")
+maps = make_map (t(params))
+mtext (side=3, text = "Listener Judgments", line = 0.5)
+
+plot_map (maps, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat], cex = 2)
+
+legend (-0.9,1.3, legend=c("b","g","m","w"),col=bmmb::cols[2:5],
+        pch=16,pt.cex=1.5,bty='n', cex=1.3, horiz = TRUE)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat2],ylab="",yaxt="n")
+plot_map (maps, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat3], cex = 2)
+mtext (side=3, text = "Model Predictions (with RE)", line = 0.5)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat3],ylab="",yaxt="n")
+plot_map (maps, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat2], cex = 2)
+mtext (side=3, text = "Model Predictions (no RE)", line = 0.5)
+
+mtext (side=1, "Centered vocal tract length (cm)", outer = TRUE, line=2.5)
+mtext (side=2, "Centered f0 / 100 (Hz)", outer = TRUE, line=2.5)
+
+```
+
+```{r F12-5, fig.height = 3.5, fig.width=8, fig.cap = "Each row presents posterior means and 95% credible intervals for speaker-dependent intercept terms for each category. Colors represent veridical boys (b), girls (g), men (m), and women (w).", echo = FALSE}
+
+################################################################################
+### Figure 12.5
+################################################################################
+
+sranef = ranef(model_multinomial)$S
+
+tab = table (exp_data$S, exp_data$C_v)
+real_cat = apply (tab, 1,which.max)
+
+par (mfrow = c(3,1), mar =c(.1,4,.1,.5), oma = c(.5,0,.5,0))
+#brmplot((sranef[,,1]+sranef[,,2]+sranef[,,3])/3, labels = '', 
+#        col = bmmb::cols[real_cat+1], ylim = c(-8,8))
+#text (1,7,"Boy category speaker intercepts", pos=4,cex=1.4)
+
+brmplot(sranef[,,1], labels = '', col = bmmb::cols[real_cat+1], ylim = c(-8,8))
+text (1,7,"Girl category speaker intercepts", pos=4,cex=1.4)
+
+legend (1,-4.5, legend=c("b","g","m","w"),col=bmmb::cols[2:5],
+        pch=16,pt.cex=1.5,bty='n', cex=1.1, horiz = TRUE)
+
+brmplot(sranef[,,2], labels = '', col = bmmb::cols[real_cat+1], ylim = c(-8,8))
+text (1,7,"Man category speaker intercepts", pos=4,cex=1.4)
+
+brmplot(sranef[,,3], labels = '', col = bmmb::cols[real_cat+1], ylim = c(-8,8))
+text (1,7,"Woman category speaker intercepts", pos=4,cex=1.4)
+
+```
+
+```{r, eval=FALSE}
+# predictions with no random effects
+multi_pred = fitted (model_multinomial, re_formula = NA)
+```
+```{r}
+# find winners
+predicted_no_re = apply (multi_pred[,1,],1,which.max)
+# get winner labels
+predicted_category_no_re = c("b","g","m","w")[predicted_no_re]
+
+# overall correct
+mean (predicted_category_no_re == exp_data$C)
+
+# correct predictions by category
+tab = xtabs (~ exp_data$C + predicted_category_no_re)
+diag(tab) / rowSums(tab)
+```
+
+### Refitting the model without speaker random effects
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_multinomial_noS = 
+  brms::brm (y|trials(size) ~ vtl+f0 + (vtl+f0|x|L), data=exp_data, 
+             family=multinomial(), chains=4, cores=4, warmup=1000, 
+             iter = 5000, thin = 4, prior = multinomial_prior)
+```
+```{r, eval = FALSE}
+# Or download it from the GitHub page:
+model_multinomial_noS = 
+  bmmb::get_model ("../models/12_model_multinomial_noS.RDS")
+```
+```{r, include = FALSE}
+#  saveRDS (model_multinomial_noS, "../models/12_model_multinomial_noS.RDS")
+model_multinomial_noS = readRDS ("../models/12_model_multinomial_noS.RDS")
+```
+
+```{r F12-6, fig.height = 3, fig.width=8, fig.cap = "Territorial maps compared to modal classifications of speakers as boys (b), girls (g), men (m), and women (w). Point colors reflect classifications made by (left) listeners, (middle) predictions including random effects (RE), and (right) predictions excluding random effects.", echo = FALSE}
+
+################################################################################
+### Figure 12.6
+################################################################################
+
+
+params = fixef (model_multinomial_noS)
+params = fixef (model_multinomial_noS, summary = FALSE)
+params = cbind (colMeans (params[,1:3]), 
+                colMeans (params[,c(4,6,8)]),
+                colMeans (params[,c(5,7,9)]))
+
+params = rbind (c(0,0,0), params[1:3,])
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+cats = apply(multi_pred_noS[,1,],1,which.max)
+#table (exp_data$C, cats)
+tab2 = table (exp_data$S, cats)
+mod_cat2 = apply (tab2, 1,which.max)
+
+cats = apply(multi_pred_re_noS[,1,],1,which.max)
+#table (exp_data$C, cats)
+tab2 = table (exp_data$S, cats)
+mod_cat3 = apply (tab2, 1,which.max)
+
+
+par (mfrow = c(1,3), mar = c(.0,.0,.21,.2),oma=c(4,4,2,.1))
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],ylab="")
+
+maps_noS = make_map (t(params))
+
+mtext (side=3, text = "Listener Judgments", line = 0.5)
+
+legend (-2.5,-0.15, legend=c("b","g","m","w"),col=bmmb::cols[2:5],
+        pch=16,pt.cex=1.5,bty='n', cex=1.15)
+
+plot_map (maps_noS, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat], cex = 2)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat2],ylab="",yaxt="n")
+plot_map (maps_noS, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat3], cex = 2)
+mtext (side=3, text = "Model Predictions (with RE)", line = 0.5)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat3],ylab="",yaxt="n")
+plot_map (maps_noS, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat2], cex = 2)
+mtext (side=3, text = "Model Predictions (no RE)", line = 0.5)
+
+mtext (side=1, "Centered vocal tract length (cm)", outer = TRUE, line=2.5)
+mtext (side=2, "Centered f0 / 100 (Hz)", outer = TRUE, line=2.5)
+
+```
+
+```{r F12-7, fig.height = 3.2, fig.width=8, fig.cap = "Territorial maps compared to modal classifications of speakers as boys (b), girls (g), men (m), and women (w). Point colors reflect classifications made by (left) the model with speaker effects, and (right) the model without speaker effects.", echo = FALSE}
+
+################################################################################
+### Figure 12.7
+################################################################################
+
+
+params = fixef (model_multinomial_noS)
+params = fixef (model_multinomial_noS, summary = FALSE)
+params = cbind (colMeans (params[,1:3]), 
+                colMeans (params[,c(4,6,8)]),
+                colMeans (params[,c(5,7,9)]))
+
+params = rbind (c(0,0,0), params[1:3,])
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+cats = apply(multi_pred_noS[,1,],1,which.max)
+tab2 = table (exp_data$S, cats)
+mod_cat2 = apply (tab2, 1,which.max)
+
+cats = apply(multi_pred_re_noS[,1,],1,which.max)
+tab2 = table (exp_data$S, cats)
+mod_cat3 = apply (tab2, 1,which.max)
+
+
+par (mfrow = c(1,2), mar = c(.0,.0,.0,.2),oma=c(3.5,3.5,2,.1))
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat],ylab="")
+
+#maps_noS = make_map (t(params))
+
+mtext (side=3, text = "model_multinomial", line = 0.5)
+
+legend (-0.5,1.3, legend=c("b","g","m","w"),col=bmmb::cols[2:5],
+        pch=16,pt.cex=1.25,bty='n', cex=1.0, horiz = TRUE)
+
+plot_map (maps, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat], cex = 2)
+
+plot(model_multinomial$data$vtl,model_multinomial$data$f0, ylim = c(-1.25,1.25), 
+     xlim = c(-2.5,3), pch = 16, col = bmmb::cols[2:5][mod_cat2],ylab="",yaxt="n")
+plot_map (maps_noS, colors = adjustcolor (bmmb::cols[2:5], alpha.f=.2), new=FALSE)
+points(model_multinomial$data$vtl,model_multinomial$data$f0, pch = 16, col = bmmb::cols[2:5][mod_cat], cex = 2)
+mtext (side=3, text = "model_multinomial_noS", line = 0.5)
+
+mtext (side=1, "Centered vocal tract length (cm)", outer = TRUE, line=2.5)
+mtext (side=2, "Centered f0 / 100 (Hz)", outer = TRUE, line=2.5)
+
+```
+
+```{r F12-8, fig.height = 3, fig.width=8, fig.cap = "A comparison of the fixed effects means and 95% credible intervals provided by the two multinomial models we are considering.", echo = FALSE}
+################################################################################
+### Figure 12.8
+###############################################################################
+
+par (mar = c(4,8,1,1))
+brmplot (fixef(model_multinomial)[c(1,4,5,2,6,7,3,8,9),], las = 2,
+         horizontal = FALSE,col = 0, xlim = c(-5,6), xlab = "Coefficients")
+abline (h = seq(1,10),lty=3,col="grey")
+brmplot (fixef(model_multinomial)[c(1,4,5,2,6,7,3,8,9),], add = TRUE,
+         nudge = -0.2, labels = "", horizontal = FALSE, pch=16,
+         col = rep(bmmb::cols[3:5],each=3))
+brmplot (fixef(model_multinomial_noS)[c(1,4,5,2,6,7,3,8,9),], add = TRUE,
+         nudge = 0.2, labels = "", horizontal = FALSE, pch=17,
+         col = rep(bmmb::cols[3:5],each=3))
+
+legend (3,9.5,legend =c("With Speaker","No Speaker"),bty='n',
+        pch=16:17,pt.cex=1.3)
+```
+
+```{r, eval = FALSE}
+multi_pred_re_noS = fitted (model_multinomial_noS)
+multi_pred_noS = fitted (model_multinomial_noS, re_formula = NA)
+```
+
+```{r}
+predicted_noS = apply (multi_pred_re_noS[,1,],1,which.max)
+predicted_category_noS = c("b","g","m","w")[predicted_noS]
+```
+
+```{r}
+# overall correct
+mean (predicted_category_noS == exp_data$C)
+
+# correct predictions by category
+tab = xtabs (~ exp_data$C + predicted_category_noS)
+diag(tab) / rowSums(tab)
+```
+
+```{r}
+predicted_noS_no_re = apply (multi_pred_noS[,1,],1,which.max)
+predicted_category_noS_no_re = c("b","g","m","w")[predicted_noS_no_re]
+
+# overall correct
+mean (predicted_category_noS_no_re == exp_data$C)
+
+# correct predictions by category
+tab = xtabs (~ exp_data$C + predicted_category_noS_no_re)
+diag(tab) / rowSums(tab)
+```
+
+### Answering our research questions
+
+## Ordinal (logistic) regression
+
+```{r F12-9, fig.height = 3, fig.width=8, fig.cap = "(left) Distribution of apparent height judgments for apparent children, women, and men. (right) A hypothetical linear relationship between apparent height and speaker vocal-tract length. The apparent height axis is divided into three size groups: Small, medium, and large. Points indicate three possible apparent height judgments, leading to three different size-group classifications.", echo = FALSE}
+
+################################################################################
+### Figure 12.9
+################################################################################
+
+SG = 0
+SG[exp_data$C=='m'] = 3
+SG[exp_data$C=='w'] = 2
+SG[exp_data$C=='g'] = 1
+SG[exp_data$C=='b'] = 1
+
+
+x = seq (100,200,.1)
+y = seq (100,200,.1)
+
+par (mfrow = c(1,2), mar = c(.1,.1,.1,.1), oma = c(4,4,.5,.5))
+
+boxplot (height ~ SG, data = exp_data,col=bmmb::cols[c(1,11,10)],ylim = c(100,200),
+         xlab = "Apparent Speaker Category",names=c("Child","Woman","Man"))
+
+tmp = aggregate (height ~ SG, data = exp_data, FUN = mean)
+abline (h = mean (tmp[1:2,2]), lwd = 2, col = bmmb::cols[15])
+abline (h = mean (tmp[2:3,2]), lwd = 2, col = bmmb::cols[15])
+boxplot (height ~ SG, data = exp_data,col=bmmb::cols[c(1,11,10)],
+         add = TRUE,xlab = "",xaxt='n')
+mtext (side=1,text="Size Group", line = 2.5)
+mtext (side=2,text="Apparent Height (cm)", line = 2.75)
+
+plot (x,y, yaxt='n',type = 'l', xlim = c(120,190),ylim = c(100,200),xaxt='n')
+rect (100,90,200,mean(tmp[1:2,2]), col = bmmb::cols[1],border=bmmb::cols[1])
+rect (100,mean(tmp[1:2,2]),200,mean(tmp[2:3,2]), col = bmmb::cols[11],
+      border=bmmb::cols[11])
+rect (100,mean(tmp[2:3,2]),200,400, col = bmmb::cols[10],border=bmmb::cols[10])
+lines (x,y, lwd=4, col = bmmb::cols[2])
+
+points (c(140,160,180),c(140,160,180),pch=16,col=bmmb::cols[2],cex=2)
+abline (h = mean (tmp[1:2,2]), lwd = 6, col = bmmb::cols[15])
+abline (h = mean (tmp[2:3,2]), lwd = 6, col = bmmb::cols[15])
+
+text (118,c(140,163,195), c("Small", "Medium", "Large"),cex=1.1,pos=4)
+axis (side=1, at = seq(110,190,length.out=6), labels = 11:16)
+mtext (side=1,text="Vocal tract length (cm)", line = 2.75)
+```
+
+```{r}
+SG = 0
+SG[exp_data$C=='b' | exp_data$C=='g'] = 1
+SG[exp_data$C=='w'] = 2
+SG[exp_data$C=='m'] = 3
+```
+
+```{r}
+SG_hat = exp_data$height * 0
+SG_hat[exp_data$height <= 155.7] = 1
+SG_hat[exp_data$height > 155.7 & exp_data$height <= 170] = 2
+SG_hat[exp_data$height >= 170] = 3
+```
+
+```{r}
+mean (SG == SG_hat)
+```
+
+```{r F12-10, fig.height = 3, fig.width=8, fig.cap = "Our three possible size group classifications from figure 12.9 are presented again, this time with error distributions around predicted values. The right side of the plot shows an alternate y axis, the made up latent variable 'bigness'.", echo = FALSE}
+
+################################################################################
+### Figure 12.10
+################################################################################
+
+tmp = aggregate (height ~ SG, data = exp_data, FUN = mean)
+
+x = seq (-35,35,.1)
+y = dlogis(x,0,5)
+
+x_2 = seq (100,230,.1)
+y_2 = x_2
+
+
+par (mfrow = c(1,1), mar = c(4,4,.1,4), oma = c(.5,.5,.51,.51))
+#layout (mat = t(c(1,2)), widths = c(.6,.4))
+
+plot (x,y, yaxt='s',type = 'l', xlim = c(120,190),ylim = c(105,215),
+      xlab = "Vocal-tract length (cm)",xaxt='n',ylab="Apparent Height (cm)")
+rect (100,90,200,mean(tmp[1:2,2]), col = bmmb::cols[1],border=bmmb::cols[1])
+rect (100,mean(tmp[1:2,2]),200,mean(tmp[2:3,2]), col = bmmb::cols[11],border=bmmb::cols[11])
+rect (100,mean(tmp[2:3,2]),200,400, col = bmmb::cols[10],border=bmmb::cols[10])
+lines (x_2,y_2, lwd=4, col = bmmb::cols[2])
+
+
+axis (side=4, at = seq(120,200,20), labels = seq(120,200,20)/5)
+
+spot = 160
+lines (-y*150+spot, x+spot, ylim = c(120,190), xlim = c(-.35,0), xaxs='i',type='l',lwd=2)
+lines (rep(spot,length(x)),x+spot,type="l",lwd=2)
+points (spot,spot,pch=16,col=bmmb::cols[2],cex=2)
+
+spot = 140
+lines (-y*150+spot, x+spot, ylim = c(120,190), xlim = c(-.35,0), xaxs='i',type='l',lwd=2)
+lines (rep(spot,length(x)),x+spot,type="l",lwd=2)
+points (spot,spot,pch=16,col=bmmb::cols[2],cex=2)
+
+spot = 180
+lines (-y*150+spot, x+spot, ylim = c(120,190), xlim = c(-.35,0), xaxs='i',type='l',lwd=2)
+lines (rep(spot,length(x)),x+spot,type="l",lwd=2)
+points (spot,spot,pch=16,col=bmmb::cols[2],cex=2)
+
+text (118,c(140,163,195), c("Small", "Medium", "Large"),cex=1.1, pos=4)
+
+abline (h = mean (tmp[1:2,2]), lwd = 5, col = bmmb::cols[15])
+abline (h = mean (tmp[2:3,2]), lwd = 5, col = bmmb::cols[15])
+
+axis (side=1, at = seq(110,190,length.out=6), labels = 11:16)
+lines (x,y, lwd=4, col = bmmb::cols[2])
+
+mtext (side=4, "Bigness", line=2.2)
+```
+
+### Cumulative distribution functions {#c12-cumulative-density}
+
+```{r F12-11, fig.height = 3.5, fig.width=8, fig.cap = "(top row) Probability density functions for a standard normal and standard logistic distributions. (bottom row) Cumulative distribution functions for densities immediately above. Numbers indicate x and y values at different points along each curve.", echo = FALSE}
+
+################################################################################
+### Figure 12.11
+################################################################################
+
+par (mfcol = c(2,3), mar = c(.1,.2,.11,.2), oma = c(2.5,4,3,.5))
+
+x = seq(-5,5,.01)
+plot (x, dnorm (x), type = 'l', xaxt='n', xaxs='i',lwd=4,col=bmmb::cols[5],yaxt='n')
+mtext (side=2,"Density", line=2.5)
+mtext (side=3,"Standard Normal", line=1)
+abline (v = 0,lty=3,col="grey",lwd=3)
+plot (x, pnorm (x), type = 'l', xaxs='i',lwd=4,col=bmmb::cols[5])
+mtext (side=2,"Cumulative Probability", line=2.5)
+segments (-6,.5,0,.5,lty=3,col="grey",lwd=3)
+segments (0,-5,0,.5,lty=3,col="grey",lwd=3)
+text (0.1,.2,"x=0", cex = 1.5,pos=4)
+text (-3,.6,"y=0.5", cex = 1.5,pos=4)
+
+x = seq(-10,10,.01)
+plot (x, dlogis (x), type = 'l', xaxt='n', yaxt='n', xaxs='i',lwd=5,col=bmmb::cols[2])
+mtext (side=3,"Logistic", line=1)
+abline (v = 2,lty=3,col="grey",lwd=3)
+plot (x, plogis (x), type = 'l', yaxt='n', xaxs='i',lwd=5,col=bmmb::cols[2])
+segments (-16,.88,2,.88,lty=3,col="grey",lwd=3)
+segments (2,-5,2,.88,lty=3,col="grey",lwd=3)
+text (2.1,.2,"x=2", cex = 1.5,pos=4)
+text (-7,.8,"y=0.88", cex = 1.5,pos=4)
+
+x = seq(-10,10,.01)
+plot (x, dlogis (x), type = 'l', xaxt='n', yaxt='n', xaxs='i',lwd=5,col=bmmb::cols[1])
+mtext (side=3,"Logistic", line=1)
+abline (v = c(2,-1),lty=3,col="grey",lwd=3)
+plot (x, plogis (x), type = 'l', yaxt='n', xaxs='i',lwd=5,col=bmmb::cols[1])
+segments (-16,.88,2,.88,lty=3,col="grey",lwd=3)
+segments (-16,.27,-1,.27,lty=3,col="grey",lwd=3)
+segments (2,-5,2,.88,lty=3,col="grey",lwd=3)
+segments (-1,-5,-1,.27,lty=3,col="grey",lwd=3)
+text (2.1,.2,"x=2", cex = 1.5,pos=4)
+text (-7,.8,"y=0.88", cex = 1.5,pos=4)
+
+text (-5.11,.1,"x= -1", cex = 1.5,pos=4)
+text (-7,.35,"y=0.27", cex = 1.5,pos=4)
+```
+
+```{r}
+# cumulative distribution at x = -2, 0, 2
+pnorm (c(-2,0,2),0,1)
+```
+
+```{r}
+plogis (2,0,1)
+```
+
+```{r}
+# area left of first line
+plogis (-1,0,1)
+
+# area left of second line
+plogis (2,0,1)
+```
+
+```{r}
+# area between first and second line
+plogis (2,0,1)-plogis (-1,0,1)
+```
+
+```{r F12-12, fig.height = 3.5, fig.width=8, fig.cap = "Error distributions from figure \\@ref(fig:F12-10), presented in more detail. Vertical lines indicate the expected value for each distribution. Numbers indicate the area under the curve of the density function inside of each category's section of the 'bigness' dimension. These values correspond to the expected probability of observing each of the size group responses for each expected value of the latent variable.", echo = FALSE}
+
+################################################################################
+### Figure 12.12
+################################################################################
+
+x = seq (20,44,.01)
+y = dlogis(x,30,1)
+
+x_2 = seq (-4,4.4,.05)
+y_2 = x_2
+
+par (mfrow = c(3,1), mar = c(.5,1,.5,1), oma = c(4,.5,.51,.51))
+
+plot (x+3.2,y*2, yaxt='s',type = 'n', xlim = c(22,42),ylim = c(0.02,.8),
+      xlab = "",xaxt='n',ylab="",yaxt = 'n')
+rect (1,0,31,1, col = bmmb::cols[1],border=bmmb::cols[1])
+rect (31,0,34,1, col = bmmb::cols[11],border=bmmb::cols[11])
+rect (34,0,50,1, col = bmmb::cols[10],border=bmmb::cols[10])
+lines (x-2,y*2.5, xaxs='i',type='l',lwd=2)
+abline (v = c(31,34),lwd=5,col=bmmb::cols[15])
+abline (v = 28, lty=3)
+
+text (25, .45, "P(SG=1)=0.95", cex=1.1)
+text (32.5, .3, "P(SG=2)=0.04", cex=1.1)
+text (40, .3, "P(SG=3)=0.01", cex=1.1)
+
+plot (x+3.2,y*2, yaxt='s',type = 'n', xlim = c(22,42),ylim = c(0.02,.8),
+      xlab = "Bigness",xaxt='n',ylab="",yaxt = 'n')
+rect (1,0,31,1, col = bmmb::cols[1],border=bmmb::cols[1])
+rect (31,0,34,1, col = bmmb::cols[11],border=bmmb::cols[11])
+rect (34,0,50,1, col = bmmb::cols[10],border=bmmb::cols[10])
+lines (x+2,y*2.5, type = 'l', lwd=2)
+abline (v = c(31,34),lwd=5,col=bmmb::cols[15])
+abline (v = 32, lty=3)
+
+text (25, .3, "P(SG=1)=0.26", cex=1.1)
+text (32.5, .2, "P(SG=2)=0.61", cex=1.1)
+text (40, .3, "P(SG=3)=0.12", cex=1.1)
+
+plot (x+3.2,y*2, yaxt='s',type = 'n', xlim = c(22,42),ylim = c(0.02,.8),
+      xlab = "Bigness",xaxt='n',ylab="",yaxt = 'n')
+rect (1,0,31,1, col = bmmb::cols[1],border=bmmb::cols[1])
+rect (31,0,34,1, col = bmmb::cols[11],border=bmmb::cols[11])
+rect (34,0,50,1, col = bmmb::cols[10],border=bmmb::cols[10])
+axis (side=1, at = seq(24,40,4),cex.axis=1.2)
+lines (x+6,y*2.5, type = 'l', lwd=2)
+abline (v = c(31,34),lwd=5,col=bmmb::cols[15])
+abline (v = 36, lty=3)
+
+text (25, .3, "P(SG=1)=0.01", cex=1.1)
+text (32.5, .35, "P(SG=2)=0.11", cex=1.1)
+text (40, .3, "P(SG=3)=0.88", cex=1.1)
+
+mtext (side=1,"Bigness", line=2.75)
+```
+
+```{r}
+# probability of observing category 1
+plogis (31,32,1)
+
+# probability of observing category 2
+plogis (34,32,1) - plogis (31,32,1)
+
+# probability of observing category 3
+1 - plogis (34,32,1)
+```
+
+### Data and research questions
+
+```{r, warning=FALSE, message=FALSE}
+library (brms)
+library (bmmb)
+data (exp_data)
+
+# new dependent variable: Size Group
+SG = 0
+SG[exp_data$C=='g'] = 1
+SG[exp_data$C=='b'] = 1
+SG[exp_data$C=='w'] = 2
+SG[exp_data$C=='m'] = 3
+exp_data$SG = SG
+
+# preparation of quantitative predictors as in previous chapters
+exp_data$vtl_original = exp_data$vtl
+exp_data$vtl = exp_data$vtl - mean (exp_data$vtl)
+
+exp_data$f0_original = exp_data$f0 
+exp_data$f0 = exp_data$f0 - mean(exp_data$f0)
+exp_data$f0 = exp_data$f0 / 100
+```
+
+### Description of the model
+
+$$
+\begin{equation}
+\begin{split}
+\mu_{[i]} = a_{[i]} + b_{[i]} \cdot \mathrm{vtl}_{[i]} + c_{[i]} \cdot \mathrm{f0}_{[i]} \end{split}
+(\#eq:12-11)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+z_{[i]} \sim \mathrm{Logistic} (\mu_{[i]}, 1)
+\end{split}
+(\#eq:12-12)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+SG_{[i]} = 
+\begin{cases}
+1 \; \mathrm{if} \; z_{[i]} \leq \theta_1 \\ 
+2 \; \mathrm{if} \; \theta_{[1]} < z_{[i]} \leq \theta_{[2]} \\ 
+3 \; \mathrm{if} \; \theta_{[2]} \leq z_{[i]} \\ 
+\end{cases}       
+\end{split}
+(\#eq:12-13)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+SG_{[i]} = 
+\begin{cases}
+1 \; \mathrm{if} \; z_{[i]} \leq \theta_{[1]} \\ 
+2 \; \mathrm{if} \; \theta_{[1]} < z_{[i]} \leq \theta_{[2]} \\ 
+3 \; \mathrm{if} \; \theta_{[2]} \leq z_{[i]} \\ 
+\end{cases}
+\\\\
+z_{[i]} \sim \mathrm{Logistic} (\mu_{[i]}, 1)\\
+\\
+\mu_{[i]} = a_{[i]} + b_{[i]} \cdot \mathrm{vtl}_{[i]} + c_{[i]} \cdot \mathrm{f0}_{[i]}  \\ 
+a_{[i]} =  L_{[\mathsf{L}_{[i]}]} \\
+b_{[i]} =  VTL + VTL \colon L_{[\mathsf{L}_{[i]}]} \\
+c_{[i]} =  F0 + F0 \colon L_{[\mathsf{L}_{[i]}]} \\ 
+\\
+\textrm{Priors:} \\
+S_{[\bullet]} \sim \mathrm{Normal}(0,\sigma_{S}) 
+\\ 
+\begin{bmatrix} L_{[\bullet]} \\ VTL \colon L_{[\bullet]} \\ F0 \colon L_{[\bullet]} \end{bmatrix}	
+\sim \mathrm{MVNormal} \left(\, \begin{bmatrix} 0\\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+\theta_{[1]}, \theta_{[2]} \sim \mathrm{t}(3, 0, 3) \\
+VTL, F0 \sim \mathrm{t}(3, 0, 3) \\
+\sigma_{L}, \sigma_{VTL \colon L}, \sigma_{F0 \colon L}, \sigma_{S} \sim \mathrm{t}(3, 0, 3) \\ R \sim \mathrm{LKJCorr} (2)
+\end{split}
+(\#eq:12-14)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_ordinal = 
+  brms::brm (SG ~ vtl+f0 + (vtl+f0|L) + (1|S), data=exp_data, 
+             family="cumulative", chains=4, cores=4, warmup=1000, 
+             iter = 5000, thin = 4,
+             prior = c(set_prior("student_t(3, 0, 3)", class = "Intercept"),
+                       set_prior("student_t(3, 0, 3)", class = "b"),
+                       set_prior("student_t(3, 0, 3)", class = "sd"),
+                       set_prior("lkj_corr_cholesky (2)", class = "cor")))
+```
+
+```{r, eval = FALSE}
+# Or download it from the GitHub page:
+model_ordinal = bmmb::get_model ("12_model_ordinal.RDS")
+```
+```{r, include = FALSE}
+#  saveRDS (model_ordinal, "../models/12_model_ordinal.RDS")
+model_ordinal = readRDS ("../models/12_model_ordinal.RDS")
+```
+
+```{r}
+bmmb::short_summary(model_ordinal)
+```
+
+```{r, cache = TRUE}
+# make latent variable predictions
+predictions_latent = fitted (model_ordinal,scale="linear", re_formula = NA)
+
+# inspect first 6 predictions
+head (predictions_latent)
+```
+
+```{r}
+# get fixed effects
+fixed_effects = brms::fixef(model_ordinal)
+
+threshold_1 = fixed_effects[1,1]
+threshold_2 = fixed_effects[2,1]
+vtl_slope = fixed_effects[3,1]
+f0_slope = fixed_effects[4,1]
+
+# get expected values
+mu = exp_data$vtl * vtl_slope + exp_data$f0  * f0_slope
+```
+
+```{r, eval = FALSE}
+cor (predictions_latent[,1], mu)
+## [1] 1 
+
+sd (predictions_latent[,1] - mu)
+## [1] 3.571143e-16
+```
+
+```{r, cache = TRUE}
+# predict probability of category membership
+predictions_latent = fitted (model_ordinal, re_formula = NA)
+```
+
+```{r}
+# see first six for the first category
+head (predictions_latent[,,1])
+```
+
+```{r}
+# see first six for each category
+head (predictions_latent[,1,])
+```
+
+```{r, eval = FALSE}
+predictions_manual = 
+  cbind (round (plogis (threshold_1, mu),5),
+         round ((plogis (threshold_2, mu)-plogis (threshold_1, mu)),5),
+         round (1-plogis (threshold_2, mu), 5))
+
+head (predictions_manual)
+##         [,1]    [,2]    [,3]
+## [1,] 0.95834 0.04115 0.00051
+## [2,] 0.93592 0.06328 0.00080
+## [3,] 0.98201 0.01778 0.00021
+## [4,] 0.97772 0.02202 0.00027
+## [5,] 0.94604 0.05329 0.00067
+## [6,] 0.99478 0.00515 0.00006
+```
+
+```{r, include = FALSE}
+predictions_manual = readRDS ('../data/predictions_manual.RDS')
+```
+
+```{r, eval = TRUE}
+cor (predictions_latent[,1,1],predictions_manual[,1])
+
+cor (predictions_latent[,1,2],predictions_manual[,2])
+
+cor (predictions_latent[,1,3],predictions_manual[,3])
+```
+
+```{r}
+SG_hat = apply (predictions_latent[,1,],1,which.max)
+SG_hat_manual = apply (predictions_manual,1,which.max)
+```
+
+```{r, eval = TRUE}
+# manual and automatically-calculated predictions
+mean (SG_hat == SG_hat_manual)
+
+# predictive accuracy for actual size group responses 
+mean (SG_hat == exp_data$SG)
+
+mean (SG_hat_manual == exp_data$SG)
+```
+
+### Listener-specific discrimination terms
+
+```{r, eval = FALSE}
+model_formula = bf(SG ~ vtl+f0 + (vtl+f0|L) + (1|S),
+                   disc ~ 1 + (1|L))
+priors = 
+  c(set_prior("student_t(3, 0, 3)", class = "Intercept"),
+    set_prior("student_t(3, 0, 3)", class = "b"),
+    set_prior("student_t(3, 0, 3)", class = "sd"),
+    set_prior("student_t(3, 0, 1)", class = "Intercept",dpar="disc"),
+    set_prior("student_t(3, 0, 1)", class = "sd",dpar="disc"),
+    set_prior("lkj_corr_cholesky (2)", class = "cor"))
+
+model_ordinal_disc = 
+  brms::brm (model_formula, data=exp_data, family="cumulative", chains=4, 
+             cores=4, warmup=1000, iter = 5000, thin = 4, prior = priors,
+             control = list(adapt_delta = 0.99))
+```
+```{r, eval = FALSE}
+# Or download it from the GitHub page:
+model_ordinal_disc = bmmb::get_model ("12_model_ordinal_disc.RDS")
+```
+```{r, include = FALSE}
+#  saveRDS (model_ordinal_disc, "../models/12_model_ordinal_disc.RDS")
+model_ordinal_disc = readRDS ("../models/12_model_ordinal_disc.RDS")
+```
+
+```{r}
+bmmb::short_summary (model_ordinal_disc)
+```
+
+```{r}
+listener_scale = 
+  short_hypothesis (model_ordinal_disc, 
+                    "1/exp(disc_Intercept)=0", group="L",scope="coef")
+
+# omit hypothesis column so this fits in the book
+head(listener_scale)[,-5]
+```
+
+```{r  F12-13, fig.height = 4, fig.width=8, fig.cap = "Listener-specific distributions of the latent variable given an expected value of zero. Numbers indicate the expected probability of observing each size group for this expected value, for each listener. Plot y axis ranges are determined relative to the height of each density and are not all equal.", echo = FALSE}
+
+################################################################################
+### Figure 12.13
+################################################################################
+
+fixefs = fixef(model_ordinal_disc)
+thresholds = fixefs[1:2,1]
+
+xaxts = c('n','n','n','n','n',
+          'n','n','n','n','n',
+          's','s','s','s','s')
+
+ymaxs = c(.2,.2,.2,.2,.2,
+          .2,.2,.2,.2,.2,
+          .35,.35,.35,.35,.35)
+
+par (mfrow = c(3,5), mar = c(.15,.2,.2,.2), oma = c(4,3,1,1))
+i=1
+for (i in 1:15){
+  x = seq (-15,15,.1)
+  y = dlogis (x,0,listener_scale[i,1])
+  max_y = max(y)
+  y = y/max_y
+  plot (x, y, type = 'l',yaxt='n',xaxt=xaxts[i], 
+        yaxs = 'i',xaxs='i',xaxt='n', ylim = c(0,1.4)) #ylim=c(0,ymaxs[i])
+  
+  if (xaxts[i]=='s') axis(side=1,at = seq(-12,12,4))
+  x = seq (-15,thresholds[1],.1)
+  y = dlogis (x,0,listener_scale[i,1])
+  y = y/max_y
+  y = c(0,y,0)
+  x = c(x[1],x,x[length(x)])
+  polygon (x,y,col=bmmb::cols[1],border=bmmb::cols[1])
+  
+  x = seq (thresholds[1],thresholds[2],.1)
+  y = dlogis (x,0,listener_scale[i,1])
+  y = y/max_y
+  y = c(0,y,0)
+  x = c(x[1],x,x[length(x)])
+  polygon (x,y,col=bmmb::cols[11],border=bmmb::cols[11])
+  
+  x = seq (thresholds[2],15,.1)
+  y = dlogis (x,0,listener_scale[i,1])
+  y = y/max_y
+  y = c(0,y,0)
+  x = c(x[1],x,x[length(x)])
+  polygon (x,y,col=bmmb::cols[10],border=bmmb::cols[10])
+  
+  x = seq (-15,15,.1)
+  y = dlogis (x,0,listener_scale[i,1])
+  y = y/max_y
+  lines (x, y, type = 'l',yaxt='n',xaxt=xaxts[i],lwd=2)
+  abline (v = thresholds,col=bmmb::cols[15], lwd=2)
+  
+  p1 = plogis (thresholds[1],0,listener_scale[i,1])
+  p3 = 1 - plogis (thresholds[2],0,listener_scale[i,1])
+  p2 = (1-p3) - p1
+  
+  text (-8,1.2,round(p1,2))
+  text (0,1.2,round(p2,2))
+  text (8,1.2,round(p3,2))
+}
+mtext (side=1,"Centered vocal-tract length (cm)", outer = TRUE, line = 2.9, cex = 0.9)
+```
+
+### Answering our research questions
+
+```{r, cache = TRUE}
+# predictions with random effects
+predictions_latent_full = fitted (model_ordinal)
+# predictions with listener dependent disc
+predictions_latent_disc = fitted (model_ordinal_disc)
+
+# find highest predicted probability
+SG_hat_full = apply (predictions_latent_full[,1,],1,which.max)
+SG_hat_disc = apply (predictions_latent_disc[,1,],1,which.max)
+```
+
+```{r}
+# fixed effects
+mean (SG_hat == exp_data$SG)
+
+# full model, single disc
+mean (SG_hat_full == exp_data$SG)
+
+# full model, listener-dependent disc
+mean (SG_hat_disc == exp_data$SG)
+```
+
+## Exercises
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
