@@ -1,0 +1,896 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4) 
+)
+```
+
+# Inspecting a 'single group' of observations using a Bayesian multilevel model 
+
+## Chapter pre-cap
+
+## Repeated measures data {#c4-multilevel}
+
+$$
+\begin{equation}
+\begin{split}
+\\
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} \\
+\\
+\textrm{Priors:} \\
+\mathrm{Intercept} \sim \mathrm{N}(176, 15) \\
+\sigma \sim \mathrm{N}(0, 15) \\ 
+\end{split}
+(\#eq:4-1)
+\end{equation}
+$$
+
+```{r}
+library (bmmb)
+data (exp_data)
+men = exp_data[exp_data$C_v=='m',]
+
+# create vector of height judgments
+mens_height = men$height
+```
+
+```{r F4-1, fig.height=2.5, fig.width=8, fig.cap = "(left) Distribution of all apparent height judgments for adult male speakers. (right) Distribution of height judgments for adult male speakers, individually for each listener.", echo = FALSE}
+
+################################################################################
+### Figure 4.1
+################################################################################
+
+library (bmmb)
+data (exp_data)
+men = exp_data[exp_data$C_v=='m',]
+
+# create vector of height judgments
+mens_height = men$height
+
+#par (mar = c(.1,.1,.5,.1), mfrow = c(1,1), oma = c(4.2,.20,0,.2))
+#layout (m=matrix(c(1,2,3,4),2,2), heights = c(.25,.75))
+
+par (mar = c(4,.5,.5,.5), mfrow = c(1,2))
+
+#plot (0,type='n',xlab='',ylab='',xaxt='n',yaxt='n',bty='n')
+
+boxplot (men$height,col = 'grey', ylim = c(140,195), 
+         width = 2, ylab="", horizontal = TRUE)
+mtext (side=2,outer=TRUE, text="Apparent height (cm)", cex=1, line=2.9,adj=.55)
+
+
+#boxplot (tapply(men$height,men$L,mean), xlab = "",xaxt='n',
+#         col = cols, ylim = c(140,195), width = 2,cex.axis=1.3, 
+#         horizontal = TRUE)
+#abline (h=)
+#text (1,190,expression(sigma["[within]"]), cex=2)
+
+boxplot (height ~ L, data = men, xlab = "", ylab="",xaxt='s',
+         col = cols[-1], ylim = c(140,195), cex.lab=1.1,cex.axis=1.1,
+         horizontal = TRUE, yaxt='n')
+grid()
+abline (h = mean(mens_height), lwd=2, lty=3)
+boxplot (height ~ L, data = men, col = cols[-c(1,8)],add=TRUE,yaxt='n',xaxt='n')
+
+mtext (side=1,outer=TRUE, "Apparent height (cm)",line=-0.9)
+```
+
+### Multilevel models and 'levels' of variation {#c4-levels}
+
+```{r F4-2, echo = FALSE, out.width = "100%", fig.cap = "Comparison of the structure of a statistical model with only a single level of variation (a \'unilevel model\', left), to a model with multiple levels of variation (a multilevel model, right)."}
+
+################################################################################
+### Figure 4.2
+################################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 4.2.jpg")
+```
+
+## Representing predictors with many levels {#c4-many-levels}
+
+$$
+\begin{equation}
+\begin{split}
+\mu_{[i]} = \mathrm{Intercept} + L_{[1]} \cdot 0 + L_{[2]} \cdot 1 + L_{[3]} \cdot 0 +\ldots + L_{[15]} \cdot 0 \\
+\mu_{[i]} = \mathrm{Intercept} + L_{[2]}  \\
+\end{split}
+(\#eq:4-2)
+\end{equation}
+$$
+```{r}
+exp_data$L[1]
+exp_data$L[1000]
+```
+
+$$
+\begin{equation}
+\begin{split}
+\mu_{[i]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i]}]}
+\end{split}
+(\#eq:4-3)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\mathsf{L}_{[1]} = 2, \mathsf{L}_{[2]}=4,\mathsf{L}_{[3]}=1,  \dots \\ \\
+\mu_{[i=1]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i=1]}]} = \mathrm{Intercept} + L_{[2]} \\
+\mu_{[i=2]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i=2]}]} = \mathrm{Intercept} + L_{[4]} \\
+\mu_{[i=3]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i=3]}]} = \mathrm{Intercept} + L_{[1]} \\
+\dots
+\end{split}
+(\#eq:4-3a)
+\end{equation}
+$$
+
+## Strategies for estimating factors with many levels {#c4-strategies}
+
+### Complete pooling {#c4-complete-pooling}
+
+### No pooling {#c4-no-pooling}
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i]}]}  \\
+\\
+\textrm{Priors:} \\
+L_{[\bullet]} \sim \mathrm{uniform}(-\infty, \infty) \\\\
+\mathrm{Intercept} \sim \mathrm{N}(176, 15) \\
+\end{split}
+(\#eq:4-4)
+\end{equation}
+$$
+
+```{r}
+listener_means = tapply (men$height, men$L, mean)
+quantile(listener_means)
+```
+
+### (Adaptive) Partial pooling {#c4-partial-pooling}
+
+```{r}
+sd(listener_means)
+```
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i]}]} \\ 
+\\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\ 
+\\
+\mathrm{Intercept} \sim \mathrm{N}(176,15) \\
+\sigma \sim \mathrm{N}(0,15) \\
+\sigma_L \sim \mathrm{N}(0,15)
+\end{split}
+(\#eq:4-5)
+\end{equation}
+$$
+
+### Hyperpriors
+
+$$
+\begin{equation}
+\begin{split}
+P(L_{[\bullet]}|y) = \frac{P(y|L_{[\bullet]}) \cdot P(L_{[\bullet]})}{P(y)}
+(\#eq:4-6)
+\end{split}
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+P(L_{[\bullet]},\sigma_L|y) = \frac{P(y|L_{[\bullet]} , \sigma_L) \cdot P(L_{[\bullet]},\sigma_L)}{P(y)}
+(\#eq:4-7)
+\end{split}
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+P(L_{[\bullet]},\sigma_L|y) = \frac{P(y|L_{[\bullet]})  \cdot P(L_{[\bullet]}|\sigma_L)  \cdot P(\sigma_L)}{P(y)}
+(\#eq:4-8)
+\end{split}
+\end{equation}
+$$
+
+## Estimating a multilevel model with `brms` {#c4-estimating1}
+
+### Data and Research questions {#c4-data-and-qs-1}
+
+```{r}
+# load book package and brms
+library (bmmb)
+library (brms)
+
+# load and subset experimental data
+data (exp_data)
+men = exp_data[exp_data$C_v=='m',]
+```
+
+```{r}
+head (men)
+```
+  
+### Description of the model
+
+`height ~ 1`
+
+`height ~ 1 + ( 1 | L)`
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i]}]} \\ 
+\\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\ 
+\\
+\mathrm{Intercept} \sim \mathrm{N}(176,15) \\
+\sigma \sim \mathrm{N}(0,15) \\
+\sigma_L \sim \mathrm{N}(0,15)
+\end{split}
+(\#eq:4-9)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\sigma^2_{total} = \sigma^2
+(\#eq:4-10)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\sigma^2_{total} = \sigma^2_{L} + \sigma^2
+(\#eq:4-11)
+\end{equation}
+$$
+
+### Fitting the model {#c4-fitting-1}
+
+```{r}
+bmmb::get_prior (height ~ 1 + (1|L), data = men)[,-c(7:9)]
+```
+
+```{r,eval = FALSE}
+# Fit the model yourself
+model_multilevel =  brms::brm (
+  height ~ 1 + (1|L), data = men, chains = 4, cores = 4, 
+  warmup = 1000, iter = 3500, thin = 2,
+  prior = c(brms::set_prior("normal(176, 15)", class = "Intercept"),
+            brms::set_prior("normal(0, 15)", class = "sd"),
+            brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_multilevel = bmmb::get_model ('4_model_multilevel.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_multilevel, '../models/4_model_multilevel.RDS')
+model_multilevel = readRDS ('../models/4_model_multilevel.RDS')
+```
+
+### Interpreting the model
+
+```{r, collapse = TRUE, eval=TRUE}
+# inspect model
+bmmb::short_summary (model_multilevel)
+```
+
+```{r, collapse = TRUE}
+# find mean height for each listener
+listener_means = aggregate (height ~ L, data = men, FUN = mean) 
+
+# find the within listener standard deviation 
+# This is the within-talker 'error'.
+listener_sigmas = aggregate (height ~ L, data = men, FUN = sd) 
+
+# the mean of the listener means corresponds to our Intercept
+mean (listener_means$height)
+
+# the standard deviation of the listener means corresponds 
+# to 'sd(Intercept)', the estimate of the standard deviation 
+# of listener intercepts
+sd (listener_means$height)
+
+# the average within-listener standard deviation corresponds to 'sigma', 
+# the estimated error
+mean (listener_sigmas$height)
+```
+
+```{r F4-3, fig.height = 2.75, fig.width = 8, fig.cap = "Listener-specific boxplots for apparent height judgments made for adult male speakers. The horizontal line represents the model intercept.", echo = FALSE}
+
+################################################################################
+### Figure 4.3
+################################################################################
+
+par (mfrow = c(1,1), mar = c(4,4,0.5,0.5))
+boxplot (height ~ L, data = men, main = "",xlab="Listener",
+         ylab="Apparent height (cm)",
+         col=bmmb::cols, ylim = c(150,195), outline=FALSE) 
+abline (h = mean(men$height), lwd=3,lty=3)
+boxplot (height ~ L, data = men, main = "",col=bmmb::cols,add=TRUE, outline=FALSE) 
+```
+
+## 'Random' Effects {#c4-random-effects}
+
+### Inspecting the random effects {#c4-inspecting-random-effects}
+
+```{r}
+# get random effects, without summarizing
+random_effects = brms::ranef (model_multilevel, summary = FALSE)
+
+# get only the listener random effects
+listener_effects = random_effects$L
+```
+
+```{r}
+str (listener_effects)
+```
+
+```{r}
+# take only the intercept along the third dimension
+listener_intercepts = listener_effects[,,"Intercept"]
+```
+
+```{r}
+# Our matrix of posterior samples showing 5000 samples 
+# for each of 15 listener effects
+dim (listener_intercepts)
+
+# the first six samples of the listener effect for 6 listeners
+head ( round (listener_intercepts[,1:6], 2))
+```
+
+```{r,include=FALSE}
+options(digits=2)
+```
+```{r}
+colMeans (listener_intercepts)[1:10]
+```
+```{r,include=FALSE}
+options(digits=4)
+```
+
+```{r, collapse = TRUE}
+# get random effects, *with* summarizing (by default)
+random_effects = brms::ranef (model_multilevel)
+
+# get only the listener random effects
+listener_effects = random_effects$L
+
+# along the third (coefficient) dimension, take only the intercept dimension
+listener_intercepts = listener_effects[,,"Intercept"]
+```
+
+```{r}
+listener_intercepts[1:6,]
+```
+
+```{r}
+# find listener means
+listener_means = tapply (men$height, men$L, mean)
+
+# center them
+listener_means_centered = listener_means - mean(listener_means)
+
+# compare centered means (top row) to model random effects (bottom row)
+round (rbind (listener_means_centered, 
+              listener_random_effects = listener_intercepts[,1]))
+```
+
+```{r eval=FALSE}
+bmmb::brmplot(listener_intercepts)
+```
+
+```{r F4-4, fig.height = 3, fig.width = 8, fig.cap="Distribution of centered apparent height, individually for each listener. Colored points and lines indicate posterior mean estimates and 95% credible intervals for the listener-specific intercept effects (i.e. the listener \'random\' effects).", echo=FALSE}
+
+################################################################################
+### Figure 4.4
+################################################################################
+
+par (mfrow = c(1,1), mar = c(4,4,1,1))
+
+height_centered = (men$height-mean(men$height))
+boxplot (height_centered ~ L, data=men, col = 0, ylim = c(-23,21), xlab="Listener",
+         ylab="Centered apparent height (cm)", outline = FALSE)
+abline (h=0)
+bmmb::brmplot(listener_intercepts, col = bmmb::cols, ylim = c(-30,20), 
+              add = TRUE, outline = FALSE)
+```
+
+## Simulating data using our model parameters {#c4-simulating}
+
+```{r, collapse = TRUE}
+# skip this line if you want a new simulated data set. 
+set.seed(1)
+# this is the value of our intercept
+Intercept = 174
+# this is a vector of 15 listener effects
+L_ = rnorm (15, 0, 3.8 )
+# this is a vector indicating which listener produced which utterance
+L = rep (1:15, each = 45)
+# this vector contains the error
+error = rnorm (45 * 15, 0, 7)
+```
+
+```{r, collapse = TRUE}
+# the sum of an intercept, listener effects and random error 
+height_rep = Intercept + L_[L] + error
+```
+
+```{r F4-5, echo = FALSE, fig.width = 8, fig.height = 2.5, fig.cap = "Comparison of real and simulated apparent height data. Each box represents data from one listener, the horizontal line represents the mean of the listener means. Which is the real data?"}
+
+################################################################################
+### Figure 4.5
+################################################################################
+
+par (mfrow = c(1,2), mar = c(0.5,0.5,1,0.5), oma = c(0,3.5,0,0))
+
+boxplot (height_rep ~ L, ylim = c(140,200), xaxt='n',xlab='',
+         col=bmmb::cols)
+abline (h = 173.8, lwd=3,lty=3)
+boxplot (height ~ L, data = men, ylim = c(140,200), xaxt='n',xlab='',
+         col=bmmb::cols,yaxt="n")
+abline (h = 173.8, lwd=3,lty=3)
+mtext (text = "Apparent height (cm)", side=2, outer=TRUE, line = 2.5)
+```
+
+```{r, collapse = TRUE}
+# this fake data is missing between listener variation
+height_rep_1 = Intercept + error
+# this fake data is missing within listener variation
+height_rep_2 = Intercept +  L_[L]
+```
+
+```{r F4-6, fig.width = 8, fig.height = 5, fig.cap="(top) Simulated data containing within-listener variation but no between-listener variation. (middle) Simulated data containing between-listener variation but no within-listener variation. (bottom) Simulated data containing both within and between-listener variation in apparent height.", echo = FALSE}
+
+################################################################################
+### Figure 4.6
+################################################################################
+
+par (mfrow = c(3,1), mar = c(.1,3,.1,1), oma = c(1,2,1,0))
+boxplot (height_rep_1 ~ L, ylim = c(140,198),xaxt='n',
+         col=bmmb::cols,ylab="",yaxt = 'n')
+text (1, 145, label = "Intercept + error", cex = 1.5, pos=4)
+abline (h=174.8,lty=2)
+axis (side=2,at=seq(150,190,10))
+
+boxplot (height_rep_2 ~ L, ylim = c(140,198),xaxt='n',
+         col=bmmb::cols,ylab="",yaxt = 'n')
+abline (h=174.8,lty=2)
+text (1, 145, label = "Intercept + L", cex = 1.5, pos=4)
+axis (side=2,at=seq(150,190,10))
+
+boxplot (height_rep ~ L, ylim = c(140,198),xaxt='n',
+         col=bmmb::cols,ylab="",yaxt = 'n')
+abline (h=174.8,lty=2)
+text (1, 145, label = "Intercept + L + error", cex = 1.5, pos=4)
+
+mtext (side=2,text="Apparent height (cm)", outer = TRUE, line=0)
+axis (side=2,at=seq(150,190,10))
+
+```
+
+```{r, cache = TRUE}
+set.seed(1)
+
+# do 10,000 replications
+reps = 10000
+# hold the replicated values of sigma_L
+sigma_L_rep = rep(0,reps)
+for ( i in 1:reps){
+  Intercept = 173.8 # set the intercept
+  L_L = rnorm (15, 0, 0)  # zero between-listener variance
+  L = rep (1:15, each = 45) # 45 responses from each of 15 listeners
+  epsilon = rnorm (45 * 15, 0, 7.78) # generate random noise
+  height_rep = Intercept + L_L[L] + epsilon # add up to components
+  L_rep_means = tapply(height_rep, L, mean) # get replicated listener means
+  sigma_L_rep[i] = sd (L_rep_means) # find sigma of listener effects
+}
+```
+
+```{r}
+quantile(sigma_L_rep)
+```
+
+## Adding a second random effect {#c4-second-random-effect}
+
+```{r F4-7, fig.height=3, fig.width=8, fig.cap = "(left) Distribution of all apparent height judgments for adult male speakers. (middle) Distribution of height judgments for adult male speakers, individually for each listener. (right) Distribution of height judgments for adult male speakers, individually for each speaker.", echo = FALSE}
+
+################################################################################
+### Figure 4.7
+################################################################################
+
+library (bmmb)
+data (exp_data)
+men = exp_data[exp_data$C_v=='m',]
+
+# create vector of height judgments
+mens_height = men$height
+
+#par (mar = c(.1,.1,.5,.1), mfrow = c(1,1), oma = c(4.2,.20,0,.2))
+#layout (m=matrix(c(1,2,3,4),2,2), heights = c(.25,.75))
+
+par (mar = c(4.5,.5,.5,.5), mfrow = c(1,3))
+
+#plot (0,type='n',xlab='',ylab='',xaxt='n',yaxt='n',bty='n')
+
+boxplot (men$height,col = 'grey', ylim = c(140,195), 
+         width = 2, ylab="", horizontal = TRUE)
+mtext (side=2,outer=TRUE, text="Apparent height (cm)", cex=1, line=2.9,adj=.55)
+
+
+#boxplot (tapply(men$height,men$L,mean), xlab = "",xaxt='n',
+#         col = cols, ylim = c(140,195), width = 2,cex.axis=1.3, 
+#         horizontal = TRUE)
+#abline (h=)
+#text (1,190,expression(sigma["[within]"]), cex=2)
+
+boxplot (height ~ L, data = men, xlab = "", ylab="",xaxt='s',
+         col = cols[-1], ylim = c(140,195), cex.lab=1.1,cex.axis=1.1,
+         horizontal = TRUE, yaxt='n')
+grid()
+abline (h = mean(mens_height), lwd=2, lty=3)
+boxplot (height ~ L, data = men, col = cols[-c(1,8)],add=TRUE,yaxt='n',xaxt='n')
+
+
+boxplot (height ~ S, data = men, xlab = "", ylab="",xaxt='s',
+         col = cols[-1], ylim = c(140,195), cex.lab=1.1,cex.axis=1.1,
+         horizontal = TRUE, yaxt='n')
+grid()
+abline (h = mean(mens_height), lwd=2, lty=3)
+boxplot (height ~ S, data = men, col = cols[-c(1,8)],add=TRUE,yaxt='n',xaxt='n')
+
+mtext (side=1,outer=TRUE, "Apparent height (cm)",line=-1.3)
+```
+
+### Updating the model description {#c4-updating-model}
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\\
+\mathrm{Intercept} \sim \mathrm{N}(176,15) \\
+\sigma \sim \mathrm{N}(0,15) \\
+\sigma_L \sim \mathrm{N}(0,15) \\
+\sigma_S \sim \mathrm{N}(0,15)
+\end{split}
+(\#eq:4-12)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\sigma^2_{total} = \sigma^2_{L} + \sigma^2_{S} + \sigma^2
+(\#eq:4-13)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+```{r,eval = FALSE}
+# Fit the model yourself
+model_multilevel_L_S =  brms::brm (
+  height ~ 1 + (1|L) + (1|S), data = men, chains = 4, cores = 4,
+  warmup = 1000, iter = 3500, thin = 2,
+  prior = c(brms::set_prior("normal(176, 15)", class = "Intercept"),
+            brms::set_prior("normal(0, 15)", class = "sd"),
+            brms::set_prior("normal(0, 15)", class = "sigma")))
+```
+
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_multilevel_L_S = bmmb::get_model ('4_model_multilevel_L_S.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_multilevel_L_S, '../models/4_model_multilevel_L_S.RDS')
+model_multilevel_L_S = readRDS ('../models/4_model_multilevel_L_S.RDS')
+```
+
+```{r, eval=FALSE}
+bmmb::short_summary (model_multilevel_L_S)
+```
+
+```{r}
+## ~S (Number of levels: 45)
+##               Estimate Est.Error l-95% CI u-95% CI
+## sd(Intercept)     2.83      0.42      2.1     3.72
+```
+
+## Investigating 'shrinkage' {#c4-investigating-shrinkage}
+
+```{r, cache = TRUE}
+# these are the Bayesian 'shrinkage' estimates of
+# the listener effects
+L_shrunk = brms::ranef(model_multilevel_L_S)$L[,1,'Intercept']
+# and the speaker effects
+S_shrunk = brms::ranef(model_multilevel_L_S)$S[,1,'Intercept']
+
+# these are the no pooling estimates
+L_nopooling = tapply (men$height, men$L, mean)
+S_nopooling = tapply (men$height, men$S, mean)
+# and now they are centered
+L_nopooling = L_nopooling - mean (L_nopooling)
+S_nopooling = S_nopooling - mean (S_nopooling)
+```
+
+```{r F4-8, fig.height = 4, fig.width = 8, fig.cap="(top row) A comparison of the shrunken (i.e. adaptive pooling) and no pooling estimates of the listener and speaker effects. Curves indicate the density of the prior distribution of each set of effects. Arrows link shrunken and no pooling effects for each listener/speaker. (bottom row) An illustration of how the effect for speaker 87, highlighted in the top row, gets shrunken towards the prior through adaptive pooling.", echo=FALSE}
+
+################################################################################
+### Figure 4.8
+################################################################################
+
+par (mfrow = c(1,2), mar = c(2,.51,.5,.51))
+
+layout (mat = matrix(c(1,3,2,3), 2,2))
+
+plot (L_nopooling,rep(0,15), ylim = c(0,4.3), cex=1.5,pch=1,col=rev(bmmb::cols), xlim = c(-13,13), 
+      yaxt = 'n',xlab = 'Listener Effects',lwd=3)
+points (L_shrunk,rep(1,15), cex=1.5,pch=16,col=rev(bmmb::cols),lwd=2)
+arrows (L_nopooling,0.1,L_shrunk,0.9, length=0.1)
+abline (v=0, lty=3,col='grey')
+x = seq(-12,12,0.01)
+den = dnorm (x, 0, 3.79)
+den = den / max (den)
+den2 = dnorm (x, 0, sd(S_nopooling))
+den2 = den2 / max (den2)
+text (0,2.5,label = expression(paste(sigma["L"]," = 3.79")), cex = 1.25)
+text (0,3,label = expression(paste("P(L)")), cex = 1.25)
+lines (x, (den*2)+2, lwd = 3, col = 4)
+#lines (x, (den2*2)+2, lwd = 2, col = 4,lty=3)
+
+text (-13.5,0,"No pooling", pos = 4)
+text (-13.5,1,"Shrunken", pos = 4)
+
+text (5,4,"Listener Effects", pos = 4)
+
+
+plot (S_nopooling,rep(0,45), ylim = c(0,4.3), cex=1.5,pch=1,col=rev(bmmb::cols), xlim = c(-13,13), 
+      yaxt = 'n', ylab = '',xlab = 'Speaker Effects',lwd=3)
+points (S_shrunk,rep(1,45), cex=1.5,pch=16,col=rev(bmmb::cols),lwd=2)
+arrows (S_nopooling,0.1,S_shrunk,0.9, length=0.1)
+abline (v=0, lty=3,col='grey')
+x = seq(-12,12,0.01)
+den = dnorm (x, 0, 2.84)
+den = den / max (den)
+den2 = dnorm (x, 0, sd(L_nopooling))
+den2 = den2 / max (den2)
+text (0,2.5,label = expression(paste(sigma["S"]," = 2.84")), cex = 1.25)
+text (0,3,label = expression(paste("P(S)")), cex = 1.25)
+
+lines (x, (den*2)+2, lwd = 3, col = 4)
+#lines (x, (den2*2)+2, lwd = 2, col = 4,lty=3)
+
+text (5,4,"Speaker Effects", pos = 4)
+
+
+text (-12, 0.5, "S=87")
+plot (S_nopooling[41],0.05, ylim = c(0,1.5), cex=2.5,pch=1,
+      col=bmmb::cols[5], xlim = c(-17,9), yaxt = 'n', ylab = '',
+      xlab = 'Speaker Effects',lwd=3, yaxs = 'i')
+points (S_shrunk[41],0.05, cex=2.5,pch=16,col=bmmb::cols[5],lwd=2)
+arrows (S_nopooling[41],0.05,S_shrunk[41]-.5,0.05, length=0.1)
+x = seq(-20,15,0.01)
+den = dnorm (x, 0, 2.84)
+den = den / max (den)
+
+tmp = exp_data$height[exp_data$S==87] - 173.8
+den2 = dnorm (x, mean (tmp), 6.47/sqrt(14))
+den2 = den2 / max (den2)
+
+den3 = den2 * den
+den3 = den3 / max (den3)
+
+den4 = dnorm (x, -8.560 ,  1.648)
+den4 = den4 / max (den4)
+
+
+use2 = (x > -17) & (x < -5)
+lines (x[use2], (den2)[use2], lwd = 3, col = bmmb::cols[5], lty = 2)
+#lines (x[use2], (den4)[use2], lwd = 3, col = bmmb::cols[6], lty = 2)
+
+use3 = (x > -13) & (x < -2)
+lines (x[use3], (den3[use3]), lwd = 3, col = bmmb::cols[5])
+use = (x > -10) & (x < 10)
+lines (x[use], (den[use]), lwd = 3, col = 4)
+
+points (S_nopooling[41],0.05, cex=2.5,pch=1,col=bmmb::cols[5])
+points (S_shrunk[41],0.05, cex=2.5,pch=16,col=bmmb::cols[5],lwd=2)
+
+text (S_nopooling[41],1.25,label = expression(paste("P(y|",S["[87]"],")")), cex = 1.25)
+text (S_shrunk[41],1.25,label = expression(paste("P(",S["[87]"],"|y)")), cex = 1.25)
+text (0,1.25,label = expression(paste("P(",S,")")), cex = 1.25)
+
+text (S_nopooling[41],.5,label = "Likelihood", cex = 1.25)
+text (S_shrunk[41],.5,label = "Posterior", cex = 1.25)
+text (0,.5,label = "Prior", cex = 1.25)
+
+
+abline (v=0,lty=3,col="grey")
+
+```
+
+
+```{r F4-9, fig.height = 2.5, fig.width = 8, fig.cap="The x axis represents the no pooling estimate for listener (L) and speaker (S) effects. The y axis represents the difference between the shrunken and no pooling estimates of each parameter, i.e. the amount of shrinkage. Positive values indicate that the shrunken estimate was greater than the no pooling one, and vice versa. Shrunken values were more positive for negative values and more negative for positive values.", echo=FALSE}
+
+################################################################################
+### Figure 4.9
+################################################################################
+
+par (mfrow = c(1,2), mar = c(.25,4,.25,1), oma=c(4,.1,.1,.1))
+# 
+# plot (L_nopooling, L_shrunk, xlim = c(-10,10), ylim = c(-10,10),
+#       pch=4, lwd=3, col=bmmb::cols,cex=2.25,xaxt="n",xlab="")
+# grid()
+# abline (0,1,col=2,lwd=2)
+# abline(h=0,v=0,lty=3,lwd=2)
+# points (L_nopooling, L_shrunk, pch=4,lwd=3, col=bmmb::cols,cex=2.25)
+# 
+# plot (S_nopooling, S_shrunk, xlim = c(-12,12), ylim = c(-12,12),
+#       pch=4, col=4,cex=2.25,xaxt="n",xlab="")
+# grid()
+# abline (0,1,col=2, lwd=2)
+# abline(h=0,v=0,lty=3,lwd=2)
+# points (S_nopooling, S_shrunk, pch=4,lwd=3, col=bmmb::cols,cex=2.25)
+
+plot (L_nopooling, L_shrunk-L_nopooling, xlim = c(-10,10), ylim = c(-5,5),
+      pch=3, lwd=3, col=rev(bmmb::cols),cex=2.25,cex.lab=0.9,cex.axis = 0.9)
+grid()
+abline(h=0,v=0,lty=3,lwd=2)
+points (L_nopooling, L_shrunk-L_nopooling, pch=3,lwd=3, col=bmmb::cols,cex=2.25)
+
+mtext (side = 1, text = "L_nopooling", line=2.5,cex=0.9)
+
+plot (S_nopooling, S_shrunk-S_nopooling, xlim = c(-12,12), ylim = c(-5,5),
+      pch=3, col=4,cex=2.25,cex.lab=0.9,cex.axis = 0.9)
+grid()
+abline(h=0,v=0,lty=3,lwd=2)
+points (S_nopooling, S_shrunk-S_nopooling, pch=3,lwd=3, col=rev(bmmb::cols),cex=2.25)
+
+mtext (side = 1, text = "S_nopooling", line=2.5,cex=0.9)
+```
+
+## Answering our research questions {#c4-answering-question}
+
+```{r, include = FALSE, eval = FALSE}
+model_priors = bmmb::get_model ('3_model_priors.RDS')
+```
+```{r, include = FALSE}
+model_priors = readRDS ('../models/3_model_priors.RDS')
+```
+
+```{r, collapse = TRUE}
+bmmb::short_summary (model_priors)
+```
+
+```{r, collapse = TRUE}
+bmmb::short_summary (model_multilevel_L_S)
+```
+
+## 'Traditionalists' corner {#c4-frequentist}
+
+### Bayesian multilevel models vs. lmer {#c4-vs-lmer}
+
+```{r, warning=FALSE, message = FALSE, collapse = TRUE, cache = TRUE}
+lmer_model = lme4::lmer (height ~ 1 + (1|L) + (1|S), data = men)
+```
+
+```{r, eval = FALSE}
+bmmb::short_summary(model_multilevel_L_S)
+
+## (1) Formula:  height ~ 1 + (1 | L) + (1 | S)
+## 
+## (2) Group-Level Effects:
+##     ~L (Number of levels: 15)
+##                   Estimate Est.Error l-95% CI u-95% CI
+## (3) sd(Intercept)     3.81      0.86     2.51     5.87
+## 
+##     ~S (Number of levels: 45)
+##                   Estimate Est.Error l-95% CI u-95% CI
+## (4) sd(Intercept)     2.83      0.42      2.1     3.72
+## 
+##     Population-Level Effects:
+##               Estimate Est.Error l-95% CI u-95% CI
+## (5) Intercept    173.8      1.12    171.6   176.05
+## 
+##     Family Specific Parameters:
+##           Estimate Est.Error l-95% CI u-95% CI
+## (6) sigma     6.47      0.19     6.11     6.85
+```
+
+```{r, eval = FALSE}
+summary (lmer_model)
+
+##     Linear mixed model fit by REML ['lmerMod']
+## (1) Formula: height ~ 1 + (1 | L) + (1 | S)
+##        Data: men
+## 
+##     REML criterion at convergence: 4527.4
+## 
+##     Scaled residuals: 
+##         Min      1Q  Median      3Q     Max 
+##     -4.6205 -0.4868  0.0722  0.5700  2.7179 
+## 
+## (2) Random effects:
+##      Groups   Name        Variance Std.Dev.
+## (3)  S        (Intercept)  7.593   2.756   
+## (4)  L        (Intercept) 11.990   3.463   
+## (6)  Residual             41.630   6.452   
+##     Number of obs: 675, groups:  S, 45; L, 15
+## 
+##     Fixed effects:
+##                 Estimate Std. Error t value
+## (5) (Intercept)  173.788      1.015   171.3
+```
+
+```{r, collapse = TRUE, cache = TRUE, eval = TRUE}
+brms_ranefs = brms::ranef (model_multilevel_L_S)$L[,,"Intercept"]
+head (brms_ranefs)
+```
+
+```{r, collapse = TRUE, eval = TRUE}
+lmer_ranefs = lme4::ranef (lmer_model)[["L"]]
+head (lmer_ranefs)
+```
+
+```{r F4-10, fig.width=8, fig.height=2.75, fig.cap="(left) In green, the random speaker intercept estimates provided by brm. The red arrows indicate the estimates of the same provided by lmer. .", echo = FALSE}
+
+################################################################################
+### Figure 4.10
+################################################################################
+
+brms_ranefs_S = brms::ranef (model_multilevel_L_S)$S[,,"Intercept"]
+lmer_ranefs_S = lme4::ranef (lmer_model)[["S"]]
+
+
+par(mfrow = c(1,2), mar = c(4,4.5,1,1))
+
+brmplot (brms_ranefs, xlab="Listener", ylab="Listener Effect (cm)", col=deepgreen, line = FALSE)
+abline (h = 0)
+
+points (lmer_ranefs[,1],pch=4,cex=1.5,lwd=2,col=coral, xaxt='n',xlab='',
+      ylab="")
+
+brmplot (brms_ranefs_S, xlab="Speaker", ylab="Speaker Effect (cm)", col=deepgreen, line = FALSE)
+abline (h = 0)
+
+points (lmer_ranefs_S[,1],pch=4,cex=1.5,lwd=2,col=coral, xaxt='n',xlab='',
+      ylab="")
+
+#plot (brms_ranefs[,1], lmer_ranefs[,1], lwd=2, cex=1.5, col=deeppurple,
+#      xlab = 'brms Random Effects (cm)', ylab = 'lmer Random Effects (cm)', pch=16)
+#abline (0,1,col=2)
+#abline (h = 0, v = 0, lty=3)
+```
+
+
+## Exercises
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
