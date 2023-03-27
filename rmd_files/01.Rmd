@@ -1,0 +1,439 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+# options(knitr.duplicate.label = "allow")
+```
+
+# Introduction: Experiments and Variables 
+
+## Chapter pre-cap
+
+## Experiments and effects {#c1-exp-and-effects}
+
+### Experiments and inference {#c1-exp-and-inference}
+
+## Our experiment {#c1-exp}
+
+### Our experiment: Introduction {#c1-exp-intro}
+ 
+```{r F1-1, echo = FALSE, fig.height = 2.75, fig.width = 8, echo = FALSE, fig.cap = "(left) Average height of males and females in the United States of America, organized by age (Fryar et al. (2012)). (middle) Average f0 produced by male and female speakers from 5 years of age until adulthood (Lee et al. 1999). (right) Average acoustic vocal-tract length (VTL) of male and female speakers from 5 years of age until adulthood (Lee et al. 1999). The average adult male VTL was set to 15 cm. Error bars indicate two standard deviations.", eval = TRUE}
+
+################################################################################
+### Figure 1.1
+################################################################################
+library (bmmb)
+data (height_data)
+data (lee_etal_data)
+
+par (mfrow = c(1,3), mar = c(4.1,4.1,1,1))
+plot (height_data$age[height_data$gender=="f"]-.1,
+      height_data$height[height_data$gender=="f"],
+      pch=16,col=2,lwd=2,cex=1.5, ylim = c(70,205),type='b', xlab="Age (years)",
+      ylab = "Height (cm)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+lines (height_data$age[height_data$gender=="m"]+.1,
+       height_data$height[height_data$gender=="m"],
+      pch=16,col=4,lwd=2,cex=1.5,type='b')
+grid()
+legend (13,110,legend = c("Female","Male"), col = c(2,4),pch=16,cex=1.2,
+        pt.cex=1.5, bty='n')
+
+phonTools::errorbar(height_data$age[height_data$gender=="f"]-.1,
+                    height_data$height[height_data$gender=="f"],
+                    height_data$sd[height_data$gender=="f"]*2,col=2,lwd=1,length=0.051)
+phonTools::errorbar(height_data$age[height_data$gender=="m"]+.1,
+                    height_data$height[height_data$gender=="m"],
+                    height_data$sd[height_data$gender=="m"]*2,col=4,lwd=1,length=0.051)
+
+rect (9.5,120,12.5,177,lwd=2,border="forestgreen",lty=1)
+rect (17.5,143,20.5,205,lwd=2,border="forestgreen",lty=1)
+
+
+lee_etal_data$f0_original=lee_etal_data$f0
+
+lee_etal_data$f0 = log(lee_etal_data$f0_original)
+aggdmu = aggregate (f0 ~ age+gender, FUN = mean, data = lee_etal_data)
+aggdmu[,3] = exp(aggdmu[,3])
+
+lee_etal_data$f0 = log(lee_etal_data$f0sd/lee_etal_data$f0_original)
+aggdsd = aggregate (f0 ~ age+gender, FUN = sd, data = lee_etal_data)
+aggdsd[,3] = (exp(aggdsd[,3])-1)*aggdmu[,3] 
+
+aggdmuf0 = aggdmu
+aggdsdf0 = aggdsd
+
+plot (aggdmu$age[aggdmu$gender=="f"]-.1,aggdmu$f0[aggdmu$gender=="f"],
+      pch=16,col=2,lwd=2,cex=1.5, ylim = c(75,370),type='b', xlab="Age (years)",
+      ylab = "f0 (Hz)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+lines (aggdmu$age[aggdmu$gender=="m"]+.1,aggdmu$f0[aggdmu$gender=="m"],
+      pch=16,col=4,lwd=2,cex=1.5,type='b')
+grid()
+
+phonTools::errorbars(aggdmu$age[aggdmu$gender=="f"]-.1,aggdmu$f0[aggdmu$gender=="f"],
+                   aggdsd$f0[aggdsd$gender=="f"]*2,col=2,lwd=1,length=0.051)
+phonTools::errorbars(aggdmu$age[aggdmu$gender=="m"]+.1,aggdmu$f0[aggdmu$gender=="m"],
+                   aggdsd$f0[aggdsd$gender=="m"]*2,col=4,lwd=1,length=0.051)
+
+
+gbars = (log(lee_etal_data$f1)+log(lee_etal_data$f2)+log(lee_etal_data$f3))/3
+
+aggdmu = aggregate (gbars ~ age+gender, FUN = mean, data = lee_etal_data)
+aggdmu[,3] = (aggdmu[,3])
+
+aggdmu$vtl = exp(-((aggdmu$gbar)-min(aggdmu$gbars)))
+aggdmu$vtl = 15 * aggdmu$vtl
+
+vtl = (log(lee_etal_data$f1sd/lee_etal_data$f1)+
+         log(lee_etal_data$f2sd/lee_etal_data$f2)+
+         log(lee_etal_data$f3sd/lee_etal_data$f3))/3
+
+aggdsd = aggregate (vtl ~ age+gender, FUN = mean, data = lee_etal_data)
+aggdsd[,3] = exp(aggdsd[,3])*aggdmu$vtl
+
+aggdmuvtl = aggdmu
+aggdsdvtl = aggdsd
+
+plot (aggdmu$age[aggdmu$gender=="f"]-.1,aggdmu$vtl[aggdmu$gender=="f"],
+      pch=16,col=2,lwd=2,cex=1.5, ylim = c(8.5,17),type='b', xlab="Age (years)",
+      ylab = "VTL (cm)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+lines (aggdmu$age[aggdmu$gender=="m"]+.1,aggdmu$vtl[aggdmu$gender=="m"],
+      pch=16,col=4,lwd=2,cex=1.5,type='b')
+grid()
+
+phonTools::errorbars(aggdmu$age[aggdmu$gender=="f"]-.1,
+                   aggdmu$vtl[aggdmu$gender=="f"],
+                   aggdsd$vtl[aggdsd$gender=="f"]*2,col=2,lwd=1,length=0.051)
+phonTools::errorbars(aggdmu$age[aggdmu$gender=="m"]+.1,
+                   aggdmu$vtl[aggdmu$gender=="m"],
+                   aggdsd$vtl[aggdsd$gender=="m"]*2,col=4,lwd=1,length=0.051)
+
+```
+
+### Our experimental methods {#c1-methods}
+
+### Our research questions {#c1-research-questions}
+
+### Our experimental data {#c1-exp-data}
+
+```{r, collapse = TRUE, messages=FALSE,warning=FALSE}
+# load package
+library ("bmmb")
+
+# load data
+data (exp_data_all)
+```
+
+```{r, collapse = TRUE}
+# see first 6 rows
+head (exp_data_all)
+```
+
+```{r, collapse = TRUE, eval = FALSE}
+write.csv (exp_data_all, "exp_data_all.csv", row.names = FALSE)
+```
+
+```{r, collapse = TRUE}
+str (exp_data_all)
+```
+
+```{r, collapse = TRUE, eval = FALSE}
+exp_data_all$height
+```
+
+```{r, collapse = TRUE}
+# show the first six
+head(exp_data_all$height)
+
+# show the first element
+exp_data_all$height[1]
+
+# show elements 2 to 6
+exp_data_all$height[2:6]
+```
+
+```{r, collapse = TRUE}
+head(exp_data_all[[3]])
+
+head(exp_data_all[["height"]])
+```
+
+```{r, collapse = TRUE}
+head(exp_data_all[,3])
+
+head(exp_data_all[,"height"])
+```
+
+```{r, collapse = TRUE}
+exp_data_all[1,]
+
+exp_data_all[1,2]
+```
+
+## Variables {#c1-variables}
+
+### Populations and samples {#c1-pops-and-samps}
+
+### Dependent and Independent Variables {#c1-dep-and-indep}
+
+### Categorical variables and 'factors' {#c1-categorical}
+
+```{r, collapse = TRUE}
+# see the first 6 observations
+head (exp_data_all$C_v)   
+
+# it has levels
+levels(exp_data_all$C_v)  
+
+# each level has numerical values
+table (exp_data_all$C_v, as.numeric (exp_data_all$C_v))  
+```
+
+```{r, collapse = TRUE}
+# re order
+exp_data_all$C_v_f = factor (exp_data_all$C_v, levels = c('w','m','g','b'))
+
+# the new order is evident
+levels (exp_data_all$C_v_f)
+
+# note that 'm' is now the second category
+xtabs ( ~ exp_data_all$C_v + exp_data_all$C_v_f)
+```
+
+### Quantitative variables  {#c1-quantitative}
+
+```{r, collapse = TRUE}
+2 == 1
+
+"hello" == "hello"
+
+"hello" != "hello"
+```
+
+```{r, collapse = TRUE, eval = TRUE}
+2 > 1
+
+2 >= 1
+
+2 < 1
+
+2 >= 1
+```
+
+```{r, collapse = TRUE}
+TRUE + 1
+
+(2 == 2) + 1
+```
+
+```{r, collapse = TRUE}
+# are the values less than or equal to 3?
+c(1,2,3,4,5,6,7,8,9,10) <= 3
+```
+
+```{r, collapse = TRUE}
+logical_vector = c(1,2,3,4,5,6,7,8,9,10) <= 3
+
+as.numeric (logical_vector)
+
+sum (logical_vector)
+
+sum (c(1,2,3,4,5,6,7,8,9,10) <= 3)
+```
+
+```{r, collapse = TRUE}
+# TRUE if f0 < 175
+f0_idx = exp_data_all$f0 < 175
+
+str (f0_idx)
+
+sum (f0_idx)
+```
+
+```{r, collapse = TRUE}
+# get only rows where f0 < 175, i.e. where f0_idx is TRUE
+low_f0 = exp_data_all[f0_idx,]
+
+nrow(low_f0)
+
+max(low_f0$f0)
+```
+
+```{r, collapse = TRUE}
+# get only rows where f0 >= 175, i.e. where f0_idx is FALSE
+high_f0 = exp_data_all[!f0_idx,]
+
+nrow(high_f0)
+
+min(high_f0$f0)
+```
+
+## Inspecting our data {#c1-inspecting}
+
+### Inspecting categorical variables {#c1-inspecting-categorical}
+
+```{r, collapse = TRUE}
+table (exp_data_all$L)
+```
+
+```{r, collapse = TRUE}
+# table of listener and veridical speaker category
+table (exp_data_all$C_v, exp_data_all$L)
+```
+
+```{r, collapse = TRUE}
+# table of listener and apparent speaker category
+table (exp_data_all$C, exp_data_all$L)
+```
+
+```{r F1-2, fig.height = 2.5, fig.width = 8, echo = FALSE, fig.cap = "Comparisons of mosaic plots showing variables that do not (left), and do (right), affect each other.",collapse=TRUE}
+
+################################################################################
+### Figure 1.2
+################################################################################
+
+par (mfrow = c(1,2), mar=c(2,2,1,.5))
+plot (t(table (exp_data_all$C_v, exp_data_all$L)), main = '',xlab='Listener', 
+      col = bmmb::cols[2:5],ylab = 'Veridical Speaker Class')
+plot(t(table (exp_data_all$C, exp_data_all$L)), main = '',xlab='Listener', 
+     col = bmmb::cols[2:5],ylab = 'Apparent Speaker Class')
+```
+
+```{r, eval = FALSE,collapse=TRUE}
+tmp_tab = table (exp_data_all$C, exp_data_all$L, exp_data_all$R)
+tmp_tab
+tmp_tab[,,1]
+tmp_tab[,,2]
+```
+
+```{r F1-3, fig.height = 2.5, fig.width = 8, echo = FALSE, fig.cap = "Mosaic plots highlighting a three-way relationship: The two-way listener by apparent speaker class relationship varies as a function of the third variable, resonance (indicated along the top of each plot).", echo=FALSE}
+
+################################################################################
+### Figure 1.3
+################################################################################
+
+tmp_tab = table (exp_data_all$C, exp_data_all$L, exp_data_all$R)
+
+par (mfrow = c(1,2), mar=c(2,2,2.5,0.5))
+plot (t(tmp_tab[,,1]), main = 'Actual Resonance',xlab='Listener', 
+      col = bmmb::cols[2:5],
+      ylab = 'Apparent Speaker Class')
+plot(t(tmp_tab[,,2]), main = 'Big Resonance',xlab='Listener', 
+     col = bmmb::cols[2:5],
+     ylab = 'Apparent Speaker Class')
+```
+
+### Inspecting quantitative variables {#c1-inspecting-quantitative}   
+
+```{r, collapse = TRUE}
+# calculate the mean
+mean (exp_data_all$height)
+
+# find the number of observations
+length (exp_data_all$height)
+
+# find quantiles
+quantile (exp_data_all$height)
+```
+
+```{r F1-4, fig.height = 4.5, fig.width = 8, fig.cap='Each column presents the same data in three different ways: (top) As individual jittered points, (middle) as a boxplot, and (bottom) as a histogram.', echo = FALSE}
+
+################################################################################
+### Figure 1.4
+################################################################################
+
+mens_height = exp_data_all$height[exp_data_all$C_v=='m']
+
+set.seed(7)
+par (mfcol = c(3,2), mar = c(0.5,4,0.5,1), oma = c(4,0,2,0))
+plot (mens_height, jitter (rep(1,length(mens_height))), xlim = c(100, 210), ylim = c(.95,1.05),
+      yaxt='n',ylab='', pch = 16, col = yellow, xaxt='n')
+mtext (side =3, outer = FALSE, text = "Adult male apparent heights", line = 1)
+boxplot (mens_height, horizontal = TRUE, ylim = c(100, 210), col = coral,xaxt='n')
+hist (mens_height,main="", col = teal, xlim = c(100, 210),breaks=40,cex.lab=1.3,
+      cex.axis=1.3, xlab = "")
+mtext (side =1, outer = FALSE, text = "Apparent height (cm)", line = 3)
+box()
+
+plot (exp_data_all$height, jitter (rep(1,length(exp_data_all$height))), xlim = c(100, 210), ylim = c(.95,1.05),
+      yaxt='n',ylab='', pch = 16, col = yellow, xaxt='n')
+mtext (side =3, outer = FALSE, text = "All apparent heights", line = 1)
+boxplot (exp_data_all$height, horizontal = TRUE, ylim = c(100, 210), col = coral,xaxt='n')
+hist (exp_data_all$height,main="", col = teal, xlim = c(100, 210),breaks=40,cex.lab=1.3,
+      cex.axis=1.3,xlab = "")
+mtext (side =1, outer = FALSE, text = "Apparent height (cm)", line = 3)
+
+box()
+```
+
+
+```{r F1-5, fig.height = 5, fig.width = 8, fig.cap='A pairs plot of the continuous variables in our data, showing different sorts of relationships between: f0 (fundamental frequency in Hertz), vtl (vocal-tract length in centimeters), dur (duration in milliseconds), and height (apparent speaker height in centimeters).', echo = FALSE}
+
+################################################################################
+### Figure 1.5
+################################################################################
+
+agg_data = aggregate (height~f0+vtl+dur, data = exp_data_all, FUN=mean)
+pairs (agg_data, col = lavender,pch=16)
+
+```
+
+
+### Exploring continuous and categorical variables together {#c1-inspecting-together}
+
+```{r, eval = FALSE}
+boxplot (y ~ factor)
+```
+
+```{r F1-6, fig.height = 2.5, fig.width = 8, fig.cap='Boxplots showing the distribution of different quantitative variables in our data according to the veridical speaker categories of boy (b), girl (g), man (m), and woman (w).', echo = FALSE}
+
+################################################################################
+### Figure 1.6
+################################################################################
+
+par (mfrow = c(1,3), mar = c(3,4.2,1,1))
+boxplot (f0 ~ C_v, data = exp_data_all, col = bmmb::cols[1:4],cex.lab=1.3,cex.axis=1.3,
+         xlab="",ylab="f0 (Hz)")
+boxplot (vtl ~ C_v, data = exp_data_all, col = bmmb::cols[5:8],cex.lab=1.3,cex.axis=1.3,
+         xlab="",ylab="Vocal-tract Length (cm)")
+boxplot (dur ~ C_v, data = exp_data_all, col = bmmb::cols[9:12],cex.lab=1.3,cex.axis=1.3,
+         xlab="",ylab="Duration (ms)")
+```
+
+```{r F1-7, fig.height = 2.5, fig.width = 8, fig.cap='Speakers plotted according to their fundamental frequency (f0), vocal-tract length, and average apparent height. Letters indicate if speaker is a boy (b), girl (g), man (m), or woman (w).', echo = FALSE}
+
+agg_data = aggregate (cbind(f0,vtl,dur,height)~C_v+S, data = exp_data_all, FUN=mean)
+
+
+par (mfrow = c(1,3), mar = c(4,4,1,1))
+
+plot (agg_data$vtl, agg_data$height, type = 'n',ylab="Apparent height (cm)",xlab="Vocal-tract length (cm)",
+      cex.lab=1.3,cex.axis=1.3)
+text (agg_data$vtl, agg_data$height, labels = agg_data$C_v, 
+      col = bmmb::cols[2:5][factor(agg_data$C_v)], cex = 1.5)
+
+plot (agg_data$f0, agg_data$height, type = 'n',xlab="f0 (Hz)",ylab="Apparent height (cm)",
+      cex.lab=1.3,cex.axis=1.3)
+text (agg_data$f0, agg_data$height, labels = agg_data$C_v, 
+      col = bmmb::cols[2:5][factor(agg_data$C_v)], cex = 1.5)
+
+plot (agg_data$vtl, agg_data$f0, type = 'n',ylab="f0 (Hz)",xlab="Vocal-tract length (cm)",
+      cex.lab=1.3,cex.axis=1.3)
+text (agg_data$vtl, agg_data$f0, labels = agg_data$C_v, 
+      col = bmmb::cols[2:5][factor(agg_data$C_v)], cex = 1.5)
+```
+
+
+## Exercises
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
