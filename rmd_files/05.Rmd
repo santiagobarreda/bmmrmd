@@ -1,0 +1,826 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+```
+
+# Comparing two groups of observations: Factors and contrasts
+
+## Chapter pre-cap
+
+## Comparing two groups
+
+## Distribution of repeated measures across factor levels
+
+
+```{r F5-1, echo = FALSE, out.width = "100%", fig.cap = "Three ways that subjects (S) can vary across levels of the factor A, making two groups."}
+
+knitr::include_graphics("_main_files/figure-html/Figure 5.1.jpg")
+```
+
+## Data and research questions {#c5-data-and-qs}
+
+```{r}
+xtabs ( ~ bmmb::exp_data$C_v + bmmb::exp_data$C)
+```
+
+```{r, warning=FALSE,message=FALSE}
+# load packages and data
+library (bmmb)
+library (brms)
+data (exp_data)
+
+# exclude actual men and apparent men
+notmen = exp_data[exp_data$C_v!='m' & exp_data$C!='m',]
+```
+
+```{r}
+xtabs (~ notmen$A_v + notmen$C)
+```
+
+```{r F5-2, fig.height = 2.75, fig.width=8, fig.cap = "Distribution of apparent height judgments organized by apparent and veridical age. Apparent height varies a lot across levels of apparent age, but not much across levels of veridical age.", echo = FALSE}
+
+################################################################################
+### Figure 5.2
+################################################################################
+
+par (mfrow = c(1,1), mar = c(4,4,1,1))
+
+boxplot (height ~ A_v + A, data = notmen, col = bmmb::cols[c(9,4,9,4)], 
+        ylab = "Perceived Age", xlab = "Apparent height (cm)", horizontal = TRUE,
+        names=c("","","",""),yaxt='n')
+axis (side=2,at =c(1.5,3.5),c("Adult","Child"))
+
+legend (108,2,legend=c("Veridical adults",
+                           "Veridical children"),
+         pch=15,col = bmmb::cols[c(9,4)], bty='n',pt.cex=1.5)
+
+# aa = notmen$height[notmen$A_v=="a" & notmen$A=="a"]
+# ac = notmen$height[notmen$A_v=="a" & notmen$A=="c"]
+# ca = notmen$height[notmen$A_v=="c" & notmen$A=="a"]
+# cc = notmen$height[notmen$A_v=="c" & notmen$A=="c"]
+ 
+# plot (density (aa), xlim = c(110,185), lwd=4, col= bmmb::cols[9],
+#       main="",xlab = "Apparent height (cm)", ylim = c(0,0.15),yaxs='i')
+# lines (density (ac), lwd=4, col= bmmb::cols[4])
+# lines (density (ca), lwd=4, col= bmmb::cols[9],lty=2)
+# lines (density (cc), lwd=4, col= bmmb::cols[4],lty=2)
+# 
+# legend (108,0.13,legend=c("Veridical adults, identified as adults",
+#                           "Veridical children, identified as adults",
+#                           "Veridical adults, identified as children",
+#                           "Veridical children, identified as children"),
+#         lwd=6,col = bmmb::cols[c(9,9,4,4)], bty='n',lty=c(1,3,1,3))
+```
+
+```{r}
+xtabs (~ notmen$A + notmen$L)
+```
+
+```{r}
+xtabs (~ notmen$A + notmen$S)[,40:50]
+```
+
+```{r F5-3, fig.height = 3, fig.width=8, fig.cap = "(left) Distribution of apparent heights according to apparent age group, across all listeners. (right) Same as left plot but presented individually for each listener. In each case, the first box of each color (the higher box) represents responses for apparent adults.", echo = FALSE}
+
+################################################################################
+### Figure 5.3
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4.1,.1,.5,.1),oma = c(0,4,0,.50)); layout (mat = t(c(1,2)), widths = c(.2,.8))
+
+boxplot (height ~ A, data=notmen, col = c(beige,lightpink),ylim = c(103,185), xlab="")
+mtext (side=1, "Apparent Age Group", line=3)
+
+mtext (side = 2, outer = FALSE, "Apparent height (cm)", line = 2.75)
+boxplot (height ~ A+L, data=notmen, col = rep(cols,each=2),ylim = c(103,185),
+         ylab="",yaxt="n", xaxt="n",xlab="Listener")
+axis (side=1, at = seq(1.5,30.5,2), 1:15)
+
+```
+
+## Estimating the difference between two means with 'brms' {#c5-two-means}
+
+### Fitting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model = brms::brm (
+  height ~ A + (1|L) + (1|S), data = notmen, chains = 4, cores = 4,
+  warmup = 1000, iter = 3500, thin = 2,
+  prior = c(brms::set_prior("normal(156, 12)", class = "Intercept"),
+            brms::set_prior("normal(0, 12)", class = "b"),
+            brms::set_prior("normal(0, 12)", class = "sd"),
+            brms::set_prior("normal(0, 12)", class = "sigma")))
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model = bmmb::get_model ('5_model.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model, '../models/5_model.RDS')
+model = readRDS ('../models/5_model.RDS')
+```
+
+### Interpreting the model
+
+```{r, collapse = TRUE}
+# inspect model
+bmmb::short_summary (model)
+```
+
+```{r, collapse = TRUE}
+# calculate mean apparent height based on apparent adultness
+tapply (notmen$height, notmen$A, mean)
+```
+
+## Contrasts {#c5-contrasts}
+
+### Treatment coding {#c5-treatment-coding}
+
+### Sum coding {#c5-sum-coding}
+
+```{r, collapse = TRUE}
+# calculate group means
+means = tapply (notmen$height, notmen$A, mean)
+mean (means)
+
+# find the distances to the mean of the means
+means - mean (means)
+```
+
+### Comparison of sum and treatment coding {#c5-comparison-sum-treatment}
+
+```{r F5-4, echo = FALSE, out.width = "100%", fig.cap = "Artist\'s rendition of contrast and treatment coding differences for our model."}
+
+################################################################################
+### Figure 5.4
+################################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 5.4.jpg")
+```
+
+## Sum coding and the decomposition of variation {#c5-refittin-sum}
+
+### Description of the model {#c5-description-1}
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A  + L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\\
+\mathrm{Intercept} \sim \mathrm{N}(156,12) \\
+A \sim \mathrm{N}(0,12) \\
+\sigma \sim \mathrm{N}(0,12) \\
+\sigma_L \sim \mathrm{N}(0,12) \\
+\sigma_S \sim \mathrm{N}(0,12)
+\end{split}
+(\#eq:5-1)
+\end{equation}
+$$
+
+### Fitting the model
+
+```{r}
+# to change to sum coding
+options (contrasts = c('contr.sum','contr.sum'))
+
+# to change back to treatment coding
+# options (contrasts = c('contr.treatment','contr.treatment'))
+```
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_sum_coding =  brms::brm (
+  height ~ A + (1|L) + (1|S), data = notmen, chains = 4, cores = 4,
+  warmup = 1000, iter = 3500, thin = 2,
+  prior = c(brms::set_prior("normal(156, 12)", class = "Intercept"),
+            brms::set_prior("normal(0, 12)", class = "b"),
+            brms::set_prior("normal(0, 12)", class = "sd"),
+            brms::set_prior("normal(0, 12)", class = "sigma")))
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_sum_coding = bmmb::get_model ('5_model_sum_coding.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_sum_coding, '../models/5_model_sum_coding.RDS')
+model_sum_coding = readRDS ('../models/5_model_sum_coding.RDS')
+```
+
+```{r, collapse = TRUE}
+# inspect model fixed effects
+brms::fixef (model_sum_coding)
+```
+
+```{r, collapse = TRUE}
+sort (unique (notmen$A))
+```
+
+### Comparison of sum and treatment coding 
+
+```{r, eval = FALSE}
+bmmb::short_summary (model)
+bmmb::short_summary (model_sum_coding)
+```
+
+```{r, collapse = TRUE}
+# treatment coding
+brms::fixef (model)
+
+# sum coding
+brms::fixef (model_sum_coding)
+```
+
+```{r}
+17.4/2
+```
+
+```{r}
+163.9 - (17.4/2)
+```
+
+```{r}
+155.2 + 8.7
+```
+
+```{r}
+8.7*2
+```
+
+## Inspecting and manipulating the posterior samples {#c5-working-with-posteriors}
+
+$$
+\begin{equation}
+\begin{split}
+\sigma^2_{x + y} = \sigma^2_x + \sigma^2_y + 2 \rho \sigma_x \sigma_y \\
+\sigma^2_{x - y} = \sigma^2_x - \sigma^2_y - 2 \rho \sigma_x \sigma_y
+\end{split}
+(\#eq:5-1a)
+\end{equation}
+$$
+
+```{r}
+set.seed (1)
+x = 1:10
+y = -x + rnorm (10)
+```
+
+```{r}
+# 'marginal' variance of x
+var (x)
+
+# 'marginal' variance of y
+var (y)
+
+# variance of sum of x and y
+var (x+y)
+
+# variance of difference of x and y
+var (x-y)
+```
+
+```{r, collapse = TRUE}
+samples = brms::fixef (model_sum_coding, summary = FALSE)
+
+head (samples)
+```
+
+```{r}
+colMeans (samples)
+```
+
+```{r}
+adult_mean = samples[,"Intercept"] + samples[,"A1"]
+```
+
+```{r F5-5, fig.height = 4, fig.width = 8, fig.cap = "Comparison of histograms (top row) and trace plots (bottom row) of the posterior samples of selected parameters, and their combinations.", echo = FALSE}
+
+################################################################################
+### Figure 5.5
+################################################################################
+par (mfrow = c(2,4), mar = c(4,4,3,1))
+hist (samples[,'Intercept'],freq=FALSE, col = skyblue,main='Intercept',
+      xlab="Apparent Height (cm)")  
+hist (samples[,'A1'], freq=FALSE, col = deeppurple,main='A1',
+      xlab="Apparent Height (cm)")
+hist (samples[,'Intercept']-samples[,'A1'], freq=FALSE, col = teal,main='Intercept-A1',
+      xlab="Apparent Height (cm)")
+hist (samples[,'Intercept']+samples[,'A1'], freq=FALSE, 
+      col = yellow,main='Intercept+A1',xlab="Apparent Height (cm)")
+plot (samples[,'Intercept'], col = skyblue,pch=16,ylab="Apparent Height (cm)")  
+plot (samples[,'A1'], col = deeppurple, pch=16,ylab="Apparent Height (cm)")  
+plot (samples[,'Intercept']-samples[,'A1'], col = teal, pch=16,ylab="Apparent Height (cm)")
+plot (samples[,'Intercept']+samples[,'A1'], col = yellow,
+      pch=16,ylab="Apparent Height (cm)")  
+```
+
+```{r, collapse = TRUE}
+new_parameters = cbind(adult_mean = samples[,'Intercept'] + samples[,'A1'],
+                       child_mean = samples[,'Intercept'] - samples[,'A1'])
+
+# report mean and spread of samples
+brms::posterior_summary (new_parameters)
+```
+
+
+```{r}
+brms::fixef (model_sum_coding)
+```
+
+
+### Using the *hypothesis* function {#c5-using-hypothesis}
+
+```{r, collapse = TRUE}
+bmmb::short_hypothesis(model_sum_coding, "Intercept + A1 = 0")
+```
+
+
+```{r, collapse = TRUE}
+short_hypothesis(model_sum_coding, 
+                 c("Intercept = 0",        # overall mean
+                   "Intercept + A1 = 0",   # adult mean
+                   "Intercept - A1 = 0"))  # child mean
+```
+
+```{r, collapse = TRUE}
+short_hypothesis(model, 
+                 c("Intercept + Ac/2 = 0",   # overall mean
+                   "Intercept = 0",          # adult mean
+                   "Intercept + Ac = 0"))    # child mean
+```
+
+### Working with the random effects {#c5-manipulating-random-effects}
+
+```{r}
+listener_effects_hat = 
+  ranef(model_sum_coding, summary = FALSE)$L[,,"Intercept"]
+
+str (listener_effects_hat)
+```
+
+```{r}
+Intercept_hat = 
+  fixef(model_sum_coding, summary = FALSE)[,"Intercept"]
+
+str (Intercept_hat)
+```
+
+```{r}
+# add the intercept and listener random effects, and summarize
+listener_means_hat = 
+  brms::posterior_summary (Intercept_hat + listener_effects_hat)
+
+# summarize listener effects
+listener_effects_hat = brms::posterior_summary (listener_effects_hat)
+```
+
+```{r}
+# find average apparent height for each listener and apparent age
+listener_means = tapply (notmen$height, notmen[,c('A','L')], mean)
+
+# find average apparent height for each listener 
+listener_means = colMeans (listener_means)
+```
+
+```{r}
+Intercept = mean (listener_means)
+listener_effects = listener_means - Intercept
+```
+
+```{r F5-6, fig.height = 2.5, fig.width=8, fig.cap = "(left) Estimated listener means and 95% credible intervals. Crosses indicate no pooling estimates. (right) Estimated listener effects and 95% credible intervals. Crosses indicate centered no pooling estimates.", echo = FALSE}
+
+################################################################################
+### Figure 5.6
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,2.5,.1,.1), oma = c(0,1,0,0))
+bmmb::brmplot (listener_means_hat, col = cols,ylim=c(143,168),xlab="Listener")
+points (listener_means, cex=2, col = cols, pch = 4,lwd=2)
+abline (h = Intercept)
+bmmb::brmplot (listener_effects_hat, col = cols,ylim=c(-12,13),xlab="Listener")
+points (listener_effects, cex=2, col = cols, pch = 4,lwd=2)
+#bmmb::brmplot (qq, col = cols,ylim=c(-12,13))
+#points (listener_effects, cex=2, col = cols, pch = 4,lwd=2)
+
+mtext (side=2,text="Centimeters", outer = TRUE, line=0, adj = 0.6)
+```
+
+```{r}
+short_hypothesis(model_sum_coding, "Intercept = 0")
+```
+
+```{r}
+short_hypothesis(model_sum_coding, "Intercept = 0",
+                 scope = "ranef",group="L")[1:5,]
+```
+
+```{r}
+listener_effects_hat[1:5,]
+```
+
+```{r}
+short_hypothesis(model_sum_coding, "Intercept = 0",
+                 scope = "coef",group="L")[1:5,]
+```
+
+
+```{r}
+listener_means_hat[1:5,]
+```
+
+```{r}
+# get listener effects
+listener_effects_hat = 
+  ranef(model_sum_coding, summary = FALSE)$L[,,"Intercept"]
+
+# find the difference between the second and third listener effect
+difference_2_3 = listener_effects_hat[,2] - listener_effects_hat[,3]
+
+# summarize the difference
+posterior_summary (difference_2_3)
+```
+
+## Making our models more robust: The (non-standardized) t distribution {#c5-robustness}
+
+```{r F5-7, fig.height = 2.75, fig.width = 8, fig.cap='(left) A comparison of the density of a standard normal distribution (red curve) with the densities of t distributions with different degrees of freedom. (middle) The log-densities of the distributions in the left plot. (right) The same as the middle plot, except across a wider domain.', echo = FALSE}
+
+################################################################
+### Figure 5.7
+################################################################
+
+par (mfrow = c(1,3), mar = c(4,4.2,1,1))
+curve (dnorm (x, 0, 1), from = -7, to = 7, col = 2,lwd=3, 
+       yaxs='i',ylim = c(0,0.45), xlim = c(-6,6),ylab="Density",cex.lab=1.4)
+curve (dt (x, 1), from = -7, to = 7, add = TRUE, lwd=3, col=deeppurple)
+curve (dt (x, 5), from = -7, to = 7, add = TRUE, lwd=3, col=skyblue)
+curve (dt (x, 15), from = -7, to = 7, add = TRUE, lwd=3, col=deepgreen)
+curve (dt (x, 50), from = -7, to = 7, add = TRUE, lwd=3, col=darkorange)
+#abline (h = 1/10^seq(1,5,1),lty=3,col='grey')
+
+legend (2,.4,legend=c("1","5","15","50","\u221E"),bty='n',title='d.f.',lwd=3,
+        col=c(deeppurple,skyblue,deepgreen,darkorange,"red"),cex=1.2)
+
+curve (dnorm (x, 0, 1), from = -7, to = 7, col = 2,lwd=3, 
+       yaxs='i',log='y', ylim = c(0.001,.6), xlim = c(-3,3),
+       yaxt='n',ylab="Log Density",cex.lab=1.4)
+curve (dt (x, 1), from = -7, to = 7, add = TRUE, lwd=3, col=deeppurple)
+curve (dt (x, 5), from = -7, to = 7, add = TRUE, lwd=3, col=skyblue)
+curve (dt (x, 15), from = -7, to = 7, add = TRUE, lwd=3,col=deepgreen)
+curve (dt (x, 50), from = -7, to = 7, add = TRUE, lwd=3, col=darkorange)
+abline (h = 1/10^seq(1,9,1),lty=3,col='grey')
+abline (v = seq(-7,7,1),lty=3,col='grey')
+
+lab = expression(10^-1)
+
+for (i in seq(-1,-8,-1)){
+  lab[[1]][[3]] = i
+  axis (side=2, at = 1/(10^-i), labels = lab, las=2)
+}
+
+curve (dnorm (x, 0, 1), from = -7, to = 7, col = 2,lwd=3, 
+       yaxs='i',log='y', ylim = c(0.000000001,.6), 
+       xlim = c(-6,6), yaxt='n',ylab="Log Density",cex.lab=1.4)
+curve (dt (x, 1), from = -7, to = 7, add = TRUE, lwd=3, col=deeppurple)
+curve (dt (x, 5), from = -7, to = 7, add = TRUE, lwd=3, col=skyblue)
+curve (dt (x, 15), from = -7, to = 7, add = TRUE, lwd=3,col=deepgreen)
+curve (dt (x, 50), from = -7, to = 7, add = TRUE, lwd=3, col=darkorange)
+abline (h = 1/10^seq(1,9,1),lty=3,col='grey')
+abline (v = seq(-7,7,1),lty=3,col='grey')
+
+lab = expression(10^-1)
+
+for (i in seq(-2,-8,-2)){
+  lab[[1]][[3]] = i
+  axis (side=2, at = 1/(10^-i), labels = lab, las=2)
+}
+```
+
+$$
+\begin{equation}
+\begin{split}
+x = \mu + s \cdot t
+\end{split}
+(\#eq:5-2)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\sigma = s \cdot \sqrt{\nu / (\nu-2)} \\ \\
+\sigma^2 = s^2 \cdot \nu / (\nu-2)
+\end{split}
+(\#eq:5-3)
+\end{equation}
+$$
+
+## Re-fitting with t-distributed errors {#re-fitting-with-t-distributed-errors.}
+
+```{r, cache = TRUE}
+resids = residuals (model_sum_coding)[,1]
+```
+
+```{r}
+range (scale(resids))
+```
+
+```{r}
+head (sort(scale(resids)))
+```
+
+```{r, collapse = TRUE}
+mu = mean(resids)
+sigma = sd(resids)
+
+# probability of value smaller than smallest outlier
+pnorm (min (resids),mu,sigma)
+```
+
+```{r, collapse = TRUE}
+# sample size before outlier this big expected
+1/pnorm (min (resids),mu,sigma)
+```
+
+```{r, collapse = TRUE, error=FALSE,warning=FALSE}
+# get maximum likelihood estimates of t parameters
+# the 'lower' bounds are for the sd and df respectively
+tparams = MASS::fitdistr (resids, 't', lower = c(0,1))
+
+# check out mean, scale and nu. bottom row is standard errors
+tparams
+```
+
+```{r, collapse = TRUE, error=FALSE,warning=FALSE}
+set.seed(1)
+# generate standard normal data
+x_norm = rnorm (1401)
+norm_params = MASS::fitdistr (x_norm, 't', lower = c(0,1))
+
+# nu is very large
+norm_params
+```
+
+```{r, collapse = TRUE}
+m = tparams[[1]][1]
+s = tparams[[1]][2]
+df = tparams[[1]][3]
+
+# probability of value smaller than smallest outlier
+bmmb::ptns (min (resids),m, s, df)
+
+# sample size before outlier thie big expected
+1/bmmb::ptns (min (resids),m, s, df)
+```
+
+```{r}
+ptns (min (resids),m, s, df) / 
+  pnorm (min (resids),mu,sigma)
+```
+
+### Description of the model
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A  + L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\\
+\mathrm{Intercept} \sim \mathrm{t}(3, 156,12) \\
+A \sim \mathrm{t}(3,0,12) \\
+\sigma \sim \mathrm{t}(3,0,12) \\
+\sigma_L \sim \mathrm{t}(3,0,12) \\
+\sigma_S \sim \mathrm{t}(3,0,12) \\ 
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+\end{split}
+(\#eq:5-4)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+curve (dgamma(x,2,0.1), xlim = c(1,250), xaxs='i', ylab="Density",
+       xlab="", lwd=4, yaxs='i', ylim = c(0,0.045))
+```
+       
+```{r F5-8, fig.height = 3, fig.width = 8, fig.cap="(left) The density of a gamma distribution with the parameters specified in our model (`dgamma(x,2,0.1)`). (left middle) The log-density of the distribution in the left plot. (right middle) The density of a gamma distribution with alternate parameters (`dgamma(x,2,0.02)`). (right) The log-density of the distribution in the right-middle plot.", echo = FALSE}
+
+################################################################################
+### Figure 5.8
+################################################################################
+
+par (mfrow = c(1,4), mar = c(4,4.2,1,1))
+curve (dgamma(x,2,0.1), xlim = c(1,250), xaxs='i', ylab="Density",xlab="",
+       lwd=4, col = maroon, yaxs='i', ylim = c(0,0.045),cex.lab=1.4)
+curve (dgamma(x,2,0.1), xlim = c(1,250), log='y', xaxs='i', ylab="Log Density",
+       xlab="", lwd=4, col = lavender, yaxs='i', ylim = c(10^-7,0.05),cex.lab=1.4)
+curve (dgamma(x,2,0.02), xlim = c(1,250), xaxs='i', ylab="Density",xlab="",
+       lwd=4, col = maroon, yaxs='i', ylim = c(0,0.015),cex.lab=1.4)
+curve (dgamma(x,2,0.02), xlim = c(1,250), log='y', xaxs='i', ylab="Log Density",
+       xlab="", lwd=4, col = lavender, yaxs='i', ylim = c(10^-7,0.05),cex.lab=1.4)
+```
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+options (contrasts = c('contr.sum','contr.sum'))
+model_sum_coding_t =  brms::brm (
+  height ~ A + (1|L) + (1|S), data = notmen, chains = 4, 
+  cores = 4, warmup = 1000, iter = 3500, thin = 2, family="student",
+  prior = c(brms::set_prior("student_t(3, 156, 12)", class = "Intercept"),
+            brms::set_prior("student_t(3, 0, 12)", class = "b"),
+            brms::set_prior("student_t(3, 0, 12)", class = "sd"),
+            brms::set_prior("gamma(2, 0.1)", class = "nu"),
+            brms::set_prior("student_t(3, 0, 12)", class = "sigma")))
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_sum_coding_t = bmmb::get_model ('5_model_sum_coding_t.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_sum_coding_t, '../models/5_model_sum_coding_t.RDS')
+model_sum_coding_t = readRDS ('../models/5_model_sum_coding_t.RDS')
+```
+
+```{r, collapse = TRUE}
+# inspect model
+bmmb::short_summary (model_sum_coding_t)
+```
+
+```{r}
+nu = 6.90
+sigma = 7.23
+sigma * sqrt (nu / (nu-2))
+```
+
+```{r}
+fixef (model_sum_coding)
+
+fixef (model_sum_coding_t)
+```
+
+## Simulating the two-group model {#c5-simulating}
+
+```{r}
+n_listeners = 15
+n_speakers = 94 # must be even!
+
+# don't run this line if you want a new simulated dataset. 
+set.seed(1)
+# this is the value of our intercept
+Intercept = 155
+
+# this is a vector of adultness fixed effects
+A_ = c(8.7, -8.7)
+
+# this is a vector indicating which adultness group the observation is in
+A = rep(1:2, (n_listeners*n_speakers/2))
+
+# this is a vector of 15 listener effects
+L_ = rnorm (n_listeners, 0, 5.2)
+
+# this is a vector indicating which listener provided which observation
+L = rep (1:n_listeners, each = n_speakers)
+
+# this is a vector of 94 speaker effects
+S_ = rnorm (n_speakers, 0, 3.6)
+
+# this is a vector indicating which speaker produced which utterance
+S = rep (1:n_speakers, each = n_listeners)
+
+# this vector contains the error
+epsilon = rnorm (n_speakers*n_listeners, 0, 8.6)
+
+# the sum of the above components equals our observations
+height_rep = Intercept + A_[A] + L_[L] + S_[S] + epsilon
+```
+
+```{r, eval = FALSE}
+## ~S (Number of levels: 94) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     3.58      0.42     2.82     4.45 1.00     2878     4054
+```
+
+```{r}
+# only intercept and error
+height_rep_1 = Intercept + epsilon
+
+# only intercept and adultness
+height_rep_2 = Intercept + A_[A]
+
+# only intercept and speaker
+height_rep_3 = Intercept + L_[L]
+
+# intercept, adultness and error
+height_rep_4 = Intercept + A_[A] + epsilon
+
+# intercept, adutlness and speaker
+height_rep_5 = Intercept + A_[A] + L_[L] + epsilon
+```
+
+```{r F5-9, fig.width = 8, fig.height = 5, fig.cap="Boxplots comparing different simulated datasets to the real data. Each color represents a different simulated listener.", echo = FALSE}
+
+################################################################################
+### Figure 5.9
+################################################################################
+
+par (mfrow = c(3,2), mar = c(1,1,.5,.1), oma = c(0,4,1,1))
+boxplot (height_rep_1 ~ L, ylim = c(100,200),xaxt='n',
+         col=bmmb::cols,ylab="")
+text (1, 105, label = "Intercept + error", cex = 1.25,pos=4)
+abline (h=229,lty=2)
+
+boxplot (height_rep_2 ~ A + L, ylim = c(100,200),xaxt='n',
+         col=bmmb::cols,ylab="",yaxt="n")
+abline (h=229,lty=2)
+text (1, 105, label = "Intercept + A", cex = 1.25,pos=4)
+
+boxplot (height_rep_3 ~ L, ylim = c(100,200),xaxt='n',
+         col=bmmb::cols,ylab="")
+abline (h=229,lty=2)
+text (1, 105, label = "Intercept + L", cex = 1.25,pos=4)
+
+boxplot (height_rep_4 ~ A + L, ylim = c(100,200),xaxt='n',
+         col=rep(bmmb::cols,each=2),ylab="",yaxt="n")
+text (1, 105, label = "Intercept + A + error", cex = 1.25,pos=4)
+abline (h=229,lty=2)
+
+boxplot (height_rep_5 ~ A + L, ylim = c(100,200),xaxt='n',
+         col=rep(bmmb::cols,each=2),ylab="")
+abline (h=229,lty=2)
+text (1, 105, label = "Intercept + A + L + error", cex = 1.25,pos=4)
+
+boxplot (height ~ A + L, ylim = c(100,200),xaxt='n',data = notmen,
+         col=rep(bmmb::cols,each=2),ylab="",yaxt="n")
+abline (h=229,lty=2)
+text (1, 105, label = "Real Data", cex = 1.25,pos=4)
+
+mtext (side=2,text="Apparent height (cm)", outer = TRUE, line=2.1, cex=0.9)
+```
+
+## Answering our research questions {#c5-answering-qs}
+
+```{r F5-10, fig.height = 3, fig.width=8, fig.cap = "(left) Distribution of apparent heights according to apparent age group, across all speakers. (right) Same as left plot but presented individually for each listener. In each case, the first box of each color (the upper box) indicates responses for apparent adults. The horizontal lines running through the plots represent the grand mean (black), the adult mean (blue), and the child mean (green).", echo = FALSE}
+
+################################################################################
+### Figure 5.10
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4.1,.1,.5,.1),oma = c(0,4,0,.50)); layout (mat = t(c(1,2)), widths = c(.2,.8))
+
+boxplot (height ~ A, data=notmen, col = c(beige,lightpink),ylim = c(103,185), xlab="")
+mtext (side=1, "Apparent Age Group", line=3)
+abline (h = c(155.3,155.3+8.8,155.3-8.8), lwd = c(3,2,2), col = c(1,4,3))
+boxplot (height ~ A, data=notmen, col = c(beige,lightpink),ylim = c(103,185), xlab="",add=TRUE)
+
+mtext (side = 2, outer = FALSE, "Apparent height (cm)", line = 2.75)
+boxplot (height ~ A+L, data=notmen, col = rep(cols,each=2),ylim = c(103,185),
+         ylab="",yaxt="n", xaxt="n",xlab="Listener")
+axis (side=1, at = seq(1.5,30.5,2), 1:15)
+abline (h = c(155.3,155.3+8.8,155.3-8.8), lwd = c(3,2,2), col = c(1,4,3))
+boxplot (height ~ A+L, data=notmen, col = rep(cols,each=2),ylim = c(103,185),
+         ylab="",yaxt="n", xaxt="n",xlab="Listener", add = TRUE)
+```
+
+## 'Traditionalists' corner {#c5-frequentist}
+
+### Bayesian multilevel models vs. lmer
+
+```{r, eval = FALSE}
+options (contrasts = c("contr.sum","contr.sum"))
+```
+
+```{r, warning=FALSE, message = FALSE, collapse = TRUE, cache = TRUE}
+library (lme4)
+lmer_model = lmer (height ~ A + (1|L) + (1|S), data = notmen)
+
+summary (lmer_model)
+```
+
+```{r}
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept   155.22      1.41   152.43   157.96 1.00     1687     2492
+## A1            8.71      0.36     8.00     9.42 1.00     3883     4065
+```
+
+
+## Exercises
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
