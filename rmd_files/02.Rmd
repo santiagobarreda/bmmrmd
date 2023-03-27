@@ -1,0 +1,604 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+```
+
+# Probabilities, likelihood, and inference 
+
+## Chapter pre-cap
+
+## Data and research questions {#c2-data}
+
+```{r warning=FALSE,message=FALSE}
+# Load book package 
+library (bmmb)
+
+# Load experimental data
+data (exp_data)
+
+# Take only rows produced by men (`m`)
+men = exp_data[exp_data$C_v == 'm',]
+mens_height = men$height
+```
+
+```{r}
+quantile (mens_height)
+```
+
+## Empirical Probabilities {#c2-empirical-prob}
+
+```{r, collapse = TRUE}
+# the evaluation in the parenthesis will return 1 if true, 0 if false
+# number of observations the fall above the threshold
+sum (mens_height > 180)  
+
+# divided by total number of events
+sum (mens_height > 180) / length (mens_height)  
+
+# a shortcut to calculate probability, mean = sum/length
+mean (mens_height > 180)
+```
+
+### Conditional and marginal probabilities {#c2-conditional}
+
+```{r F2-1, collapse = TRUE, fig.height = 2.75, fig.width = 8, fig.cap='(left) Boxplot showing all height judgements for adult male speakers in our experiment. (right) Individual boxplots for each listener\'s responses', echo = FALSE}
+
+################################################################################
+### Figure 2.1
+################################################################################
+
+par (mar = c(4,.5,1,0), mfrow = c(1,2), oma = c(0,4,0,1))
+layout (mat = t(c(1,2)), widths = c(.15,.85))
+boxplot (men$height, ylab = "", xlab = "", col=lavender, ylim = c(135,200),
+         width=2)
+mtext (side=2,text="Apparent height (cm)",line=3)
+
+boxplot (height ~ L, data = men, ylab = "Apparent height (cm)", xlab = "Listener",
+         col = bmmb::cols,yaxt='n', ylim = c(135,200))
+grid()
+boxplot (height ~ L, data = men, ylab = "", xlab = "",yaxt='n',
+         col = bmmb::cols, add = TRUE)
+```
+
+```{r, collapse = TRUE}
+# create subsets based on listener
+L07 = mens_height[men$L==7]
+L12 = mens_height[men$L==12]
+
+# find the conditional probability of height>180 for each listener
+mean (L07 > 180)
+
+mean (L12 > 180)
+```
+
+```{r F2-2, collapse = TRUE, fig.height = 2.75, fig.width=8, fig.cap='(left) Boxplot showing the duration of stimuli for adult male speakers in our experiment. (right) Individual boxplots for the stimuli presented to each listener.', echo = FALSE}
+
+################################################################################
+### Figure 2.2
+################################################################################
+
+par (mar = c(4,.5,1,0), mfrow = c(1,2), oma = c(0,4,0,1))
+layout (mat = t(c(1,2)), widths = c(.15,.85))
+
+boxplot (men$dur, ylab = "", xlab = "", col=lavender, ylim = c(120,370),
+         width=2)
+mtext (side=2,text="Duration (ms)",line=3)
+boxplot (dur ~ L, data = men, ylab = "", xlab = "Listener",
+         col = c(yellow, deepgreen,coral,skyblue,darkorange,lavender),yaxt='n', ylim = c(120,370))
+grid()
+boxplot (dur ~ L, data = men, ylab = "", xlab = "",yaxt='n',
+         col = c(yellow, deepgreen,coral,skyblue,darkorange,lavender), add = TRUE)
+```
+
+### Joint probabilities {#c2-joint}
+
+```{r, collapse = TRUE}
+# TRUE if the listener is 12
+L12 = (men$L=='12')
+
+# TRUE if the duration is greater than 250 ms
+dur_250 = men$dur > 250
+
+# The probability of A and B
+mean (L12 & dur_250)
+
+mean (men$L=='12' & men$dur > 250)
+```
+
+```{r, collapse = TRUE}
+# Marginal probability of observing listener 12 (i.e. P(L=12))
+p_L12 = mean (men$L=='12')
+
+# Subset containing only listener 12 
+L12 = men[men$L == '12',]
+
+# Probability of dur>250 given listener 12 (i.e., P(dur>250 | L=12))
+p_dur_250_given_L12 = mean (L12$dur > 250)
+
+# Joint probability = P(dur>250 | L=12) * P(L=12)
+p_dur_250_given_L12 * p_L12
+```
+
+```{r, collapse = TRUE}
+# Joint probability = P(dur>250) * P(L=12)
+mean (dur_250) * mean (p_L12)
+```
+
+```{r, collapse = TRUE}
+# TRUE if the listener is 12
+L12 = (men$L=='12')
+
+# TRUE if the height is over 180
+over_180 = men$height > 180
+
+# Empirical joint probability of the observation
+mean(men$L=='12' & men$height > 180)
+
+# Wrong: multiplying marginal probabilities
+mean(L12) * mean(over_180)
+```
+
+```{r, collapse = TRUE}
+# Marginal probability of observing listener 12
+p_L12 = mean (men$L=='12')
+
+# Subset containing only listener 12 (i.e., given listener 12)
+L12 = men[men$L == '12',]
+# Conditional probability of a height > 180 given listener 12
+p_over_180_given_L12 = mean (L12$height > 180)
+
+# Correct joint probability
+p_over_180_given_L12 * p_L12
+```
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{Independent \, events:} \\
+P(A \,\&\, B \,\&\, C \,\&\, D) = P(A) \cdot P(B) \cdot P(C) \cdot P(D) \\ \\ \\
+\mathrm{Dependent \, events:} \\
+P(A \,\&\, B \,\&\, C \,\&\, D) = P(A|B,C,D) \cdot P(B|C,D) \cdot P(C|D) \cdot P(D) 
+\end{split}
+\end{equation}
+$$
+
+
+## Probability distributions {#c2-theoretical}
+
+```{r F2-3, fig.height = 2.5, fig.width = 8, fig.cap='(left) A histogram of adult male height judgments showing counts in each bin. (middle) The same data from the left plot, this time showing the density of the distribution. (right) The same data from the middle plot, this time with heights expressed in meters.', echo = FALSE}
+
+################################################################################
+### Figure 2.3
+################################################################################
+
+par (mfrow = c(1,3), mar = c(4.1,4.1,1,1))
+
+hist (mens_height, main="", col = lavender, xlim = c(135,200),
+      ylim = c(0,205), xlab="Apparent height (cm)",cex.lab=1.3,cex.axis=1.3)
+hist (mens_height, freq = FALSE, main = "", col = deepgreen, 
+      xlim = c(135,200), ylim = c(0,0.06), xlab="Apparent height (cm)",cex.lab=1.3,cex.axis=1.3)
+hist (mens_height/100, freq = FALSE, main = "", col = skyblue, 
+      xlim = c(1.35,2.00), ylim = c(0,06.0), xlab="Apparent height (m)",
+      cex.lab=1.3,cex.axis=1.3)
+```
+
+```{r, eval = FALSE}
+intercept = 3
+slope = 1
+x = seq (-10,10,.1)
+y = intercept + x*slope
+
+plot (x,y, type='l',lwd=3,col=4)
+```
+
+## The normal distribution {#c2-normal}
+
+$$
+\begin{equation}
+\mathbb{E}(y_{[i]}) = \sum_{i=1}^{\infty} y_{[i]} P(y_{[i]})
+(\#eq:2-3a)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathbb{E}(y) = \int_{-\infty}^{\infty} yf(y) \; dx
+(\#eq:2-3b)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\hat{\mu}_{y} = \sum_{i=1}^{n} y_{[i]}/n
+(\#eq:2-1)
+\end{equation}
+$$
+
+```{r, collapse = TRUE}
+# initialize values
+n = length (mens_height)
+mean_height = 0
+
+# summation equivalent to equation 2.3
+for (i in 1:n) mean_height = mean_height + mens_height[i]/n
+
+# replicates values of the mean function
+mean (mens_height)
+mean_height
+```
+
+$$
+\begin{equation}
+0 = \sum_{i=1}^{n} y_{[i]} - \hat{\mu}_{y}
+(\#eq:2-2)
+\end{equation}
+$$
+
+### The sample variance (or standard deviation) {#c2-sample-variance}
+
+$$
+\begin{equation}
+\hat{\sigma}^2_{y} = \sum_{i=1}^n (y_{[i]} - \hat{\mu}_{y})^2 / n
+(\#eq:2-4)
+\end{equation}
+$$
+
+```{r , collapse = TRUE}
+# initialize values
+n = length (mens_height)
+variance_height = 0
+mean_height = mean (mens_height)
+
+# equivalent to equation 2.5 above
+for (i in 1:n) variance_height = 
+  variance_height + (mens_height[i]-mean_height)^2/n
+
+# this time the values don't match
+var (mens_height)
+variance_height
+```
+
+$$
+\begin{equation}
+\hat{\sigma}^2_{y} = \sum_{i=1}^n (y_{[i]} - \hat{\mu}_{y})^2 / (n-1)
+(\#eq:2-5)
+\end{equation}
+$$
+
+```{r , collapse = TRUE}
+# initialize variable
+variance_height = 0
+
+# equivalent to 2.6 above
+for (i in 1:n) variance_height = variance_height + (mens_height[i]-mean_height)^2/(n-1)
+
+# this time the values do match
+var (mens_height)
+variance_height
+```
+
+$$
+\begin{equation}
+\hat{\sigma}_{y} = \sqrt{\hat{\sigma}^2_{y}} = \sqrt{\sum_{i=1}^n (y_{[i]} - \mu_{y})^2 / (n-1)}
+(\#eq:2-6)
+\end{equation}
+$$
+
+### The normal density {#c2-normal-density}
+
+$$
+\begin{equation}
+f(x) = \frac{1}{\sigma\sqrt{2\pi}} \cdot \exp( -\frac{1}{2\sigma^2}(x-\mu)^{2}\,)
+(\#eq:2-7)
+\end{equation}
+$$
+
+### The standard normal distribution {#c2-standard-normal}
+
+$$
+\begin{equation}
+z=(x-\mu) / \sigma
+(\#eq:2-8)
+\end{equation}
+$$
+
+```{r F2-4, fig.height = 2.5, fig.width = 8, fig.cap='(left) A histogram of apparent height judgments for adult male speakers. (middle) The same data from the left plot, this time the data has been centered around the mean so that the new mean is zero. (right) The same data from the middle plot, this time the data has been scaled according to the standard deviation so that the standard deviation is now one (and the mean is still zero).', echo = FALSE}
+
+################################################################################
+### Figure 2.4
+################################################################################
+
+par (mfrow = c(1,3), mar = c(4.1,4.1,1,1))
+
+hist (mens_height, main="", col = lavender, xlim = c(130,205),freq = FALSE,
+      ylim = c(0,.06), xlab="Apparent height (cm)",cex.lab=1.3,cex.axis=1.3,breaks=10)
+hist (mens_height-mean(mens_height), freq = FALSE, main = "", col = deepgreen, 
+      xlim = c(-40,30), ylim = c(0,0.057), xlab="Centered apparent height (cm)",cex.lab=1.3,cex.axis=1.3,breaks=10)
+hist (scale(mens_height), freq = FALSE, main = "", col = skyblue, 
+      xlim = c(-5.2,4), ylim = c(0,0.45), xlab="Scaled apparent height (cm)",cex.lab=1.3,cex.axis=1.3,breaks=10)
+```
+
+$$
+\begin{equation}
+x=z \cdot \sigma+\mu
+(\#eq:2-9)
+\end{equation}
+$$
+
+## Models and inference {#c2-models-and-inference}
+
+```{r F2-5, fig.height = 2.7, fig.width = 8, fig.cap='The histogram shows the empirical distribution of height judgments for adult male speakers in our data. The shaded area shows the theoretical density of the equivalent normal distribution. The red area corresponds to the theoretical probability of observing a height under 162 cm, based on the shape of the normal density.', echo = FALSE}
+
+################################################################################
+### Figure 2.5
+################################################################################
+
+par (mfrow = c(1,1), mar = c(4,4,1,1))
+
+hist (mens_height, freq = FALSE, main = "", breaks = 20, col = 'grey',
+      xlim = c(140,200), xlab = "Apparent height (cm)")
+abline (v = 162.1, lwd = 2, col = 2, lty=3)
+# plots the normal density (red line) using stats calculated form our sample. 
+curve (dnorm (x, mean(mens_height), sd(mens_height)),from=100, to=300, lwd=2, col = 2, add=TRUE)
+
+x = c(140,seq(140,162.1,length.out = 100),162.1)
+y = c(0,dnorm(seq(140,162.1,length.out = 100), mean (mens_height), sd (mens_height)),0)
+polygon(x, y, col=rgb(1, 0, 0,0.3))
+abline (v = 63.8, lwd = 2, col = 2, lty=3); abline (v = 70, lwd = 2,col=1,lty=3)
+x = c(162.1,seq(162.1,200,length.out = 100),200)
+y = c(0,dnorm(seq(162.1,200,length.out = 100), mean (mens_height), sd (mens_height)),0)
+polygon(x, y, col=rgb(0, 0, 1,0.3))
+abline (v = 63.8, lwd = 2, col = 2, lty=3); abline (v = 70, lwd = 2,col=1,lty=3)
+```
+
+```{r, collapse = TRUE}
+# empirical probability of height < 162.1
+mean (mens_height < 162.1)
+
+#  Red area of distribution, x < 162.1
+pnorm (162.1, mean (mens_height), sd(mens_height))
+
+#  Blue area of distribution, x > 162.1
+1 - pnorm (162.1, mean (mens_height), sd(mens_height))
+```
+
+## Probabilities of events and likelihoods of parameters {#c2-likelihoods}
+
+```{r F2-6, echo = FALSE, fig.height = 3, fig.width = 8, fig.cap='(left) The red curve indicates the likelihood of the population mean given the blue points in the figure. The vertical lines indicate three different parameter values that will be considered. (right) The red curve indicates the probability density given an assumed mean of 174 cm (the sample mean). Vertical lines highlight the density over each point.', echo = FALSE}
+
+################################################################################
+### Figure 2.6
+################################################################################
+
+set.seed (4)
+n = 10
+height_sample = sample (mens_height,n)   ## tiny sub sample for example
+par (mfrow = c(1,2), mar = c(4,4,2,1))
+plot (height_sample,rep(0,n), ylim = c(0,.2), pch=16,col=4, xlim = c(140,195), 
+      ylab='Density', main = 'Likelihood of mean',xlab='Apparent height (cm)',cex.main=.8, cex.main=1)
+## here the likelihood sd is divided by the sample size
+curve (dnorm (x, mean(height_sample), sd(height_sample) / sqrt (n)), from = c(140,195), 
+       add=TRUE, col = 2, lwd = 2)
+abline (v = c(mean (height_sample), 160, 170), lwd=2,lty=3)
+
+plot (height_sample,rep(0,n), ylim = c(0,.06), pch=16,col=4,xlim = c(130,200),cex.main=.8, 
+      ylab='Density', main = "Distribution if mean = 174 cm",xlab='Apparent height (cm)', cex.main=1)
+## now it is centered at mean = 175 cm
+curve (dnorm (x, mean(height_sample), sd(height_sample)), from = c(130,200), 
+       add=TRUE, col = 2, lwd = 2)
+segments (height_sample,rep(0,n),height_sample,
+          dnorm (height_sample, mean(height_sample), sd(height_sample) ))
+
+#abline (v = c(mean (height_sample)), lwd=1,lty=3)
+```
+
+```{r F2-7, echo = FALSE, fig.height = 3, fig.width = 8, fig.cap='(left) The red curve indicates the probability density given an assumed mean of 170 cm (the sample mean). Vertical lines highlight the density over each point. (right) The same information as in the left plot, but given a mean of 160 cm.', echo = FALSE}
+
+################################################################################
+### Figure 2.7
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,4,2,1))
+plot (height_sample,rep(0,n), ylim = c(0,.06), pch=16,col=4,xlim = c(140,195),cex.main=.8, 
+      ylab='Density', main = "Distribution if mean = 170 cm",xlab='Apparent height (cm)', cex.main=1)
+## now it is centered at mean = 175 cm
+curve (dnorm (x, 170, sd(height_sample)), from = c(130,200), 
+       add=TRUE, col = 2, lwd = 2)
+segments (height_sample,rep(0,n),height_sample,
+          dnorm (height_sample, 170, sd(height_sample) ))
+#abline (v = 170, lwd=2,lty=3)
+
+plot (height_sample,rep(0,n), ylim = c(0,.06), pch=16,col=4,xlim = c(140,195),cex.main=.8, 
+      ylab='Density', main = "Distribution if mean = 160 cm",xlab='Apparent height (cm)', cex.main=1)
+## now it is centered at mean = 175 cm
+curve (dnorm (x, 160, sd(height_sample)), from = c(130,200), 
+       add=TRUE, col = 2, lwd = 2)
+segments (height_sample,rep(0,n),height_sample,
+          dnorm (height_sample, 160, sd(height_sample) ))
+#abline (v = 160, lwd=2,lty=3)
+
+```
+
+$$
+\begin{equation}
+P(x_1\,\&\,x_2\,\&\, \dots \& \, x_n)=[f(x_1) \cdot a] \cdot [f(x_2) \cdot a]  \cdot  \dots \cdot [f(x_n) \cdot a]
+(\#eq:2-10)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+P(x_1\,\&\,x_2\,\&\, \dots \& \, x_n)=[f(x_1) \cdot f(x_2) \cdot \dots \cdot f(x_n)] \cdot a^n
+(\#eq:2-11)
+\end{equation}
+$$
+
+### Characteristics of likelihoods {#c2-chars-of-likelihoods}
+
+$$
+\begin{equation}
+f(x_1,x_2) = [\frac{1}{\sigma\sqrt{2\pi}} \exp( -\frac{1}{2\sigma^2}(x_1-\mu)^{\!2}\,)]
+\cdot 
+[\frac{1}{\sigma\sqrt{2\pi}} \exp( -\frac{1}{2\sigma^2}(x_2-\mu)^{\!2}\,)]
+(\#eq:2-12)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathcal{L}_{(\mu|x)} = [\frac{1}{\sigma\sqrt{2\pi}} \exp( -\frac{1}{2\sigma^2}(x_1-\mu)^{\!2}\,)] \cdot 
+                        [\frac{1}{\sigma\sqrt{2\pi}} \exp( -\frac{1}{2\sigma^2}(x_2-\mu)^{\!2}\,)]
+(\#eq:2-13)
+\end{equation}
+$$
+
+### A brief aside on logarithms {#c2-logarithms}
+
+
+$$
+\begin{equation}
+\log(f(x)) =  \log(\frac{1}{\sigma\sqrt{2\pi}})-\frac{1}{2\sigma^2}\left(x-\mu\right)^2
+(\#eq:2-14)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\log(e^x)=x \\ \\
+\log(1) = 0 \\
+\textrm{if} \: x < 1, \: \log(x) < 0 \\
+\textrm{if} \: x > 1, \: \log(x) > 0 \\
+\textrm{if} \: x < 0, \: \log(x) = \textrm{undefined} \\ \\
+\log(x^y)=\log(x) \cdot y \\
+\log(\sqrt[y]{x})=\log(x)/y \\ \\
+\log(x)+\log(y)= log(x \cdot y) \\
+\log(x)-\log(y)= log(x/y) \\
+\end{split}
+(\#eq:2-15)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\log(f(x)) =  \log(\frac{1}{\sigma\sqrt{2\pi}})-\frac{1}{2\sigma^2}\left(x-\mu\right)^2 \\
+\log(f(x)) =  \log(1)-\log(\sigma\sqrt{2\pi})-\frac{1}{2\sigma^2}\left(x-\mu\right)^2 \\
+\log(f(x)) =  0-\log(\sigma\sqrt{2\pi})-\frac{1}{2\sigma^2}\left(x-\mu\right)^2 \\
+\log(f(x)) =  -\frac{1}{2\sigma^2}\left(x-\mu\right)^2 - \log({\sigma\sqrt{2\pi}})
+\end{split}
+(\#eq:2-16)
+\end{equation}
+$$
+
+### Characteristics of likelihoods, continued  {#c2-chars-of-likelihoods-2}
+
+$$
+\begin{equation}
+\mathcal{L}_{(\mu|x)} = [\frac{1}{\sigma\sqrt{2\pi}} \exp( -\frac{1}{2\sigma^2}(x_1-\mu)^{\!2}\,)] \cdot 
+                        [\frac{1}{\sigma\sqrt{2\pi}} \exp( -\frac{1}{2\sigma^2}(x_2-\mu)^{\!2}\,)]
+(\#eq:2-17)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathcal{L}\mathcal{L}_{(\mu|x)} = 
+[-\frac{1}{2\sigma^2}(x_1-\mu)^2 - \log({\sigma\sqrt{2\pi}})] + 
+[-\frac{1}{2\sigma^2}(x_2-\mu)^2 - \log({\sigma\sqrt{2\pi}})]
+(\#eq:2-18)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathcal{L}\mathcal{L}_{(\mu|x)} = -\frac{1}{2\sigma^2}\sum_{i=1}^{n}(x_i-\mu)^2 - n \cdot (\log({\sigma\sqrt{2\pi}}))
+(\#eq:2-19)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathcal{L}\mathcal{L}_{(\mu|x)} = -\frac{1}{2\sigma^2} \cdot (n \cdot \sigma^2) - n \cdot (\log({\sigma\sqrt{2\pi}}))
+(\#eq:2-20)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathcal{L}\mathcal{L}_{(\mu|x)} = -\frac{1}{2} \cdot \frac{n \cdot \sigma^2}{\sigma^2} - n \cdot (\log({\sigma\sqrt{2\pi}}))
+(\#eq:2-21)
+\end{equation}
+$$
+
+
+$$
+\begin{equation}
+\mathcal{L}\mathcal{L}_{(\mu|x)} = -\frac{1}{2} \cdot \frac{\sigma^2}{(\sigma^2/n)} - n \cdot (\log({\sigma\sqrt{2\pi}}))
+(\#eq:2-22)
+\end{equation}
+$$
+
+## Answering our research questions {#c2-inference-and-likelihood}
+
+```{r}
+# make candidates for mean parameter
+mus = seq (172.5,175, .01)
+
+# easy way to make zero vector of same length as above
+log_likelihood = mus*0
+
+# add the log-density of all observations. Notice only the 
+# mean changes across iterations of the for loop.
+for (i in 1:length(mus)) log_likelihood[i] = 
+  sum (dnorm (mens_height, mus[i], sd(mens_height), log = TRUE))
+```
+
+```{r F2-8, fig.height = 2.7,fig.width = 8, fig.cap = "(left) The curve represents the log-likelihood for different values of our mean given our apparent height judgments and assuming a normal distribution. (right) The likelihood implied by the log-likelihood on the left. The curve has been scaled to have a peak of 1 so that we can plot it. For example, exp (-2300) is a value so small that it is difficult to represent in a figure axis.", echo = FALSE}
+
+################################################################################
+### Figure 2.8
+################################################################################
+mus = seq (172.5,175, .01)
+
+log_likelihood = mus*0
+for (i in 1:length(mus)) log_likelihood[i] = sum (dnorm (mens_height, mus[i], sd(mens_height), log = TRUE))
+
+
+par (mar = c(4.1,4.1,1,1), mfrow = c(1,2))
+plot (mus, log_likelihood, col = skyblue, lwd=2, type = 'l', ylab = "Log-Likelihood",
+      xlab = "Apparent height (cm)")
+
+scaled_log_likelihood = log_likelihood-max(log_likelihood)
+scaled_log_likelihood = exp (scaled_log_likelihood)
+
+plot (mus, scaled_log_likelihood, col = skyblue, lwd=2, type = 'l', ylab = "Scaled Likelihood",
+      xlab = "Apparent height (cm)")
+```
+
+```{r}
+# find index number of highest values in log-likelihood
+maximum = which.max(scaled_log_likelihood)
+
+# print and compare to sample mean
+mus[maximum]
+mean (mens_height)
+```
+
+
+## Exercises
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
+
