@@ -1,0 +1,896 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+rm (list=ls())
+```
+
+# Writing up experiments: An investigation of the perception of apparent speaker characteristics from speech acoustics
+
+## Introduction
+
+### Fundamental frequency and voice pitch
+
+### Variation in fundamental frequency between speakers
+
+```{r F13-1, echo = FALSE, fig.height = 2.75, fig.width = 8, echo = FALSE, fig.cap = "(left) Average height of males and females in the United States of America, organized by age (Fryar et al. (2012)). Error bars indicate two standard deviations and boxes highlight the age ranges featured in this experiment. (middle) Average f0 produced by male and female speakers from 5 years of age until adulthood (Lee et al. 1999). Error bars indicate two standard deviations. (right) The heights from the first plot plotted against the f0s from the second plot. These data were collected from different sets of people, so this comparison is simply illustrative. Ellipses enclose two standard deviations and assume no correlation between the dimensions.", eval = TRUE}
+
+################################################################################
+### Figure 13.1
+################################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 13.1.jpg")
+
+# jpeg ("../wrong_plots/Figure 13.1.jpg",4800,1800,res=600)
+# library (bmmb)
+# data(height_data)
+# data (lee_etal_data)
+# 
+# lee_etal_data$f0_original=lee_etal_data$f0
+# lee_etal_data$f0 = log(lee_etal_data$f0_original)
+# 
+# aggdmu = aggregate (f0 ~ age+gender, FUN = mean, data = lee_etal_data)
+# aggdmu[,3] = exp(aggdmu[,3])
+# 
+# lee_etal_data$f0 = log(lee_etal_data$f0sd/lee_etal_data$f0_original)
+# aggdsd = aggregate (f0 ~ age+gender, FUN = sd, data = lee_etal_data)
+# aggdsd[,3] = (exp(aggdsd[,3])-1)*aggdmu[,3]
+# 
+# aggdmuf0 = aggdmu
+# aggdsdf0 = aggdsd
+# 
+# par (mfrow = c(1,3), mar = c(4.1,4.1,1,1))
+# 
+# plot (height_data$age[height_data$gender=="f"]-.1,
+#       height_data$height[height_data$gender=="f"],
+#       pch=16,col=2,lwd=2,cex=1.5, ylim = c(70,205),type='b', xlab="Age (years)",
+#       ylab = "Height (cm)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+# lines (height_data$age[height_data$gender=="m"]+.1,
+#        height_data$height[height_data$gender=="m"],
+#        pch=16,col=4,lwd=2,cex=1.5,type='b')
+# grid()
+# legend (11,120,legend = c("Female","Male"), col = c(2,4),pch=16,cex=1.2,pt.cex=1.5)
+# 
+# 
+# phonTools::errorbar(height_data$age[height_data$gender=="f"]-.1,
+#                     height_data$height[height_data$gender=="f"],
+#                     height_data$sd[height_data$gender=="f"]*2,col=2,lwd=1,length=0.051)
+# phonTools::errorbar(height_data$age[height_data$gender=="m"]+.1,
+#                     height_data$height[height_data$gender=="m"],
+#                     height_data$sd[height_data$gender=="m"]*2,col=4,lwd=1,length=0.051)
+# 
+# rect (9.5,128,12.5,168,lwd=2,border="forestgreen",lty=1)
+# rect (17.5,150,20.5,190,lwd=2,border="forestgreen",lty=1)
+# 
+# plot (aggdmu$age[aggdmu$gender=="f"]-.1,aggdmu$f0[aggdmu$gender=="f"],
+#       pch=16,col=2,lwd=2,cex=1.5, ylim = c(50,370),type='b', xlab="Age (years)",
+#       ylab = "f0 (Hz)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+# lines (aggdmu$age[aggdmu$gender=="m"]+.1,aggdmu$f0[aggdmu$gender=="m"],
+#       pch=16,col=4,lwd=2,cex=1.5,type='b')
+# grid()
+# 
+# phonTools::errorbars(aggdmu$age[aggdmu$gender=="f"]-.1,aggdmu$f0[aggdmu$gender=="f"],
+#                    aggdsd$f0[aggdsd$gender=="f"]*2,col=2,lwd=1,length=0.051)
+# phonTools::errorbars(aggdmu$age[aggdmu$gender=="m"]+.1,aggdmu$f0[aggdmu$gender=="m"],
+#                    aggdsd$f0[aggdsd$gender=="m"]*2,col=4,lwd=1,length=0.051)
+# 
+# plot (height_data$height[height_data$gender=="f"][-c(1,2,3,19)],
+#       aggdmu$f0[aggdmu$gender=="f"], pch=16,col=2,lwd=6,cex=2.75, ylim = c(50,350),
+#       type='b', xlab="Hieght (cm)", ylab = "f0 (Hz)",xlim=c(95,205),cex.axis=1.3,
+#       cex.lab=1.3)
+# lines (height_data$height[height_data$gender=="m"][-c(1,2,3,19)],
+#        aggdmu$f0[aggdmu$gender=="m"],
+#       pch=16,col=4,lwd=6,cex=2.75,type='b')
+# grid()
+# 
+# count = 1
+# for (i in (1:19)[-c(1,2,3,19)]){
+#   phonTools::sdellipse (
+#     matrix(c((height_data$sd[height_data$gender=="f"][count]),0,
+#              0,(aggdsd$f0[aggdsd$gender=="f"][count]))^2,2,2),
+#     means = c(height_data$height[height_data$gender=="f"][i],
+#               aggdmu$f0[aggdmu$gender=="f"][count]), col = 2,lty=3)
+# 
+#   phonTools::sdellipse (
+#     matrix(c((height_data$sd[height_data$gender=="m"][count]),0,
+#              0,(aggdsd$f0[aggdsd$gender=="m"][count]))^2,2,2),
+#     means = c(height_data$height[height_data$gender=="m"][i],
+#               aggdmu$f0[aggdmu$gender=="m"][count]), col = 4, lty=3)
+# 
+#   count = count + 1
+# }
+# dev.off()
+
+```
+
+### Voice resonance and vocal-tract length
+
+### Estimating vocal-tracts length from speech {#c13-estimating-vtl}
+
+### Variation in vocal-tract length between speakers
+
+```{r F13-2, echo = FALSE, fig.height = 3, fig.width = 8, echo = FALSE, fig.cap = "(left) Average height of males and females in the United States of America, organized by age (Fryar et al. (2012)). Error bars indicate two standard deviations and boxes highlight the age ranges featured in this experiment. (middle) Average acoustic vocal-tract length (VTL) of male and female speakers from 5 years of age until adulthood (Lee et al. 1999). The average adult male VTL was set to 15 cm. Error bars indicate two standard deviations. (right) The heights from the first plot plotted against the f0s from the second plot. These data were collected from different sets of people, so this comparison is simply illustrative. Ellipses enclose two standard deviations and assume no correlation between the dimensions.", eval = TRUE}
+
+################################################################################
+### Figure 13.2
+################################################################################
+
+data (lee_etal_data)
+
+gbars = (log(lee_etal_data$f1)+log(lee_etal_data$f2)+log(lee_etal_data$f3))/3
+
+aggdmu = aggregate (gbars ~ age+gender, FUN = mean, data = lee_etal_data)
+aggdmu[,3] = (aggdmu[,3])
+
+aggdmu$vtl = exp(-((aggdmu$gbar)-min(aggdmu$gbars)))
+aggdmu$vtl = 15 * aggdmu$vtl
+
+vtl = (log(lee_etal_data$f1sd/lee_etal_data$f1)+
+         log(lee_etal_data$f2sd/lee_etal_data$f2)+
+         log(lee_etal_data$f3sd/lee_etal_data$f3))/3
+
+aggdsd = aggregate (vtl ~ age+gender, FUN = mean, data = lee_etal_data)
+aggdsd[,3] = exp(aggdsd[,3])*aggdmu$vtl
+
+aggdmuvtl = aggdmu
+aggdsdvtl = aggdsd
+
+par (mfrow = c(1,3), mar = c(4.1,4.1,1,1))
+plot (height_data$age[height_data$gender=="f"]-.1,
+      height_data$height[height_data$gender=="f"],
+      pch=16,col=2,lwd=2,cex=1.5, ylim = c(70,205),type='b', xlab="Age (years)",
+      ylab = "Height (cm)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+lines (height_data$age[height_data$gender=="m"]+.1,
+       height_data$height[height_data$gender=="m"],
+      pch=16,col=4,lwd=2,cex=1.5,type='b')
+grid()
+legend (11,120,legend = c("Female","Male"), col = c(2,4),pch=16,cex=1.2,pt.cex=1.5)
+
+phonTools::errorbar(height_data$age[height_data$gender=="f"]-.1,
+                    height_data$height[height_data$gender=="f"],
+                    height_data$sd[height_data$gender=="f"]*2,col=2,lwd=1,length=0.051)
+phonTools::errorbar(height_data$age[height_data$gender=="m"]+.1,
+                    height_data$height[height_data$gender=="m"],
+                    height_data$sd[height_data$gender=="m"]*2,col=4,lwd=1,length=0.051)
+
+rect (9.5,128,12.5,168,lwd=2,border="forestgreen",lty=1)
+rect (17.5,150,20.5,190,lwd=2,border="forestgreen",lty=1)
+
+plot (aggdmu$age[aggdmu$gender=="f"]-.1,aggdmu$vtl[aggdmu$gender=="f"],
+      pch=16,col=2,lwd=2,cex=1.5, ylim = c(8.5,17),type='b', xlab="Age (years)",
+      ylab = "VTL (cm)",xlim=c(2,21),cex.axis=1.3,cex.lab=1.3)
+lines (aggdmu$age[aggdmu$gender=="m"]+.1,aggdmu$vtl[aggdmu$gender=="m"],
+      pch=16,col=4,lwd=2,cex=1.5,type='b')
+grid()
+
+
+phonTools::errorbars(aggdmu$age[aggdmu$gender=="f"]-.1,
+                   aggdmu$vtl[aggdmu$gender=="f"],
+                   aggdsd$vtl[aggdsd$gender=="f"]*2,col=2,lwd=1,length=0.051)
+phonTools::errorbars(aggdmu$age[aggdmu$gender=="m"]+.1,
+                   aggdmu$vtl[aggdmu$gender=="m"],
+                   aggdsd$vtl[aggdsd$gender=="m"]*2,col=4,lwd=1,length=0.051)
+
+plot (height_data$height[height_data$gender=="f"][-c(1,2,3,19)],
+      aggdmu$vtl[aggdmu$gender=="f"],
+      pch=16,col=2,lwd=6,cex=2.75, ylim = c(8.5,17.5),type='b', xlab="Height (cm)",
+      ylab = "VTL (cm)",xlim=c(105,185),cex.axis=1.3,cex.lab=1.3)
+lines (height_data$height[height_data$gender=="m"][-c(1,2,3,19)],
+       aggdmu$vtl[aggdmu$gender=="m"],
+      pch=16,col=4,lwd=6,cex=2.75,type='b')
+grid()
+
+count = 1
+for (i in (1:19)[-c(1,2,3,19)]){
+  phonTools::sdellipse (
+    matrix((c(height_data$sd[height_data$gender=="f"][count],0,
+             0,aggdsd$vtl[aggdsd$gender=="f"][count]))^2,2,2), 
+    means = c(height_data$height[height_data$gender=="f"][i],
+              aggdmu$vtl[aggdmu$gender=="f"][count]), col = 2,lty=3)
+  
+  phonTools::sdellipse (
+    matrix((c(height_data$sd[height_data$gender=="m"][count],0,
+             0,aggdsd$vtl[aggdsd$gender=="m"][count]))^2,2,2), 
+    means = c(height_data$height[height_data$gender=="m"][i],
+              aggdmu$vtl[aggdmu$gender=="m"][count]), col = 4, lty=3)
+  
+  count = count + 1
+}
+
+```
+
+### Perception of age, gender and size {#c13-perception-of-chars}
+
+### Category-dependent behavior
+
+```{r F13-3, echo = FALSE, fig.height = 3, fig.width = 8, echo = FALSE, fig.cap = "(left) Average f0 and vocal-tract length for each age group in the Lee at al. (1999) data. (right) The same data as in the left plot, but only age groups similar to those included in our experiment are included. These are 10-12 year-old children, and adults over 19 years of age."}
+
+################################################################################
+### Figure 13.3
+################################################################################
+
+library (bmmb)
+data(height_data)
+data (lee_etal_data)
+
+lee_etal_data$f0_original=lee_etal_data$f0
+lee_etal_data$f0 = log(lee_etal_data$f0_original)
+
+aggdmu = aggregate (f0 ~ age+gender, FUN = mean, data = lee_etal_data)
+aggdmu[,3] = exp(aggdmu[,3])
+
+lee_etal_data$f0 = log(lee_etal_data$f0sd/lee_etal_data$f0_original)
+aggdsd = aggregate (f0 ~ age+gender, FUN = sd, data = lee_etal_data)
+aggdsd[,3] = (exp(aggdsd[,3])-1)*aggdmu[,3]
+
+aggdmuf0 = aggdmu
+aggdsdf0 = aggdsd
+
+par (mfrow = c(1,2), mar = c(4.1,.2,.5,.25), oma = c(0,4,0,0))
+
+
+plot (aggdmuvtl$vtl,aggdmuf0$f0, pch=16,col=2,lwd=2,cex=2.5, ylim = c(90,320),type='n', 
+      xlab="Vocal-tract length (cm)", ylab = "f0 (Hz)",xlim=c(9,16.5),cex.axis=1.1,cex.lab=1.1)
+grid()
+
+text (aggdmuvtl$vtl,aggdmuf0$f0, 5:19, col = rep(bmmb::cols[7:8], each = 15),cex=1.2)
+mtext (side=2, "f0 (Hz)", line = 3, cex = 1.1)
+
+
+legend (9.5,200,legend=c("female","male"), col=bmmb::cols[7:8],pch=16,bty='n')
+
+use = aggdmuvtl$age %in% c(10,12,19)
+plot (aggdmuvtl$vtl[use],aggdmuf0$f0[use], pch=16,col=2,lwd=2,
+      cex=1.5, ylim = c(90,320),type='n', xlab="Vocal-tract length (cm)", 
+      ylab = "f0 (Hz)",xlim=c(9,16.75),cex.axis=1.1,cex.lab=1.1,yaxt='n')
+grid()
+
+colss=bmmb::cols[c(3,3,5,2,2,4)]
+text (aggdmuvtl$vtl[use],aggdmuf0$f0[use], rep(5:19,2)[use], col = colss, cex=1.5)
+
+col_count = 1
+for (i in c(6,8,15)){
+  
+  phonTools::sdellipse (
+    matrix((c(aggdsdvtl$vtl[aggdsdvtl$gender=="f"][i],0,
+             0,aggdsdf0$f0[aggdsdf0$gender=="f"][i]))^2,2,2), 
+    means = c(aggdmuvtl$vtl[aggdmuvtl$gender=="f"][i],
+              aggdmuf0$f0[aggdmuf0$gender=="f"][i]), 
+    col = bmmb::cols[c(3,3,5)][col_count], lty = 1)
+  
+  phonTools::sdellipse (
+    matrix((c(aggdsdvtl$vtl[aggdsdvtl$gender=="m"][i],0,
+             0,aggdsdf0$f0[aggdsdf0$gender=="m"][i]))^2,2,2), 
+    means = c(aggdmuvtl$vtl[aggdmuvtl$gender=="m"][i],
+              aggdmuf0$f0[aggdmuf0$gender=="m"][i]), 
+    col = bmmb::cols[c(2,2,4)][col_count], lty = 1)
+  
+  col_count = col_count + 1
+}
+
+
+```
+
+### The current experiment
+
+```{r, eval = FALSE}
+characteristic ~ f0 + vtl
+```
+
+```{r, eval = FALSE}
+characteristic ~ (f0 + vtl + X) * (Y * Z)
+```
+
+## Methods
+
+###  Participants
+
+###  Stimuli {#c13-stimuli}
+
+### Procedure
+
+### Data screening
+
+### Loading the data and packages
+
+```{r, warning=FALSE, message=FALSE}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+
+# load data
+data (exp_data)
+
+# create gender analysis dependent variable
+exp_data$Female = ifelse(exp_data$G == 'f', 1, 0)
+
+# scale and center vtl 
+exp_data$vtl_original = exp_data$vtl
+exp_data$vtl = exp_data$vtl - mean (exp_data$vtl)
+
+# scale and center f0 
+exp_data$f0_original = exp_data$f0 
+exp_data$f0 = exp_data$f0 - mean(exp_data$f0)
+exp_data$f0 = exp_data$f0 / 100
+```
+
+### Statistical Analysis: Apparent height
+
+```{r, eval = FALSE}
+priors = c(brms::set_prior("student_t(3,160, 5)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 5)", class = "b"),
+           brms::set_prior("student_t(3,0, 5)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("gamma(2, 0.1)", class = "nu"),
+           brms::set_prior("student_t(3,0, 5)", class = "sigma"))
+
+height_model =  
+  brms::brm (height ~ (vtl+f0)*A*G + ((vtl+f0)*A*G|L) + (1|S), 
+             data = exp_data, chains = 4, cores = 4, warmup = 1000, 
+             iter = 5000, thin = 4, prior = priors, family = "student")
+```
+```{r, include = TRUE, eval = FALSE}
+# Download the height from the GitHub page:
+height_model = bmmb::get_model ('13_model_height_vtl_f0.RDS')
+```
+```{r, include = FALSE, eval = TRUE}
+height_model = readRDS ('../models/13_model_height_vtl_f0.RDS')
+```
+
+```{r, eval = FALSE, warning=FALSE, message=FALSE}
+height_model_priors =  
+  brms::brm (height ~ (vtl+f0)*A*G + ((vtl+f0)*A*G|L) + (1|S), 
+             data = exp_data, chains = 4, cores = 4, warmup = 1000, 
+             iter = 5000, thin = 4, prior = priors, family = "student", 
+             sample_prior = "only")
+
+p_check (height_model_priors)
+```
+
+### Statistical Analysis: Apparent gender
+
+```{r, include = TRUE, eval = FALSE}
+# Download the gender model from the GitHub page:
+gender_model = bmmb::get_model ('11_model_gender_vtl_f0_reduced.RDS')
+```
+```{r, include = FALSE, eval = TRUE}
+gender_model = readRDS ('../models/11_model_gender_vtl_f0_reduced.RDS')
+```
+
+```{r, eval = FALSE}
+gender_model_prior =
+  brm (Female ~ (vtl+f0)*A + ((vtl+f0)*A|L) + (1|S), data=exp_data,
+       family="bernoulli", sample_prior = "only",  
+       chains = 4, cores = 4, warmup = 1000, iter = 5000, thin = 4, 
+       prior = c(set_prior("student_t(3, 0, 3)", class = "Intercept"),
+                 set_prior("student_t(3, 0, 3)", class = "b"),
+                 set_prior("student_t(3, 0, 3)", class = "sd"),
+                 set_prior("lkj_corr_cholesky (2)", class = "cor")))
+
+preds = p_check (gender_model_prior)
+```
+
+## Results: Apparent height judgments
+
+```{r F13-4, echo = FALSE, fig.height = 2.75, fig.width = 8, echo = FALSE, fig.cap = "(left) Distribution of apparent height judgments across all listeners, grouped by apparent speaker category. (middle) Distribution of individual apparent height judgments based on the fundamental frequency (f0) of the stimulus. (right) Distribution of individual apparent height judgments based on the vocal-tract length (VTL). Point colors represent the modal category judgment made by listeners, for each token."}
+
+################################################################################
+### Figure 13.4
+################################################################################
+
+#aggd = aggregate (cbind (height,f0,vtl) ~ S + C_v, data = exp_data, FUN = mean)
+
+#tab = table (exp_data$S, exp_data$C)
+#mod_cat = apply (tab, 1,which.max)
+mod_cat = as.numeric(factor(exp_data$C))
+
+par (mfrow = c(1,3), mar = c(4.2,.25,1,.25), oma = c(0,4,0,0))
+boxplot (height ~ A+G, data = exp_data, col = bmmb::cols[c(5,3,4,2)],cex.lab=1.2,
+         cex.axis=1.2,ylim=c(100,195), names = c("b","g","m","w"),
+         ylab="Apparent height (cm)", xlab="Apparent Speaker Category")
+grid ()
+boxplot (height ~ A+G, data = exp_data, col = bmmb::cols[c(5,3,4,2)],add=TRUE,ylim=c(100,195), xaxt='n',yaxt='n',
+         ylab="", xlab="")
+
+mtext(side=2,"Apparent height (cm)",line=3,cex=0.9)
+plot (exp_data$f0_original, exp_data$height, pch=16,ylab="Apparent height (cm)",
+      col = bmmb::cols[1+mod_cat], cex=1,ylim=c(100,195), #xlim = c(-1.2,1.2),
+      cex.lab=1.2, cex.axis=1.2,yaxt='n',xlab="f0 (Hz)")
+grid ()
+plot (exp_data$vtl_original, exp_data$height, pch=16,ylab="Apparent height (cm)", 
+      col = bmmb::cols[1+mod_cat], cex=1,ylim=c(100,195), #xlim = c(-2.5,2.9),
+      cex.lab=1.2, cex.axis=1.2,yaxt='n',xlab="VTL (cm)")
+legend (14.1,139, legend = c("boy","girl","man","woman"), pch=16,col=bmmb::cols[2:5],
+        bty='n', cex = 1.3)
+grid ()
+```
+
+```{r F13-5, fig.height = 3.5, fig.width = 8, fig.cap='(left) Posterior distribution of model fixed effects. (right) Posterior distribution of random effect standard deviation estimates. Points indicate means, lines indicate 95% credible intervals. Dashed vertical lines indicate 0.5 cm away from 0. Points whose 95% credible intervals are at least 0.5 cm away from zero are filled.', echo = FALSE, cache = FALSE}
+
+################################################################################
+### Figure 13.5
+################################################################################
+
+
+par (mfrow = c(1,2), mar = c(4,6,1,1))
+
+fixefs = fixef (height_model)[-1,]
+good = (fixefs[,3] < -0.5 & fixefs[,4] < -0.5) | (fixefs[,3] > 0.5 & fixefs[,4] > 0.5) 
+pchs = ifelse (good, 16,1)
+
+brmplot (fixefs, xlim = c(-7,10),las=2, #ylim = c(-1,12),
+               pch=pchs,lwd=2,horizontal=FALSE,xlab="Centimeters")
+abline (v = c(-0.5,0.5), lty = 3, col = bmmb::cols[6],lwd=2)
+
+sds = bmmb::get_sds (height_model)
+good = (sds[,3] < -0.5 & sds[,4] < -0.5) | (sds[,3] > 0.5 & sds[,4] > 0.5) 
+pchs = ifelse (good, 16,1)
+
+brmplot (sds, xlim = c(0,10),las=2, pch=pchs,lwd=2,xaxs='i',
+               horizontal=FALSE,xlab="Centimeters")
+abline (v = c(0.5), lty = 3, col = bmmb::cols[6],lwd=2)
+
+```
+
+```{r T13-1, echo = FALSE}
+knitr::kable(fixef(height_model), digits=2, caption = "Posterior means, standard deviations, and 2.5% and 97.5% quantiles for our regression model \'fixed\' effect parameter estimates.")
+```
+
+```{r}
+# vtl main effect + adult, vtl main effect - adult (i.e. + child)
+age_vtl_slopes = bmmb::short_hypothesis(
+  height_model, c("vtl + vtl:A1 = 0","vtl - vtl:A1 = 0"))
+
+age_vtl_slopes
+```
+
+## Discussion: Apparent height
+
+### Age-dependent use of VTL cues on apparent height
+
+```{r}
+age_intercepts = bmmb::short_hypothesis(
+  height_model, c("Intercept + A1 = 0","Intercept - A1 = 0"))
+
+age_intercepts
+```
+
+```{r F13-6, echo = FALSE, fig.height = 2.75, fig.width = 8, echo = FALSE, fig.cap = "Posterior means and 95% credible intervals for model intercepts (left), and slopes (middle), of the lines relating speaker vocal-tract length (VTL) and apparent height, for apparent children and adults. (right) Average apparent height for each stimulus plotted against stimulus VTL. Point colors represent modal classifications for each speaker."}
+
+################################################################################
+### Figure 13.6
+################################################################################
+
+mod_cat = as.numeric(factor(exp_data$C))
+
+par (mar = c(4.2,4.2,3,1.5))
+layout (mat=t(c(1:3)), widths=c(.27,.27,.46))
+brmplot (age_intercepts, labels = c("adult","child"),ylab="Apparent height (cm)",
+         cex.lab=1.3,cex.axis=1.3, main = "Intercept")
+brmplot (age_vtl_slopes, labels = c("adult","child"),ylab="Centimeters",
+         cex.lab=1.3,cex.axis=1.3, main = "VTL slope")
+
+tmp = exp_data$vtl - mean (exp_data$vtl)
+aggd = aggregate (cbind (height,f0,tmp) ~ S + C_v, data = exp_data, FUN = mean)
+
+plot (aggd$tmp, aggd$height, pch=16, col = bmmb::cols[1+mod_cat], 
+      cex=2,ylim=c(130,182),xlab="Centered VTL (cm)", ylab = "Apparent Height (cm)",
+         cex.lab=1.3,cex.axis=1.3)
+
+#cffs = fixef(height_model)[1:2,1]
+#abline (cffs[1], cffs[2], lwd=3,col=1)
+
+abline (age_intercepts[1,1], age_vtl_slopes[1,1], lwd=3,col=2)
+abline (age_intercepts[2,1], age_vtl_slopes[2,1], lwd=3, col=4)
+legend (1,152, legend = c("boy","girl","man","woman"), pch=16,col=bmmb::cols[2:5],
+        bty='n', cex = 1.3)
+
+```
+
+```{r F13-7, echo = FALSE, fig.height = 2.75, fig.width = 8, echo = FALSE, fig.cap = "(left) Distribution of apparent height difference for 27 speakers identified as both adults and children at least 5 times each. The difference reflects apparent adult height minus apparent child height. (right) Posterior distribution and 95% credible intervals for listener-dependent effects for apparent maleness."}
+
+################################################################################
+### Figure 13.7
+################################################################################
+
+qq = aggregate (exp_data$height ~ exp_data$S + exp_data$A + exp_data$C_v, 
+                data = exp_data, FUN = mean)
+a = qq[qq[,2]=='a',]
+c = qq[qq[,2]=='c',]
+
+inter = intersect(a[,1],c[,1])
+
+
+tmpp = exp_data[exp_data$S %in% inter,]
+tmpp = tapply (tmpp$A=="a", tmpp$S, mean)
+tmp = abs (tmpp - 0.5)
+
+a = a[a[,1] %in% inter,]
+c = c[c[,1] %in% inter,]
+
+#hist(a[,3] - c[,3])
+
+listener_gender_effects = 
+  bmmb::short_hypothesis(height_model, "-(G1+A1:G1)=0",scope="coef",group="L")
+
+age_intercepts = bmmb::short_hypothesis(
+  height_model, c("2*(A1+A1:G1) = 0","2*(A1-A1:G1) = 0",
+                  "2*(G1+A1:G1) = 0","2*(G1-A1:G1) = 0"))
+
+par (mar =c(4,4,1.5,1))
+layout (mat = t(c(1:2)), widths = c(.4,.6))
+hist(a[tmp < 0.3,4] - c[tmp < 0.3,4], xlim = c(0,30), main = '',
+     xlab = "Apparent height difference (cm)", col = bmmb::cols[1])
+
+brmplot (listener_gender_effects[,1:4], col = bmmb::cols,
+         labels = 1:15,xlab = "Listener", ylab = "Centimeters")
+mtext (side=3,line=0.5,"Effect for apparent maleness")
+#brmplot (age_intercepts, labels = c("w-g","m-b","w-m","g-b"))
+
+
+```
+
+### The effect for apparent gender on apparent height
+
+## Conclusion: Apparent height judgments
+
+## Results: Apparent gender judgments
+
+```{r F13-8, echo = FALSE, fig.height = 3, fig.width = 8, echo = FALSE, fig.cap = "Probability of observing a female response for each speaker, across all listeners. Point color reflects modal speaker classification. Points are organized according to speaker fundamental frequency (left) and speaker (acoustic) vocal-tract length (right)."}
+
+################################################################################
+### Figure 13.8
+################################################################################
+
+exp_data$F = as.numeric(exp_data$G=='f')
+
+aggd = aggregate (cbind (exp_data$F,f0_original,vtl_original) ~ 
+                    S + C_v, data = exp_data, FUN = mean)
+colnames (aggd)[3]="Female"
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+par (mfrow = c(1,2), mar = c(4,.2,0,.2), oma = c(0,4,1,.5))
+plot (aggd$f0_original, aggd$Female, pch=16, col = bmmb::cols[1+mod_cat], 
+      cex=1.5,ylim=c(0,1), ylab="P(female response)", xlab="Fundamental frequency (Hz)")
+legend (95,0.99,legend=c("boy","girl","man","woman"),col=bmmb::cols[2:5],
+        pch=16,bty='n',pt.cex=1.2)
+abline (h=.5,lty=3)
+mtext (side=2,"P(female response)", line = 3)
+plot (aggd$vtl_original, aggd$Female, pch=16, col = bmmb::cols[1+mod_cat], 
+      cex=1.5,ylim=c(0,1), ylab="", xlab="Vocal-tract length (cm)",
+      yaxt='n')
+abline (h=.5,lty=3)
+```
+
+```{r}
+# find cases where reported and veridical gender matches, across levels 
+# of veridical category
+tapply (exp_data$G==exp_data$G_v, exp_data$C_v,mean)
+```
+
+```{r}
+# table comparing reported (C) to actual (C_v) category. 
+xtabs (~ exp_data$C_v + exp_data$C)
+```
+
+```{r F13-9, fig.height = 3, fig.width = 8, fig.cap='(left) Posterior distribution of model fixed effects. (right) Posterior distribution of random effect superpopulation standard deviation estimates. Points indicate means, lines indicate 95% credible intervals.', echo = FALSE, cache = FALSE}
+
+################################################################################
+### Figure 13.9
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,5,1,.25), oma = c(0,0,0,1))
+
+fixefs = fixef (gender_model)
+good = (fixefs[,3] < -0.5 & fixefs[,4] < -0.5) | (fixefs[,3] > 0.5 & fixefs[,4] > 0.5) 
+pchs = 16
+
+brmplot (fixefs, xlim = c(-4,4),las=2, #ylim = c(-1,12),
+               pch=pchs,lwd=2,horizontal=FALSE,xlab="Logits",line=TRUE)
+#abline (v = c(-0.5,0.5), lty = 3, col = bmmb::cols[6],lwd=2)
+#abline (v=0,lty=3,lwd=2)
+
+sds = bmmb::get_sds (gender_model)
+good = (sds[,3] < -0.5 & sds[,4] < -0.5) | (sds[,3] > 0.5 & sds[,4] > 0.5) 
+#pchs = ifelse (good, 16,1)
+
+brmplot (sds, xlim = c(0,2.5),las=2, pch=pchs,lwd=2,xaxs='i',
+               horizontal=FALSE,xlab="Logits")
+#abline (v = c(0.5), lty = 3, col = bmmb::cols[6],lwd=2)
+
+```
+
+```{r T13-2, echo = FALSE}
+fixef_effects = fixef(gender_model)
+standard_deviations = bmmb::getsds (gender_model)
+knitr::kable(fixef_effects, caption = "Posterior means, standard deviations, and 2.5% and 97.5% quantiles for the standard deviation estimates for our model random effects parameters.",digits=2)
+```
+
+## Discussion: Apparent gender judgments
+
+### Effect of apparent age on the perception of femaleness
+
+```{r F13-10, fig.width = 8, fig.height = 2.75, fig.cap = "(left) Each point represents a single speaker, labels indicate most common group classification. Lines indicate male/female boundaries for adults (green), children (orange), and overall (blue) implied by our model. (middle) Territorial map showing expected classifications for apparent adults in different regions of the f0 by VTL stimulus space. (right) Same as middle, but for apparent children. In each territorial map, dotted lines indicate an increase/decrease of 2 logits in the expected value of observing a female response, starting at a value of zero for the solid black line.", echo = FALSE, cache = FALSE}
+
+################################################################################
+### Figure 13-10
+################################################################################
+
+knitr::include_graphics("_main_files/figure-html/Figure 13.10.jpg")
+
+# jpeg ("Figure 13.10.jpg",4800,1650,res=600)
+# #get fixed effect parameters
+# samples = brms::fixef (gender_model, summary = FALSE)
+# 
+# # get a,b,c coefficients for overall plane
+# a_all_reduced = mean (samples[,"Intercept"])
+# b_all_reduced = mean (samples[,"vtl"])
+# c_all_reduced = mean (samples[,"f0"])
+# 
+# # get a,b,c coefficients for adult plane
+# a_adult_reduced = mean (samples[,"Intercept"] + samples[,"A1"])
+# b_adult_reduced = mean (samples[,"vtl"] + samples[,"vtl:A1"])
+# c_adult_reduced = mean (samples[,"f0"] + samples[,"f0:A1"])
+# 
+# # get a,b,c coefficients for child plane
+# a_child_reduced = mean (samples[,"Intercept"] - samples[,"A1"])
+# b_child_reduced = mean (samples[,"vtl"] - samples[,"vtl:A1"])
+# c_child_reduced = mean (samples[,"f0"] - samples[,"f0:A1"])
+# 
+# fixef_2 = brms::fixef (gender_model)
+# 
+# # y = (-b*x - a - z) / (dx+c)
+# # fixef(model_gender_vtl_f0)
+# 
+# tmp = bmmb::exp_data
+# tmp = tmp[tmp$R=='a',]
+# 
+# tmp$vtl_original = tmp$vtl
+# mu_vtl = mean (tmp$vtl_original)
+# tmp$vtl = tmp$vtl - mean (tmp$vtl)
+# 
+# tmp$f0_original = tmp$f0
+# mu_f0 = mean (tmp$f0_original)
+# tmp$f0 = tmp$f0 - mean(tmp$f0)
+# tmp$f0 = tmp$f0 / 100
+# 
+# aggd = aggregate (cbind ( height, A=="a", G=="f", vtl,f0, vtl) ~ S + C_v,
+#                       data = tmp, FUN = mean)
+# aggd$C = ""
+# aggd$C[aggd[,4]>= 0.5 & aggd[,5]>= 0.5] = "w"
+# aggd$C[aggd[,4]>= 0.5 & aggd[,5]<= 0.5] = "m"
+# aggd$C[aggd[,4]<= 0.5 & aggd[,5]>= 0.5] = "g"
+# aggd$C[aggd[,4]<= 0.5 & aggd[,5]<= 0.5] = "b"
+# #table(aggd$C)
+# 
+# tab = table (tmp$S, tmp$C)
+# mod_cat = apply (tab, 1,which.max)
+# 
+# par (mfrow = c(1,3), mar = c(4,.25,.5,.25), oma = c(0,4,0,0))
+# 
+# plot (aggd$vtl,aggd$f0, cex =1.2, col = bmmb::cols[c(2:5)][factor(aggd$C)],
+#       xlim=c(-2.5,3),  pch=16,lwd=2, xlab = "",yaxt='s',
+#       ylab="Height (inches)")
+# grid()
+# points (aggd$vtl, aggd$f0, cex =1.2, pch=16,lwd=2,
+#       col = bmmb::cols[c(2:5)][aggd$C])
+# 
+# legend (-2.5, -0.25, legend = c("Boys","Girls","Men","Women"),lwd=2,lty=0,
+#         col = bmmb::cols[2:5], bty='n',pch=16,pt.cex=1.5, x.intersp=.25)
+# 
+# curve ((-b_all_reduced*x - a_all_reduced) / (c_all_reduced), from = -3, to = 3, add = TRUE,lwd=2,col=bmmb::cols[7])
+# curve ((-b_adult_reduced*x - a_adult_reduced)/ (c_adult_reduced), from = -3, to = 3, add = TRUE,lwd=2, lty=2,col=bmmb::cols[10])
+# curve ((-b_child_reduced*x - a_child_reduced)/ (c_child_reduced), from = -3, to = 3, add = TRUE,lwd=2, lty=2,col=bmmb::cols[8])
+# 
+# mtext ("Centered f0 (Hz/100)", side=2, line = 2.7, cex = 0.8)
+# 
+# plot (aggd$vtl,aggd$f0, cex =1.2, col = bmmb::cols[c(2:5)][factor(aggd$C)],
+#       xlim=c(-2.5,3),  pch=16,lwd=2, xlab = "",yaxt='n',
+#       ylab="Height (inches)")
+# grid()
+# 
+# xlim = par()$usr[1:2]
+# ylim = par()$usr[3:4]
+# 
+# x = seq(-3,4,0.1)
+# y = (-b_adult_reduced*x - a_adult_reduced)/ (c_adult_reduced)
+# polygon (c(-3,x,4),c(-3,y,-3),col="seagreen")
+# 
+# y = (-b_adult_reduced*x - a_adult_reduced)/ (c_adult_reduced)
+# polygon (c(-3,x,1),c(3,y,3),col=2)
+# 
+# points (aggd$vtl, aggd$f0, cex =1.2, pch=16,lwd=2,
+#       col = 0)
+# box()
+# 
+# for ( i in seq(-20,20,2)){
+#   curve ((-b_adult_reduced*x - a_adult_reduced+i)/ (c_adult_reduced),
+#          from = -5, to = 5, add = TRUE,lwd=1, lty=3,col=0)
+# }
+# curve ((-b_adult_reduced*x - a_adult_reduced)/ (c_adult_reduced),
+#          from = -5, to = 5, add = TRUE,lwd=2, lty=1,col=1)
+# 
+# 
+# plot (aggd$vtl,aggd$f0, cex =1.2, col = bmmb::cols[c(2:5)][factor(aggd$C)],
+#       xlim=c(-2.5,3),  pch=16,lwd=2, xlab = "",yaxt='n',
+#       ylab="Height (inches)")
+# grid()
+# 
+# xlim = par()$usr[1:2]
+# ylim = par()$usr[3:4]
+# 
+# x = seq(-3,4,0.1)
+# y = (-b_child_reduced*x - a_child_reduced)/ (c_child_reduced)
+# polygon (c(-3,x,4),c(-3,y,-3),col="cyan3")
+# 
+# y = (-b_child_reduced*x - a_child_reduced)/ (c_child_reduced)
+# polygon (c(-3,x,1),c(3,y,3),col="darkgoldenrod1")
+# 
+# points (aggd$vtl, aggd$f0, cex =1.2, pch=16,lwd=2,
+#       col = 0)
+# box()
+# 
+# for ( i in seq(-20,20,2)){
+#   curve ((-b_child_reduced*x - a_child_reduced+i)/ (c_child_reduced),
+#          from = -5, to = 5, add = TRUE,lwd=1, lty=3,col=0)
+# }
+# curve ((-b_child_reduced*x - a_child_reduced)/ (c_child_reduced),
+#          from = -5, to = 5, add = TRUE,lwd=2, lty=1,col=1)
+# 
+# mtext ("Centered vocal-tract length (cm)", side = 1, outer = TRUE, line=-1,cex=0.9)
+# dev.off()
+
+```
+
+### Between-listener variation in gender perception
+
+```{r, eval = TRUE}
+listener_coefficients_adult = 
+  bmmb::short_hypothesis (gender_model, scope="coef",group="L",
+                          c("Intercept+A1=0","vtl+vtl:A1=0","f0+f0:A1=0"))
+listener_coefficients_child = 
+  bmmb::short_hypothesis (gender_model, scope="coef",group="L",
+                          c("Intercept-A1=0","vtl-vtl:A1=0","f0-f0:A1=0"))
+```
+
+```{r F13-11, fig.width = 8, fig.height = 5, fig.cap = "The first plot compares all listener-dependent category boundaries between men/women (orange) and boys/girls (blue). Subsequent plots present each listener's individual boundaries. Point colors indicate the listener's individual speaker classifications. The number on each plot indicates the listener number.", echo = FALSE, cache = FALSE}
+
+################################################################################
+### Figure 13-11
+################################################################################
+
+# y = (-b*x - a - z) / (dx+c)
+# fixef(model_gender_vtl_f0)
+
+tmp = bmmb::exp_data
+tmp = tmp[tmp$R=='a',]
+
+tmp$vtl_original = tmp$vtl
+tmp$vtl = tmp$vtl - mean (tmp$vtl)
+
+tmp$f0_original = tmp$f0 
+tmp$f0 = tmp$f0 - mean(tmp$f0)
+tmp$f0 = tmp$f0 / 100
+
+aggd = aggregate (cbind ( height, A=="a", G=="f", vtl,f0, vtl) ~ S + A_v + G_v + C_v, 
+                      data = tmp, FUN = mean)
+#aggd = aggd[aggd$A_v=='a',]
+
+a = listener_coefficients_adult[1:15,1]
+b = listener_coefficients_adult[16:30,1]
+c = listener_coefficients_adult[31:45,1]
+
+ac = listener_coefficients_child[1:15,1]
+bc = listener_coefficients_child[16:30,1]
+cc = listener_coefficients_child[31:45,1]
+
+par (mar = c(.2,.2,.2,.2), oma = c(4,4,.5,.5), mfrow = c(4,4))
+
+plot (aggd$vtl,aggd$f0, cex =1.2, col = bmmb::cols[c(2:5)][factor(aggd$C_v)], 
+      pch=16,lwd=2, xlab = "",ylab="f0 (cm)",xaxt = 'n',
+        xlim=c(-2.5,2.7),ylim=c(-1.2,1.2))
+grid()
+
+for (i in 1:15)
+  curve ((-b[i]*x - a[i]) / (c[i]), from = -3, to = 3, 
+         add = TRUE,lwd=2,col=bmmb::cols[8],xaxt='n')
+
+for (i in 1:15)
+  curve ((-bc[i]*x - ac[i]) / (cc[i]), from = -3, to = 3, 
+         add = TRUE,lwd=2,col=bmmb::cols[7],xaxt='n')
+
+for (i in 1:15){
+  xaxt = "n"
+  yaxt = "n"
+  if (i %in% 12:15) xaxt = "s"
+  if (i %in% c(4,8,12)) yaxt = "s"
+  tmpp = tmp[tmp$L==i,]
+  plot (tmpp$vtl,tmpp$f0, cex =1.2, col = bmmb::cols[2:5][factor(tmpp$C)],
+        pch=16,lwd=2, xlab = "",ylab="f0 (cm)",xaxt=xaxt,yaxt=yaxt,
+        xlim=c(-2.5,2.7),ylim=c(-1.2,1.2))
+  grid()
+  curve ((-b[i]*x - a[i]) / (c[i]), from = -5, to = 3, add = TRUE,
+         lwd=2,col=bmmb::cols[8])
+  curve ((-bc[i]*x - ac[i]) / (cc[i]), from = -5, to = 3, add = TRUE,
+         lwd=2,col=bmmb::cols[7])
+  text (-1.5,-.75,i,cex=1.5)
+}
+  mtext (side=1,outer=TRUE, "Centered vocal-tract length (cm)", line = 2.9,cex=0.9)
+  mtext (side=2,outer=TRUE, "Centered f0 (Hz/100)", line = 2.9, cex=0.9)
+```
+
+### Beyond gross acoustic cues in gender perception
+
+```{r F13-12, fig.width = 8, fig.height = 2, fig.cap = "Speaker random effects. Point colors indicate veridical speaker category for boys (b), girls (g), men (m), and women (w).", echo = FALSE, cache = FALSE}
+
+################################################################################
+### Figure 13-12
+################################################################################
+
+tab = table (exp_data$S, exp_data$C_v)
+mod_cat = apply (tab, 1,which.max)
+
+par (mar = c(1,4,1,1), oma = c(0,0,0,0))
+brmplot (ranef(gender_model)$S[,,1], col = bmmb::cols[mod_cat+1],labels="",
+         ylab="Logits")
+
+legend (1,4,legend = c("b","g","m","w"), col = bmmb::cols[2:5],pch=16,bty='n',
+        horiz=TRUE)
+```
+
+## Conclusion: Apparent gender
+
+## Next steps
+
+### Research design, variable selection, etc.
+
+### Non-linear models
+
+$$
+\begin{equation}
+\begin{split}
+\mu_{[i]} = x_{[1]} \cdot a_{[1]} \cdot x_{[2]} \cdot a_{[2]} \\ \\
+\mu_{[i]} = \frac {x_{[1]} \cdot a_{[1]}}{x_{[2]} \cdot a_{[2]}} \\
+\end{split}
+(\#eq:14-1)
+\end{equation}
+$$
+
+### Other data distributions
+
+$$
+\begin{equation}
+\begin{split}
+y \sim \mathrm{family} (\theta)
+\end{split}
+(\#eq:14-2)
+\end{equation}
+$$
+
+### Multivariate analyses
+
+$$
+\begin{equation}
+\begin{split}
+\begin{bmatrix} y_1 \\ y_2 \end{bmatrix} \sim \mathrm{MVNormal} \left( \begin{bmatrix} \mu_1 \\ \mu_2 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+\mu_1 = a_{1[1]} \cdot x_{[1]} + a_{1[2]} \cdot x_{[2]} + a_{1[3]} \cdot x_{[3]} \\
+\mu_2 = a_{2[1]} \cdot x_{[1]} + a_{2[2]} \cdot x_{[2]} + a_{2[3]} \cdot x_{[3]} \\
+\\\end{split}
+(\#eq:14-2)
+\end{equation}
+$$
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
