@@ -1,0 +1,964 @@
+
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+options (digits = 4)
+```
+
+# Variation in parameters ('random effects') and model comparison
+
+## Chapter pre-cap
+
+## Data and research questions {#c6-data-and-qs}
+
+```{r, warning=FALSE,message=FALSE}
+# load packages and data
+library (bmmb)
+library (brms)
+data (exp_data)
+
+# exclude actual men and apparent men
+notmen = exp_data[exp_data$C_v!='m' & exp_data$C!='m',]
+```
+
+
+```{r F6-1, fig.height = 3, fig.width=8, fig.cap = "(left) Distribution of apparent heights according to apparent age group. (right) Same as left plot but presented individually for each listener. In each case, the first box of each color (the upper box) indicates responses for apparent adults. The horizontal lines running through the figures represent the grand mean (black), the adult mean (blue), and the child mean (green).", echo = FALSE}
+
+################################################################################
+### Figure 6.1
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4.1,.1,.5,.1),oma = c(0,4,0,.50)); layout (mat = t(c(1,2)), widths = c(.2,.8))
+
+boxplot (height ~ A, data=notmen, col = c(beige,lightpink),ylim = c(103,185), xlab="")
+mtext (side=1, "Apparent Age Group", line=3)
+abline (h = c(155.3,155.3+8.8,155.3-8.8), lwd = c(3,2,2), col = c(1,4,3))
+boxplot (height ~ A, data=notmen, col = c(beige,lightpink),ylim = c(103,185), xlab="",add=TRUE)
+
+mtext (side = 2, outer = FALSE, "Apparent height (cm)", line = 2.75)
+boxplot (height ~ A+L, data=notmen, col = rep(bmmb::cols,each=2),ylim = c(103,185),
+         ylab="",yaxt="n", xaxt="n",xlab="Listener")
+axis (side=1, at = seq(1.5,30.5,2), 1:15)
+abline (h = c(155.3,155.3+8.8,155.3-8.8), lwd = c(3,2,2), col = c(1,4,3))
+boxplot (height ~ A+L, data=notmen, col = rep(bmmb::cols,each=2),ylim = c(103,185),
+         ylab="",yaxt="n", xaxt="n",xlab="Listener", add = TRUE)
+```
+
+## Variation in parameters across sources of data {#c6-variation-sources}
+
+```{r}
+round ( tapply (notmen$height, notmen[,c("A","L")], mean) )
+```
+
+```{r F6-2, fig.height = 2.75, fig.width=8, fig.cap = "(left) Average height reported by each listener overall. The horizontal line represents the grand mean. (middle) Age-dependent listener effects for apparent children (lower line) and apparent adults (upper line). The horizontal lines indicate the grand mean (solid), and the average means for apparent adults (upper dotted) and apparent children (lower dotted). (right) Listener-dependent age effects, the difference between the adult and child means reported by each listener (i.e., the difference between the lines in the middle plot). The horizontal line represents the average age effect across listeners.", echo = FALSE}
+
+################################################################################
+### Figure 6.2
+################################################################################
+
+listener_age_differences = tapply (notmen$height, notmen[,c("A","L")], mean)
+
+par (mfrow = c(1,3), mar = c(4,4,1,1))
+
+plot(colMeans(listener_age_differences), cex=2,
+     type = 'b', col = bmmb::cols[7], pch=16, ylim = c(132,177),ylab = "Apparent height (cm)",
+     lwd=2, xlab = "Listener",cex.axis=1.2,cex.lab=1.2)
+abline (h = c(155), lty = c(1,3,3),col=bmmb::cols[7], lwd=2)
+
+plot(listener_age_differences[1,], cex=2,
+     type = 'b', col = lavender, pch=16, ylim = c(127,172),ylab = "Apparent height (cm)",
+     lwd=2, xlab = "Listener",cex.axis=1.2,cex.lab=1.2)
+lines(listener_age_differences[2,],cex=2, 
+      type = 'b', col = deepgreen, pch=16,lwd=2)
+abline (h = c(155, 165, 145), lty = c(1,2,2), col=bmmb::cols[c(7,14,4)], lwd=2)
+
+listener_age_effects = (listener_age_differences[1,]-listener_age_differences[2,])/2
+
+plot(listener_age_effects, lwd=2,lty=1,cex=2,cex.axis=1.2,cex.lab=1.2,
+     type = 'b', col = darkorange, pch=16, ylim = c(-7,28),
+     ylab = "Apparent height difference (cm)", xlab = "Listener")
+abline (h = mean (listener_age_effects), col = darkorange, lwd=2)
+
+# plot(listener_age_effects, lwd=1,lty=3,
+#      type = 'n', col = darkorange, pch=16, ylim = c(0,18),
+#      ylab = "Height difference (cm)", xlab = "Listener")
+# arrows (1:15, rep(mean(listener_age_effects),15), 1:15, listener_age_effects,
+#         length=.1, lwd=2, col=skyblue)
+# abline (h = mean(listener_age_effects))
+
+```
+
+### Description of our model
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A + L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,\sigma_L) \\
+A \colon L_{[\bullet]} \sim \mathrm{N}(0,\sigma_{A \colon L}) \\
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\\
+\mathrm{Intercept} \sim \mathrm{t}(3, 156,12) \\
+A \sim \mathrm{t}(3, 0,12) \\
+\sigma_L, \sigma_S, \sigma_{A \colon L} \sim \mathrm{t}(3, 0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+\sigma \sim \mathrm{t}(3, 0,12) \\
+\end{split}
+(\#eq:6-1)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu, \mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A + L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+L_{[\bullet]} \sim \mathrm{N}(0,12) \\
+A \colon L_{[\bullet]} \sim \mathrm{N}(0,12) \\
+S_{[\bullet]} \sim \mathrm{N}(0,12) \\
+\\
+\mathrm{Intercept} \sim \mathrm{t}(3, 156,12) \\
+A \sim \mathrm{t}(3, 0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+\sigma \sim \mathrm{t}(3, 0,12) \\
+\end{split}
+(\#eq:6-1a)
+\end{equation}
+$$
+
+### Correlations between random parameters {#c6-correlations}
+
+```{r F6-3, fig.height = 2.75, fig.width=8, fig.cap = "(left) Average reported height by each listener, sorted by magnitude. (middle) The magnitude of the age effect for each listener, sorted by that listener\'s effect in the left plot. (right) Listener average reported height plotted against listener age effects.", echo = FALSE}
+
+################################################################################
+### Figure 6.3
+################################################################################
+par (mfrow = c(1,3), mar = c(4,4,1,1))
+
+listener_age_differences = tapply (notmen$height, notmen[,c("A","L")], mean)
+ord = order (colMeans(listener_age_differences))
+
+listener_means = colMeans(listener_age_differences)
+
+listener_age_effects = (listener_age_differences[1,]-listener_age_differences[2,])/2
+
+par (mfrow = c(1,3), mar = c(4,4,1,1))
+
+plot(colMeans(listener_age_differences)[ord], cex=2,
+     type = 'b', col = bmmb::cols[7], pch=16, ylim = c(145,167),ylab = "Apparent height (cm)",
+     lwd=2, xlab = "",cex.lab=1.2,cex.axis=1.2, xaxt='n')
+abline (h = c(155), lty = c(1,3,3),col=bmmb::cols[7])
+
+plot(listener_age_effects[ord], lwd=2,lty=1,cex=2,cex.lab=1.2,cex.axis=1.2,
+     type = 'b', col = darkorange, pch=16, ylim = c(0,22),xaxt='n',
+     ylab = "Apparent height difference (cm)", xlab = "")
+abline (h = mean (listener_age_effects), col = darkorange)
+
+# plot(listener_age_effects, lwd=1,lty=3,
+#      type = 'n', col = darkorange, pch=16, ylim = c(0,18),
+#      ylab = "Height difference (cm)", xlab = "Listener")
+# arrows (1:15, rep(mean(listener_age_effects),15), 1:15, listener_age_effects,
+#         length=.1, lwd=2, col=skyblue)
+# abline (h = mean(listener_age_effects))
+
+plot(listener_means,listener_age_effects, lwd=1,lty=3,xlim=c(145,167),ylim=c(0,22),
+     type = 'p', col = cols[4], pch=16, ylab = "Age Effect (cm)",cex=2,
+     xlab = "Height Intercept (cm)",cex.lab=1.2,cex.axis=1.2)
+abline (v = mean(listener_means), h = mean(listener_age_effects), lty=3)
+
+```
+
+$$
+\begin{equation}
+\hat{r} = \frac {\hat{\sigma}_{x,y}} 
+          {\hat{\sigma}_x \hat{\sigma}_y}
+(\#eq:6-2)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\hat{\sigma}_{x,y} = \frac {\Sigma(x_{[i]}-\bar{x})(y_{[i]}-\bar{y})} 
+          {(n-1)}
+(\#eq:6-2a)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\hat{r} = \frac {\Sigma(x_{[i]}-\bar{x})(y_{[i]}-\bar{y})} 
+          {(n-1) \cdot \hat{\sigma}_x \hat{\sigma}_y}
+(\#eq:6-3)
+\end{equation}
+$$
+
+```{r}
+# find means for each listener for each apparent age
+listener_age_means = tapply (notmen$height, notmen[,c("A","L")], mean)
+
+# average of each column = listener means
+listener_effects = colMeans (listener_age_means)
+
+# half the difference across rows = listener age effects
+listener_age_effects = (listener_age_means[1,] - listener_age_means[2,]) / 2
+
+# correlation between listener means and age effects
+cor (listener_effects, listener_age_effects)
+```
+
+```{r}
+x1 = c(-1, -1, 1, 1)
+y1 = c(-2, -2, 2, 2)
+cor (x1, y1)
+```
+
+```{r}
+x1 = c(-1, -1,  1,  1)
+y1 = c( 2,  2, -2, -2)
+cor (x1, y1)
+```
+
+```{r}
+x1 = c(-1, -1,  1, 1)
+y1 = c(-2,  2, -2, 2)
+cor (x1, y1)
+```
+
+```{r}
+x1 = c(-1, -1,  1, 1)
+y1 = c(-2, -2, -2, 2)
+cor (x1, y1)
+```
+
+### Random effects and the multivariate normal distribution {#c6-random-and-mvn}
+
+```{r F6-4, fig.height = 5, fig.width = 6, fig.cap="Marginal distributions of 10,000 bivariate normal draws of simulated listener intercepts (left column) and listener-dependent A1 coefficients (middle column) from distributions with means and standard deviations based on our listener data. The right column presents both variables together. The correlation of the variables is 0 (top), 0.5 (middle) and -0.85 (bottom).", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 6.4
+################################################################################
+
+#mean (listener_means)
+#sd (listener_means)
+#mean (listener_age_effects)
+#sd (listener_age_effects)
+set.seed(.1)
+par (mfrow = c(3,3), mar = c(4,4,1,1))
+
+ranefs = phonTools::rmvtnorm (10000, means = c(153,10), sigma = matrix (c(4.8^2,0,0,4.3^2),2,2))
+hist (ranefs[,1],main='',col=4,xlab='Intercept',freq = FALSE,breaks=40, xlim = c(130,175))
+hist (ranefs[,2],main='',col=4,xlab='A1',freq = FALSE,breaks=40, xlim = c(-5,25))
+plot (ranefs, pch=16,col=4,xlim=c(130,180),ylim=c(-10,27),xlab='Intercept',
+      ylab='A1')
+phonTools::sdellipse (ranefs,add = TRUE, lwd=2,col=2,stdev =3)
+grid()
+
+ranefs = phonTools::rmvtnorm (10000, means = c(153,10), sigma = matrix (c(4.8^2,10.5,10.5,4.3^2),2,2))
+hist (ranefs[,1],main='',col=4,xlab='Intercept',freq = FALSE,breaks=40, xlim = c(130,175))
+hist (ranefs[,2],main='',col=4,xlab='A1',freq = FALSE,breaks=40, xlim = c(-5,25))
+plot (ranefs, pch=16,col=4,xlim=c(130,180),ylim=c(-10,27),xlab='Intercept',
+      ylab='A1')
+phonTools::sdellipse (ranefs,add = TRUE, lwd=2,col=2,stdev =3, xlim = c(145,175))
+grid()
+
+ranefs = phonTools::rmvtnorm (10000, means = c(153,10), sigma = matrix (c(4.8^2,-17.8,-17.8,4.3^2),2,2))
+hist (ranefs[,1],main='',col=4,xlab='Intercept',freq = FALSE,breaks=40, xlim = c(130,175))
+hist (ranefs[,2],main='',col=4,xlab='A1',freq = FALSE,breaks=40, xlim = c(-5,25))
+plot (ranefs, pch=16,col=4,xlim=c(130,180),ylim=c(-10,27),xlab='Intercept',
+      ylab='A1')
+phonTools::sdellipse (ranefs,add = TRUE, lwd=2,col=2,stdev =3, xlim = c(145,175))
+grid()
+
+```
+
+### Specifying priors for a multivariate normal distribution {#c6-mvn-priors}
+
+$$
+\begin{equation}
+\begin{split}
+\Sigma = \begin{bmatrix} \sigma_{x}^2 & \sigma_{x,y} & \sigma_{x,z} \\ 
+\sigma_{y,x} & \sigma_{y}^2 & \sigma_{y,z} \\
+\sigma_{z,x} & \sigma_{z,y} & \sigma_{z}^2 \end{bmatrix} \\
+\end{split}
+(\#eq:6-3a)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\Sigma = \begin{bmatrix} \sigma_{L}^2 & \sigma_{L,A \colon L} \\ \sigma_{A \colon L, L} & \sigma_{A \colon L}^2 \\ \end{bmatrix} \\
+\end{split}
+(\#eq:6-3b)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{\Sigma} = \begin{bmatrix} \sigma_{L}^2 & \sigma_{L,A \colon L} \\ \sigma_{A \colon L, L} & \sigma_{A \colon L}^2 \\ \end{bmatrix} = \begin{bmatrix} \sigma_{L} & 0 \\ 0 & \sigma_{A \colon L} \\ \end{bmatrix} 
+\cdot R \cdot
+\begin{bmatrix} \sigma_{L} & 0 \\ 0 & \sigma_{A \colon L} \\ \end{bmatrix} \\
+\end{split}
+(\#eq:6-4)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+R = \begin{bmatrix} 1 & r_{L,A \colon L} \\ r_{A \colon L,L} & 1 \\ \end{bmatrix} \\ \\
+\end{split}
+(\#eq:6-5)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\begin{split}
+R \sim \mathrm{LKJCorr} (\eta)
+\end{split}
+(\#eq:6-6)
+\end{equation}
+$$
+
+```{r F6-4b, fig.height = 3, fig.width = 8, fig.cap="(left) Density of different correlation parameters for a two-dimensional correlation matrix, according to LKJ distributions with varying eta parameters. (right) Log densities of the densities in the left plot.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 6.5
+################################################################################
+
+colours = colorRampPalette(bmmb::cols[colls = c(9,7,4,3,8,5,12)])(10)
+
+tmp = lkjcorrdensity (1)
+par (mar = c(4,4,1,.5), mfrow = c(1,2))
+
+plot (tmp, type = 'l', col = colours[1], ylab="Density",xlab="Correlation",
+      ylim = c(0,2.5), xaxs='i', lwd=3, yaxs='i')
+for (j in 1:10){
+  tmp = lkjcorrdensity (j)
+  lines (tmp, col = colours[j], lwd=3)
+}
+
+legend (0.65,2.5, legend = c(1:10),col = colours, 
+        pch=15, bty = 'n', cex = 0.75)
+
+plot (tmp[,1],log(tmp[,2]), type = 'l', col = colours[1], ylab="Log Density",xlab="Correlation",
+      ylim = c(-10,2), xaxs='i', lwd=3, yaxs='i')
+for (j in 1:10){
+  tmp = lkjcorrdensity (j)
+  lines (tmp[,1],log(tmp[,2]), col = colours[j], lwd=3)
+}
+```
+
+### Updating our model description
+
+$$
+\begin{equation}
+\begin{split}
+height_{[i]} \sim \mathrm{t}(\nu,\mu_{[i]},\sigma) \\ 
+\mu_{[i]} = \mathrm{Intercept} + A  + L_{[\mathsf{L}_{[i]}]} + A \colon L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ \\ 
+\mathrm{Priors:} \\ 
+S_{[\bullet]} \sim \mathrm{N}(0,\sigma_S) \\
+\begin{bmatrix} L_{[\bullet]} \\ A \colon L_{[\bullet]} \end{bmatrix} \sim \mathrm{MVNormal} \left( \begin{bmatrix} 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\
+\\
+\mathrm{Intercept} \sim \mathrm{t}(3,156,12) \\
+A \sim \mathrm{t}(3,0,12) \\
+\sigma, \sigma_L, \sigma_{A \colon L}, \sigma_S \sim \mathrm{t}(3,0,12) \\
+\nu \sim \mathrm{gamma}(2, 0.1) \\ 
+R \sim \mathrm{LKJCorr} (2) \\\\
+\mathrm{\Sigma} = \begin{bmatrix} \sigma_{L} & 0 \\ 0 & \sigma_{A \colon L} \\ \end{bmatrix} 
+\cdot R \cdot
+\begin{bmatrix} \sigma_{L} & 0 \\ 0 & \sigma_{A \colon L} \\ \end{bmatrix} \\
+\end{split}
+(\#eq:6-7)
+\end{equation}
+$$
+
+### Fitting and interpreting the model {#c6-fitting}
+
+```{r, eval = FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("gamma(2, 0.1)", class = "nu"),
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+model_re_t =  
+  brms::brm (height ~ A + (A|L) + (1|S), data = notmen, chains = 4, 
+             cores = 4, warmup = 1000, iter = 5000, thin = 4, 
+             prior = priors, family = "student")
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_re_t = bmmb::get_model ('6_model_re_t.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_re_t, '../models/6_model_re_t.RDS')
+model_re_t = readRDS ('../models/6_model_re_t.RDS')
+```
+
+```{r, eval = FALSE}
+bmmb::short_summary (model_re_t)
+```
+
+```{r}
+## Group-Level Effects:
+## ~L (Number of levels: 15)
+##                   Estimate Est.Error l-95% CI u-95% CI
+## sd(Intercept)         4.34      0.84     3.05     6.29
+## sd(A1)                4.26      0.85     2.96     6.25
+## cor(Intercept,A1)    -0.80      0.12    -0.95    -0.51
+```
+
+```{r, eval = FALSE}
+varcorr_information = brms::VarCorr (model_re_t)
+str (varcorr_information)
+```
+
+```{r}
+bmmb::get_sds (model_re_t)
+```
+
+```{r}
+# specify that we want the correlations for L
+bmmb::getcorrs (model_re_t, factor="L")
+```
+
+```{r, include = FALSE}
+model_sum_coding_t = readRDS ('../models/5_model_sum_coding_t.RDS')
+```
+```{r, eval = FALSE}
+model_sum_coding_t = bmmb::get_model ('5_model_sum_coding_t.RDS')
+```
+
+```{r F6-5, fig.height = 2.5, fig.width = 8, fig.cap="A comparison of estimates of the same parameters across our models with and without random effects (RE) for apparent age.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 6.6
+################################################################################
+
+varcorr_information = brms::VarCorr (model_re_t)
+
+comparison = rbind (brms::fixef(model_sum_coding_t),
+                    brms::VarCorr (model_sum_coding_t)$L$sd,
+                    brms::VarCorr (model_sum_coding_t)$residual__$sd,
+                    brms::fixef(model_re_t),
+                    varcorr_information$L$sd[1,],
+                    varcorr_information$residual__$sd)
+
+par (mfrow = c(1,4), mar = c(2,2,3,1), oma = c(0,3,0,0))
+bmmb::brmplot (comparison[c(1,5),], ylim = c(152,159),main="Intercept", 
+               xlim = c(.75,2.25), col = c(4,2), labels = "",cex.axis=1.2)
+bmmb::brmplot(comparison[c(2,6),], ylim = c(6,11),main="A1", 
+              xlim = c(.75,2.25), col = c(4,2), labels = "",cex.axis=1.2)
+bmmb::brmplot(comparison[c(3,7),], ylim = c(2,8),main="sigma_L", 
+              xlim = c(.75,2.25), col = c(4,2), labels = "",cex.axis=1.2)
+bmmb::brmplot(comparison[c(4,8),], ylim = c(4,9.5),main="sigma", 
+              xlim = c(.75,2.25), col = c(4,2), labels = "",cex.axis=1.2)
+
+legend (1.1, 9, legend = c("Age RE", "No age RE"), col = c(2,4),
+        pch=16,bty='n', cex = 1.1,pt.cex=1.5)
+
+mtext (side = 2, outer = TRUE, "Centimeters",adj = .46, cex=0.9, line = 1.2)
+
+```
+
+## Model Comparison {#c6-model-comparison}
+
+### In-sample and out-of-sample prediction {#c6-in-and-out-prediction}
+
+$$
+\begin{equation}
+\widehat{\mathrm{lpd}} = \sum_{i=1}^{N} \mathrm{log} (p(y_{[i]} | \theta))
+(\#eq:6-8)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathrm{elpd} = \sum_{i=1}^{N} \mathbb{E}(\mathrm{log} (p(\tilde{y}_i | \theta)))
+(\#eq:6-9)
+\end{equation}
+$$
+
+```{r, cache = TRUE}
+n = 50         # how many observations
+iter = 1000    # how many simulations
+
+# these will hold the model log likelihoods for each iteration
+lpd_hat = matrix (0, iter, 3)
+elpd_hat = matrix (0, iter, 3)
+
+set.seed(1)
+for (i in 1:iter){
+  # create 3 random predictors
+  x1 = sample (c(-1,1), n, replace=TRUE)
+  x2 = sample (c(-1,1), n, replace=TRUE)
+  x3 = sample (c(-1,1), n, replace=TRUE)
+
+  # generate the observed (in sample) data with an  
+  # underlying process that only uses the x1 predictor
+  y = 1 + x1 + rnorm (n, 0, 1)
+  # use the same process to simulate some "out-of-sample" data
+  y_tilde = 1 + x1 + rnorm (n, 0, 1)
+ 
+  for (j in 1:3){
+    # fit three models, the first using the real underlying model
+    if (j==1) mod = lm (y ~ 1+x1)
+    # the next two include random useless predictors
+    if (j==2) mod = lm (y ~ 1+x1 + x2)
+    if (j==3) mod = lm (y ~ 1+x1 + x2 + x3)
+    
+    # find the predicted value (mu) for each data point
+    mu = mod$fitted.values
+    # and the estimated sigma parameter
+    sigma = summary(mod)$sigma
+    
+    # equivalent to equation 6.10
+    lpd_hat[i,j] = sum (dnorm (y, mu, sigma, log = TRUE))
+    # equivalent to equation 6.11
+    elpd_hat[i,j] = sum (dnorm (y_tilde, mu, sigma, log = TRUE))
+  }
+}
+```
+
+$$
+\begin{equation}
+\widehat{\mathrm{lpd}} = \sum_{i=1}^{N} \mathrm{log} (\mathrm{N}(y_{[i]} | \mu, \sigma))
+(\#eq:6-10)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\widehat{\mathrm{elpd}} = \sum_{i=1}^{N} \mathrm{log} (\mathrm{N}(\tilde{y}_i | \mu, \sigma))
+(\#eq:6-11)
+\end{equation}
+$$
+
+```{r F6-6, fig.height = 3, fig.width = 8, fig.cap="(left) Average value of lpd and elpd estimates for each model in our simulated example. (right) The same values as on the left, however, now elpd estimates are edjusted (`elpd_adj`) based on the number of predictors in the model, as discussed in the text.", cache = FALSE, echo = FALSE}
+################################################################################
+### Figure 6.7
+################################################################################
+
+means = round (apply (cbind(lpd_hat,elpd_hat), 2, mean),1)
+
+layout (mat=t(c(1:3)), widths = c(.4,.4,.2))
+par (mar = c(4.2,1,1,.1),oma = c(.5,3.5,.1,.1))
+
+plot (means[1:3], type = "b", lwd = 2, ylim = range(means)+c(-.5,.5),xaxt='n',
+      pch=16, xlim = c(.8,3.2), ylab = "lpd",xlab="Predictors",
+      cex.lab=1.3,cex.axis=1.3)
+axis (side=1,at=1:3,labels = c("x1","x1, x2","x1, x2, x3"),cex.axis=1.3)
+lines (means[4:6], col =2, lwd=2, type = "b",pch=16)
+arrows (1,means[1]-0.2, 1,means[4]+0.2,code=3, length=0.1,lwd=2)
+arrows (2,means[2]-0.2, 2,means[5]+0.2,code=3, length=0.1,lwd=2)
+arrows (3,means[3]-0.2, 3,means[6]+0.2,code=3, length=0.1,lwd=2)
+
+text ((1:3)+.1, -71, labels = round(c(means[1]-means[4],means[2]-means[5],
+                                means[3]-means[6]),2),cex=1.2)
+text (0.8,c(-68.8,-73.6), labels = c("More Likely","Less likely"), pos=4,cex=1.2)
+
+mtext (side=2,text = "Log density", line = 3)
+#legend (3.4,-70.5, legend= c("In sample","out-of-sample"), 
+#        col=c(1,2), lwd=2,bty="n")
+
+plot (means[1:3], type = "b", lwd = 2, ylim = range(means)+c(-.5,.5),xaxt='n',
+      pch=16, xlim = c(.8,3.2), ylab = "",xlab="Predictors",yaxt="n",cex.lab=1.3)
+axis (side=1,at=1:3,labels = c("x1","x1, x2","x1, x2, x3"),cex.axis=1.3)
+lines (means[4:6], col =2, lwd=2, type = "b",pch=16)
+lines (means[1:3] - c(2:4), col =2, lwd=2, type = "b",pch=16, lty = 2)
+arrows (1,means[1]-0.2, 1,means[1]+0.2-2,code=3, length=0.1,lwd=2)
+arrows (2,means[2]-0.2, 2,means[2]+0.2-3,code=3, length=0.1,lwd=2)
+arrows (3,means[3]-0.2, 3,means[3]+0.2-4,code=3, length=0.1,lwd=2)
+
+text (1:3, means[1:3]+.25, labels = means[1:3],cex=1.2)
+text (1:3, means[4:6]-.25, labels = means[4:6],cex=1.2)
+text (1:3, means[1:3]-.25-c(2:4), labels = means[1:3]-c(2:4),cex=1.2)
+
+plot (0, bty='n', xaxt='n',yaxt='n',xlab="",type="n")
+legend (.6,.2,legend = c("lpd_hat","elpd_hat","elpd_adj"), lwd=4, 
+        col = c(1,2,2),cex=1.4,lty = c(1,1,3), bty='n')
+```
+
+### Out-of-sample prediction: Adjusting predictive accuracy {#c6-out-sample-adjust}
+
+$$
+\begin{equation}
+\widehat{\mathrm{elpd}} = \widehat{\mathrm{lpd}} - \mathrm{p}
+(\#eq:6-12)
+\end{equation}
+$$
+
+```{r F6-7, fig.height = 3, fig.width = 8, fig.cap="(left) Average value of lpd and elpd for each model in our simulated example, modified to also include the second predictor (`x2`) in the data generating process. (right) The same values as on the left, however, now elpd is estimated based on adjusting the lpd using the number of model parameters. The y axis range intentionally omits the first model so that the information for the second and third models can be seen clearly.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 6.8
+################################################################################
+n = 50         # how many observations
+iter = 1000    # how many simulations
+# these will hold the model log likelihoods for each iteration
+in_sample_ll = matrix (0, iter, 3)
+out_of_sample_ll = matrix (0, iter, 3)
+
+set.seed(1)
+for (i in 1:iter){
+  # create 3 random predictors
+  x1 = sample (c(-1,1), n, replace=TRUE)
+  x2 = sample (c(-1,1), n, replace=TRUE)
+
+  # generate the observed (in sample) data with an  
+  # underlying process that only uses the x1 predictor
+  y_in = 1 + x1 + rnorm (n, 0, 1)
+  # use the same process to simulate some "out-of-sample" data
+  y_out = 1 + x1 + rnorm (n, 0, 1)
+ 
+  for (j in 1:3){
+    # fit three models, the first using the real underlying model
+    if (j==1) mod = lm (y_in ~ 0+x1)
+    # the next two include random useless predictors
+    if (j==2) mod = lm (y_in ~ 1+x1)
+    if (j==3) mod = lm (y_in ~ 1+x1 + x2)
+    
+    # find the predicted value (mu) for each data point
+    yhat = mod$fitted.values
+    # and the estimated sigma parameter
+    sigma = summary(mod)$sigma
+    
+    in_sample_ll[i,j] = sum (dnorm (y_in, yhat, sigma, log = TRUE))
+    out_of_sample_ll[i,j] = sum (dnorm (y_out, yhat, sigma, log = TRUE))
+  }
+}
+
+means = round (apply (cbind(in_sample_ll,out_of_sample_ll), 2, mean),1)
+
+layout (mat=t(c(1:3)), widths = c(.4,.4,.2))
+par (mar = c(4,1.5,1,.1),oma = c(.5,3,.1,.1))
+
+plot (means[1:3], type = "b", lwd = 2, ylim = range(means)+c(-.5,.5),xaxt='n',
+      pch=16, xlim = c(.8,3.2), ylab = "",
+      xlab="Predictors",cex.lab=1.3,cex.axis=1.3)
+axis (side=1,at=1:3,labels = c("x1","x1, x2","x1, x2, x3"),cex.axis=1.3)
+lines (means[4:6], col =2, lwd=2, type = "b",pch=16)
+mtext (side=2,text = "Log density", line = 3)
+#legend (3.4,-70.5, legend= c("In sample","out-of-sample"), 
+#        col=c(1,2), lwd=2,bty="n")
+
+plot (means[1:3], type = "b", lwd = 2, ylim =c(-73.5,-69),xaxt='n',
+      pch=16, xlim = c(.8,3.2), ylab = "",xlab="Predictors",
+      yaxt="n",cex.lab=1.3)
+axis (side=1,at=1:3,labels = c("x1","x1, x2","x1, x2, x3"),cex.axis=1.3)
+lines (means[4:6], col =2, lwd=2, type = "b",pch=16)
+lines (means[1:3] - c(1:3), col =2, lwd=2, type = "b",pch=16, lty = 2)
+arrows (1,means[1]-0.2, 1,means[1]+0.2-1,code=3, length=0.1,lwd=2)
+arrows (2,means[2]-0.2, 2,means[2]+0.2-2,code=3, length=0.1,lwd=2)
+arrows (3,means[3]-0.2, 3,means[3]+0.2-3,code=3, length=0.1,lwd=2)
+
+text (c(1,2.2,3), means[1:3]+.25, labels = means[1:3],cex=1.2)
+text (c(1,2.2,3), means[4:6]-.25, labels = means[4:6],cex=1.2)
+text (c(1,2.2,3), means[1:3]-.25-c(1:3), labels = means[1:3]-c(1:3),cex=1.2)
+
+plot (0, bty='n', xaxt='n',yaxt='n',xlab="",type="n")
+legend (.6,.2,legend = c("lpd_hat","elpd_hat","elpd_adj"), lwd=4, 
+        col = c(1,2,2),cex=1.4,lty = c(1,1,3))
+```
+
+$$
+\begin{equation}
+\frac{1}{S} \sum_{s=1}^{S} p(y_{[1]} | \theta^s)
+(\#eq:6-13)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\widehat{\mathrm{lpd}} = \sum_{i=1}^{n} \mathrm{log} (\frac{1}{S} \sum_{s=1}^{S} p(y_{[i]} | \theta^s))
+(\#eq:6-14)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathrm{Var}_{s=1}^{\,S}(\mathrm{log} (p(y_{[1]} | \theta^s)))
+(\#eq:6-15)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathrm{p_{\mathrm{WAIC}}} = \sum_{i=1}^{n} \mathrm{Var}_{s=1}^{\,S}(\mathrm{log} (p(y_{[i]} | \theta^s)))
+(\#eq:6-16)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\widehat{\mathrm{elpd}}_{WAIC} = \widehat{\mathrm{lpd}} - \mathrm{p_{WAIC}}
+(\#eq:6-17)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+model_sum_coding = bmmb::get_model ('5_model_sum_coding.RDS')
+model_sum_coding_t = bmmb::get_model ('5_model_sum_coding_t.RDS')
+```
+```{r, include = FALSE}
+model_sum_coding = readRDS ('../models/5_model_sum_coding.RDS')
+model_sum_coding_t = readRDS ('../models/5_model_sum_coding_t.RDS')
+```
+
+```{r}
+options (contrasts = c('contr.sum','contr.sum'))
+```
+
+```{r, cache = TRUE, warning=FALSE, error=FALSE}
+model_sum_coding = 
+  brms::add_criterion (model_sum_coding, criterion="waic")
+
+model_sum_coding_t = 
+  brms::add_criterion (model_sum_coding_t, criterion="waic")
+```
+
+```{r}
+model_sum_coding$criteria$waic
+```
+
+```{r}
+model_waic_info = model_sum_coding$criteria$waic$pointwise
+model_t_waic_info = model_sum_coding_t$criteria$waic$pointwise
+```
+
+```{r}
+# first six data points
+head (model_waic_info)
+```
+
+```{r}
+# the sum of each column
+colSums (model_waic_info)
+
+# the standard deviation of each column
+apply (model_waic_info,2,sd) * sqrt(1401)
+```
+
+```{r, cache = TRUE}
+resids = scale(residuals(model_sum_coding)[,1])
+resids_t = scale(residuals(model_sum_coding_t)[,1])
+```
+
+```{r F6-8, fig.height = 3, fig.width = 8, fig.cap="(left) Standardized model residuals plotted against values of the WAIC penalty term (p_waic) for each data point for the model with Gaussian errors, `model_sum_coding`. (right) The same as on the left but for the model with t distributed errors, `model_sum_coding_t`.", cache = FALSE, echo = FALSE}
+
+################################################################################
+### Figure 6.8
+################################################################################
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+plot(model_sum_coding$criteria$waic$pointwise[,2], resids,xlab="p_waic",ylab="Residual", 
+     ylim = c(-4.5,4.5), xlim = c(0,1.1), col=cols[6],pch=16)
+grid()
+abline (v = 0.4)
+#abline (h=c(-2.5,2.5))
+
+plot(model_sum_coding_t$criteria$waic$pointwise[,2], resids_t,xlab="p_waic",ylab="Residual", 
+     ylim = c(-4.5,4.5), xlim = c(0,1.1), col=cols[6],pch=16)
+grid()
+abline (v = 0.4)
+```
+
+### Out-of-sample prediction: Cross validation {#c6-out-sample-crossval}
+
+$$
+\begin{equation}
+\widehat{\mathrm{elpd}}_{LOO} \approx \sum_{i=1}^{n} \mathrm{log} (p(y_{[i]} | \theta_{y_{[-i]}}))
+(\#eq:6-18)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\widehat{\mathrm{elpd}}_{LOO} = \widehat{\mathrm{lpd}} - \mathrm{p_{\mathrm{LOO}}}
+(\#eq:6-19)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathrm{p_{\mathrm{LOO}}} = \widehat{\mathrm{lpd}} - \widehat{\mathrm{elpd}}_{LOO}
+(\#eq:6-20)
+\end{equation}
+$$
+
+```{r, cache = TRUE}
+model_sum_coding = 
+  brms::add_criterion (model_sum_coding, criterion="loo")
+
+model_sum_coding_t = 
+  brms::add_criterion (model_sum_coding_t, criterion="loo")
+
+model_re_t = 
+  brms::add_criterion (model_re_t, criterion="loo")
+```
+
+```{r}
+model_sum_coding$criteria$loo
+```
+
+```{r}
+brms::loo_compare (model_sum_coding, 
+                   model_sum_coding_t, 
+                   model_re_t, criterion = "loo")
+```
+
+```{r}
+model_re_t$criteria$loo$estimates[1,]
+```
+
+```{r}
+model_loo_info = model_sum_coding$criteria$loo$pointwise
+model_t_loo_info = model_sum_coding_t$criteria$loo$pointwise
+model_re_t_lo_info = model_re_t$criteria$loo$pointwise
+```
+
+```{r}
+sum(model_t_loo_info[,1]-model_re_t_lo_info[,1])
+```
+
+```{r}
+sd(model_t_loo_info[,1]-model_re_t_lo_info[,1]) * sqrt(1401)
+```
+
+```{r}
+sum(model_loo_info[,1]-model_t_loo_info[,1])
+sd(model_loo_info[,1]-model_t_loo_info[,1]) * sqrt(1401)
+```
+
+```{r, cache = TRUE}
+brms::loo_compare (model_sum_coding, model_sum_coding_t, criterion = "loo")
+```
+
+```{r, cache = TRUE}
+# Actual and effective number of parameters for simplest model
+ncol(bmmb::get_samples(model_sum_coding))-2
+sum(model_loo_info[,'p_loo'])
+
+# Actual and effective number of parameters for t model
+ncol(bmmb::get_samples(model_sum_coding_t))-2
+sum(model_t_loo_info[,'p_loo'])
+
+# Actual and effective number of parameters for 'random effects' model
+ncol(bmmb::get_samples(model_re_t))-2
+sum(model_re_t_lo_info[,'p_loo'])
+```
+
+### Selecting a model
+
+```{r, cache = TRUE}
+brms::loo_compare (model_sum_coding, model_sum_coding_t, criterion = "loo")
+```
+
+```{r}
+set.seed(1)
+notmen$useless = sample (c(-1,1),nrow(notmen), replace = TRUE)
+tapply (notmen$height, notmen$useless, mean)
+```
+
+`height ~ A + useless + (A + useless|L) + (1|S)`
+
+```{r, eval = FALSE}
+# Fit the model yourself
+options (contrasts = c('contr.sum','contr.sum'))
+priors = c(brms::set_prior("student_t(3,156, 12)", class = "Intercept"),
+           brms::set_prior("student_t(3,0, 12)", class = "b"),
+           brms::set_prior("student_t(3,0, 12)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"), 
+           brms::set_prior("gamma(2, 0.1)", class = "nu"),
+           brms::set_prior("student_t(3,0, 12)", class = "sigma"))
+
+model_re_t_tooBig =  
+  brms::brm (height ~ A + useless + (A + useless|L) + (1|S), data = notmen, 
+             chains = 4, cores = 4, warmup = 1000, iter = 5000, thin = 4, 
+             prior = priors, family = "student")
+```
+```{r, include = FALSE, eval = FALSE}
+# Or download it from the GitHub page:
+model_re_t_tooBig = bmmb::get_model ('6_model_re_t_tooBig.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_re_t_tooBig, '../models/6_model_re_t_tooBig.RDS')
+model_re_t_tooBig = readRDS ('../models/6_model_re_t_tooBig.RDS')
+```
+
+```{r, cache = TRUE}
+model_re_t_tooBig = brms::add_criterion (model_re_t_tooBig, criterion="loo")
+```
+
+```{r, cache = TRUE}
+brms::loo_compare (model_re_t, model_re_t_tooBig)
+```
+
+```{r, cache = TRUE}
+brms::fixef(model_re_t_tooBig)
+```
+
+## Answering our research questions {#c6-answering}
+
+## 'Traditionalists' corner {#c6-frequentist}
+
+### Bayesian multilevel models vs. lmer {#c6-vs-lmer}
+
+```{r, eval = FALSE}
+options (contrasts = c("contr.sum","contr.sum"))
+```
+
+```{r, cache = TRUE}
+# get data
+notmen = bmmb::exp_data[exp_data$C_v!='m' & exp_data$C!='m',]
+
+lmer_model = lme4::lmer (height ~ A +  (A|L) + (1|S), data = notmen)
+
+lmer_model
+```
+
+```{r F6-9, fig.width = 8, fig.height =3, fig.cap="(left) Listener-dependent intercept effects and 95% credible intervals estimated using brms models. Crosses indicate random effects estimated by lmer. (right) Same as the left plot but showing the listener-dependent age effects.", echo=FALSE,cache=FALSE}
+
+################################################################################
+### Figure 6.9
+################################################################################
+
+random_effects = brms::ranef(model_re_t)$L
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+
+brmplot (random_effects[,,1], col = bmmb::cols,
+         ylab = "Listener effects (cm)", xlab="Listener")
+points (lme4::ranef (lmer_model)$L[,1], pch=4,lwd=2, cex=3, 
+        col = bmmb::cols)
+abline (h=0,lty=3)
+brmplot (random_effects[,,2], col = bmmb::cols, xlab="Listener",
+         ylab = "Listener age effects (cm)")
+points (lme4::ranef (lmer_model)$L[,2], pch=4,lwd=2, cex=3, 
+        col = bmmb::cols)
+abline (h=0,lty=3)
+```
+
+## Exercises
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
