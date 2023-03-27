@@ -1,0 +1,936 @@
+\newpage
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  dpi = 600, dev = "jpeg", collapse=TRUE, options(digits=4)
+)
+```
+
+# Logistic regression and signal detection theory models
+
+## Chapter pre-cap
+
+## Dichotomous variables and data {#c10-dichotomous}
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{height}_{[i]} \sim \mathrm{N}(\mu_{[i]},\sigma) \\
+\mu_{[i]} = \mathrm{Intercept} + VTL \cdot \mathrm{vtl}_{[i]} 
+\end{split}
+(\#eq:10-1)
+\end{equation}
+$$
+
+```{r F10-1, fig.width = 8, fig.height = 5, fig.cap = "(top left) Average apparent height for each speaker against speaker VTL. Point color represents veridical speaker category. (top right) Individual gender identifications plotted according to speaker VTL. Female responses were given a value of 1, male responses 0. (bottom left) Probability of a female response as a function of speaker VTL. (bottom right) Logit of the probability of a female response as a function of speaker VTL.", echo = FALSE, message = FALSE, warning = FALSE}
+
+################################################################################
+### Figure 10.1
+################################################################################
+
+
+library (bmmb)
+data (exp_data)
+options (contrasts = c('contr.sum','contr.sum'))
+
+tab = table (exp_data$S, exp_data$C_v)
+mod_cat = apply (tab, 1,which.max)
+
+
+exp_data$vtl = exp_data$vtl - mean (exp_data$vtl)
+
+aggd = aggregate (cbind ( height, A=="a", G=="f", vtl,f0, vtl) ~ S + C_v, 
+                      data = exp_data, FUN = mean)
+
+par (mfrow = c(2,2), mar = c(2,4,1,1.5), oma = c(3,1,0,0))
+plot (aggd$vtl, aggd$height, cex =2, col = bmmb::cols[c(2:5)][factor(aggd$C_v)], 
+      xlim=c(-3,3),  pch=16,lwd=2,ylim = c(130,185),xlab = "",
+      ylab="Apparent height (inches)",cex.lab=1.2,cex.axis=1.2)
+grid()
+abline (lm(aggd$height~aggd$vtl)$coefficients, lwd=2)
+points (aggd$vtl, aggd$height, cex =2, pch=16,lwd=2,
+      col = bmmb::cols[c(4,6)][aggd$group])
+
+legend (.8,165, legend = c("Boys","Girls","Men","Women"),lwd=2,lty=0,
+        col = cols[2:5], bty='n',pch=16,pt.cex=2)
+plot (exp_data$vtl, exp_data$G=='f', cex =2, col = bmmb::cols[c(2:5)][factor(aggd$C_v)], yaxt='n',
+      xlim=c(-3,3),  pch=16,lwd=2,ylim = c(-.1,1.1),xlab = "",
+      ylab="G == 'f'",cex.lab=1.2,cex.axis=1.2)
+grid()
+abline (lm(aggd[,5]~aggd$vtl)$coefficients, lwd=2)
+points (aggd$vtl, aggd[,5], cex =2, pch=16,lwd=2,
+      col = bmmb::cols[c(4,6)][aggd$group])
+abline (h=.5)
+axis (side=2, at=0:1)
+
+plot (aggd$vtl, aggd[,5], cex =2, col = bmmb::cols[c(2:5)][factor(aggd$C_v)], 
+      xlim=c(-3,3),  pch=16,lwd=2,ylim = c(-.1,1.1),xlab = "",
+      ylab="P(G  = 'f')",cex.lab=1.2,cex.axis=1.2)
+grid()
+abline (lm(aggd[,5]~aggd$vtl)$coefficients, lwd=2)
+points (aggd$vtl, aggd[,5], cex =2, pch=16,lwd=2,
+      col = bmmb::cols[c(4,6)][aggd$group])
+abline (h=.5)
+
+plot (aggd$vtl, logit(aggd[,5]), cex =2, col = bmmb::cols[c(2:5)][factor(aggd$C_v)], 
+      xlim=c(-3,3),  pch=16,lwd=2,ylim = c(-6.1,6.1),xlab = "",
+      ylab="Logit (P(G  = 'f'))",cex.lab=1.2,cex.axis=1.2)
+grid()
+abline (lm(logit(aggd[,5])~aggd$vtl)$coefficients, lwd=2)
+points (aggd$vtl, logit(aggd[,5]), cex =2, pch=16,lwd=2,
+      col = bmmb::cols[c(4,6)][aggd$group])
+abline (h=0)
+
+mtext (side=1,text="Centered VTL (cm)", outer = TRUE, line = 1.5, cex=0.9)
+```
+
+$$
+\begin{equation}
+\begin{split}
+\mathbb{E}(y) = \sum_{i=1}^{2} y_{[i]} P(y_{[i]}) \\
+\mathbb{E}(y) = (1 \cdot p)+(0 \cdot (1-p)) \\
+\mathbb{E}(y) = p
+\end{split}
+(\#eq:10-2)
+\end{equation}
+$$
+
+```{r, collapse = TRUE}
+# a single trial, probability of 0.5
+bmmb::rbernoulli (1,.5)
+
+# ten single trials, probability of 0.5
+bmmb::rbernoulli (10,.5)
+```
+
+```{r, collapse = TRUE}
+# a single batch of 10 trials, probability of 0.5
+rbinom (1,10,.5)
+
+# ten individual trials, probability of 0.5
+bmmb::rbernoulli (10,.5)
+```
+
+```{r, include = FALSE}
+set.seed (7)
+```
+```{r, collapse = TRUE}
+mean (rbernoulli (10,.5)) # the mean of 10 observations
+mean (rbernoulli (100,.5))  # the mean of 100 observations
+mean (rbernoulli (1000,.5))  # the mean of 1000 observations
+mean (rbernoulli (100000,.5))  # the mean of 100000 observations
+```
+
+## Generalizing our linear models
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{Female}_{[i]} \sim \mathrm{Bernoulli}(p_{[i]}) \\
+p_{[i]} = f(\theta_{[i]}) \\
+\theta_{[i]} = \mathrm{Intercept} + VTL \cdot \mathrm{vtl}_{[i]} \\ 
+\end{split}
+(\#eq:10-3)
+\end{equation}
+$$
+
+## Logistic Regression
+
+$$
+\begin{equation}
+\begin{split}
+y_{[i]} \sim \mathrm{Bernoulli}(p_{[i]}) \\
+p_{[i]} = \mathrm{logit}^{-1}(z_{[i]}) \\
+z_{[i]} = Intercept + \beta \cdot \mathrm{x}_{[i]} \\
+\end{split}
+(\#eq:10-4)
+\end{equation}
+$$
+
+### Logits 
+
+$$
+\begin{equation}
+\mathrm{odds}_{\mathrm{success}} = \frac{N_{\mathrm{success}}}{N_{\mathrm{failures}}}
+(\#eq:10-5)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathrm{odds} = p / (1-p)
+(\#eq:10-7)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\mathrm{P}(\mathrm{success}) = \frac{N_{\mathrm{success}}}{N_{\mathrm{failures}} + N_{\mathrm{success}}} = \frac{N_{\mathrm{success}}}{N_{\mathrm{total}}}
+(\#eq:10-6)
+\end{equation}
+$$
+
+```{r, eval=FALSE}
+# this plot compares x and log (x). Note that log(x)<0 when x<1.
+curve (log(x), xlim = c(0,10),n=1000,lwd=2,col=4)
+abline (v = 1, lwd=2,col=2)
+abline (h=0,v=0, lty=3,col="grey",lwd=3)
+```
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{logit}(p) = \log (p / (1-p)) \\
+\mathrm{logit}(p) = \log (p) - \log(1-p)
+\end{split}
+(\#eq:10-8)
+\end{equation}
+$$
+
+```{r}
+bmmb::logit
+```
+
+### The inverse logit link function {#c10-inverse-logit}
+
+$$
+\begin{equation}
+P(y=1)=\mathrm{logit}^{-1}(z) = \frac{e^{z}}{1 + e^{z}}
+(\#eq:10-9)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\frac{e^{0}}{1 + e^{0}}=\frac{1}{1 + 1}=0.5
+(\#eq:10-10)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\frac{e^{-3}}{1 + e^{-3}}=\frac{0.05}{1 + 0.05}=0.0474
+(\#eq:10-11)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\frac{e^3}{1 + e^{3}}=\frac{20.1}{1 + 20.1}=0.953
+(\#eq:10-12)
+\end{equation}
+$$
+
+```{r F10-2, fig.width = 8, fig.height = 2.75, fig.cap = "(left) A plot of a line with a slope of 1 and intercept of 0. We can treat the y-axis as logits. (middle) The result of applying the inverse logit function to every point of the line in the left plot. (right) Calculating the logit of each value specified on the curve in the middle turns our sigmoid curve back to a line.", echo = FALSE}
+
+################################################################################
+### Figure 10.2
+################################################################################
+
+x = seq (-8,8,.01)
+y = x
+
+par (mfrow = c(1,3), mar=c(4,4,3,1))
+plot (x,y, type = 'l',lwd=4, col=bmmb::"deepgreen", xlim=c(-7,7), main = "y = x",
+      xlab = "Predictor", ylab = "Logits",cex.lab=1.3,cex.axis=1.2)
+abline (h=0,v=seq(-8,8,2),lty=3)
+
+plot (x,bmmb::inverse_logit (y), type = 'l',lwd=4, col=bmmb::"darkorange", xlim=c(-7,7), 
+      main = "y = inverse logit ( x )", xlab = "Predictor", ylab="Probability",
+      cex.lab=1.3,cex.axis=1.2)
+abline (h=c(0,1,.5),v=seq(-8,8,2),lty=3)
+
+plot (x,bmmb::logit(bmmb::inverse_logit (y)), type = 'l',lwd=4, 
+      col=bmmb::"lavender", xlim=c(-7,7), cex.lab=1.3,cex.axis=1.2,
+      main = "y = logit ( inverse logit ( x ) )", xlab = "Predictor", ylab="Logits")
+abline (h=0,v=seq(-8,8,2),lty=3)
+```
+
+$$
+\begin{equation}
+p = \mathrm{logit}^{-1}(\mathrm{Intercept} + \beta \cdot x_{[i]}) =  \frac{e^{(\mathrm{Intercept} + \beta \cdot x_{[i]})}}{1 + e^{(\mathrm{Intercept} + \beta \cdot x_{[i]})}}
+(\#eq:10-13)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+F \sim \mathrm{Bernoulli} \left (\frac{e^{(\mathrm{Intercept} + \beta \cdot x_{[i]})}}{1 + e^{(\mathrm{Intercept} + \beta \cdot x_{[i]})}} \right ) 
+(\#eq:10-14)
+\end{equation}
+$$
+
+### Building intuitions about logits and the inverse logit function
+
+```{r F10-3, fig.width = 8, fig.height = 2.75, fig.cap = "(left) A sigmoid curve expressing the probability associated with each logit value along the x axis. Horizontal lines are placed every 0.1 from 0.1 to 0.9 probability. (right) A line relating some predictor to logits. Horizontal lines are placed every 0.1 from 0.1 to 0.9 probability.", echo = FALSE}
+
+################################################################################
+### Figure 10.3
+################################################################################
+
+x = seq (-3.5,3.5,.01)
+y = x
+
+par (mfrow = c(1,2), mar=c(4,4,1,1))
+
+plot (x,inverse_logit (y), type = 'l',lwd=3, col=darkorange, xlim=c(-3,3),
+      xlab="Logit",ylab="Probability", ylim = c(0,1),yaxs='i',xaxs='i')
+abline (h=seq(0,1,.1),v=(-9:9),lty=3)
+abline (h = 0.5, lwd=2)
+
+plot (x,y, type = 'l',lwd=3, col=deepgreen, xlim=c(-3,3),xlab="Predictor",
+      ylab = "Logit",yaxs='i',xaxs='i')
+abline (h=logit(seq(0.1,0.9,.1)),v=c(-9:9),lty=3)
+abline (h = 0, lwd=2)
+
+```
+
+## Logistic regression with one quantitative predictor
+
+### Data and research questions
+
+```{r, warning=FALSE, message=FALSE}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+
+data (exp_data)
+
+# our dependent variable
+exp_data$Female = as.numeric (exp_data$G == 'f')
+
+# make a copy of vtl
+exp_data$vtl_original = exp_data$vtl
+# center vtl
+exp_data$vtl = exp_data$vtl - mean (exp_data$vtl)
+```
+
+```{r}
+prior = c(set_prior("student_t(3, 0, 3)", class = "Intercept"),
+                 set_prior("student_t(3, 0, 3)", class = "b"),
+                 set_prior("student_t(3, 0, 3)", class = "sd"),
+                 set_prior("lkj_corr_cholesky (2)", class = "cor"))
+```
+
+```{r}
+tapply (exp_data$vtl_original, exp_data$C_v, mean)
+```
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{Female}_{[i]} \sim \mathrm{Bernoulli}(p_{[i]}) \\
+p_{[i]} = \mathrm{logit}^{-1} (z_{[i]}) \\
+z_{[i]} = a_{[i]} + b_{[i]} \cdot \mathrm{vtl}_{[i]}  \\ 
+a_{[i]} = \mathrm{Intercept} + A + A \colon L_{[\mathsf{L}_{[i]}]} + L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ 
+b_{[i]} =  VTL + VTL \colon A + VTL \colon L_{[\mathsf{L}_{[i]}]} + VTL \colon A \colon L_{[\mathsf{L}_{[i]}]}  \\ \\
+\textrm{Priors:} \\
+S_{[\bullet]} \sim \mathrm{Normal}(0,\sigma_{S}) \\ 
+\begin{bmatrix} L_{[\bullet]} \\ A \colon L_{[\bullet]} \\ VTL \colon L_{[\bullet]} \\ VTL \colon A \colon L_{[\bullet]} \\ \end{bmatrix}	
+\sim \mathrm{MVNormal} \left(\, \begin{bmatrix} 0\\ 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+\mathrm{Intercept} \sim \mathrm{t}(3, 0, 3) \\
+A, VTL, VTL \colon A \sim \mathrm{t}(3, 0, 3) \\
+\sigma_{S}, \sigma_{L}, \sigma_{A \colon L}, \sigma_{VTL \colon L} , \sigma_{VTL  \colon A \colon L}  \sim \mathrm{t}(3, 0, 3) \\ R \sim \mathrm{LKJCorr} (2)
+\end{split}
+(\#eq:10-13)
+\end{equation}
+$$
+
+### Fitting the model {#c10-fitting-0}
+
+```{r, eval = FALSE}
+# Fit the model yourself
+priors = c(brms::set_prior("student_t(3, 0, 3)", class = "Intercept"),
+           brms::set_prior("student_t(3, 0, 3)", class = "b"),
+           brms::set_prior("student_t(3, 0, 3)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"))
+
+model_gender_vtl =
+  brm (Female ~ vtl*A + (vtl*A|L) + (1|S), data=exp_data, chains=4, cores=4, 
+       family="bernoulli", warmup=1000, iter= 5000, thin = 4,prior=priors)
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_gender_vtl = bmmb::get_model ('10_model_gender_vtl.RDS')
+```
+```{r, include = FALSE, TRUE}
+# saveRDS (model_gender_vtl, '../models/10_model_gender_vtl.RDS')
+model_gender_vtl = readRDS ('../models/10_model_gender_vtl.RDS')
+```
+
+```{r, eval = FALSE}
+priors = c(brms::set_prior("student_t(3, 0, 1)", class = "Intercept"),
+           brms::set_prior("student_t(3, 0, 1)", class = "b"),
+           brms::set_prior("student_t(3, 0, 1)", class = "sd"),
+           brms::set_prior("lkj_corr_cholesky (2)", class = "cor"))
+
+model_gender_vtl_priors =
+  brm (Female ~ vtl*A + (vtl*A|L) + (1|S), data=exp_data, chains=4, 
+       cores=4, family="bernoulli", warmup=1000, iter = 5000, thin = 4,
+       prior = priors, sample_prior = "only")
+
+bmmb::p_check (model_gender_vtl_priors)
+```
+
+### Interpreting the model {#c10-fitting-1}
+
+```{r, eval = TRUE}
+short_summary(model_gender_vtl)
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+gender_vtl_hypothesis = bmmb::short_hypothesis (
+  model_gender_vtl,
+  hypothesis = c("Intercept = 0",           # overall intercept
+                 "Intercept + A1 = 0",      # adult intercept
+                 "Intercept - A1 = 0",      # child intercept
+                 "vtl = 0",                 # overall slope
+                 "vtl + vtl:A1 = 0",        # adult slope
+                 "vtl - vtl:A1 = 0") )      # child slope
+
+gender_vtl_hypothesis
+```
+
+```{r F10-4, fig.width = 8, fig.height = 3, fig.cap = "(left) Lines indicating the linear relationship between VTL and the logit of the probability of a female response. Point colors indicate modal speaker category classification. (right) Same as the left plot but indicating probabilities on the y axis.", echo = FALSE, cache = TRUE}
+
+################################################################################
+### Figure 10.4
+################################################################################
+
+tab = table (exp_data$S, exp_data$C)
+mod_cat = apply (tab, 1,which.max)
+
+aggd = aggregate (cbind ( height, A=="a", G=="f", vtl,f0, vtl) ~ S + C_v, 
+                      data = exp_data, FUN = mean)
+aggd$C_v = factor(aggd$C_v)
+
+cffs = gender_vtl_hypothesis[,1]
+
+par (mfrow = c(1,2), mar = c(3,4,1,1))
+
+plot (aggd$vtl, logit(aggd[,5]), cex =2, ylim = c(-5,5),xlab="",
+      ylab = "Logit (P(F==1))", col = bmmb::cols[c(2:5)][mod_cat],pch=16,
+      lwd=2, xlim =range (exp_data$vtl))
+grid()
+abline (h=0,lty=3)
+curve ( (cffs[1] + cffs[4]*x), xlim =range (exp_data$vtl), add = TRUE, 
+        col = 1, lwd=4)
+curve ( (cffs[3] + cffs[6]*x), xlim =range (exp_data$vtl), add = TRUE, 
+        col = bmmb::cols[10], lwd=4, lty=1)
+curve ( (cffs[2] + cffs[5]*x), xlim =range (exp_data$vtl), add = TRUE, 
+        col = bmmb::cols[14], lwd=4, lty=1)
+
+legend (0.8,4.5, legend = c("Boys","Girls","Men","Women"),lwd=2,lty=0,
+        col = bmmb::cols[2:5], bty='n',pch=16,pt.cex=1.5)
+
+plot (aggd$vtl, (aggd[,5]), cex =2, ylim = c(0,1),xlab="",
+      ylab = "P(F==1)", col = bmmb::cols[c(2:5)][mod_cat],
+      pch=16,lwd=2, xlim =range (exp_data$vtl))
+grid()
+abline (h=.50,lty=3)
+
+curve ( inverse_logit(cffs[1] + cffs[4]*x), xlim =range (exp_data$vtl), 
+        add = TRUE, col = 1, lwd=4)
+curve ( inverse_logit(cffs[3] + cffs[6]*x), xlim =range (exp_data$vtl), 
+        add = TRUE, col = bmmb::cols[10], lwd=4, lty=1)
+curve ( inverse_logit(cffs[2] + cffs[5]*x), xlim =range (exp_data$vtl), 
+        add = TRUE, col = bmmb::cols[14], lwd=4, lty=1)
+
+legend (-2,-1, legend = c("Boys","Girls","Men","Women"),lwd=2,lty=0,
+        col = bmmb::cols[3:6], bty='n',pch=1,pt.cex=1.5)
+
+mtext (side=1, text = "Centered VTL (cm)", outer = TRUE, cex = 1, line=-1)
+
+legend (0.8,.9, legend = c("Overall","Adult","Child"),lwd=5,
+        col = c(1,bmmb::cols[c(14,10)]), bty='n')
+
+```
+
+$$
+\begin{equation}
+f(x+y) = f(x) + f(y) 
+(\#eq:10-14)
+\end{equation}
+$$
+
+```{r}
+# model intercept
+inverse_logit (0.86)
+
+# model A1, adultness, term
+inverse_logit (2.65)
+```
+
+$$
+\begin{equation}
+\mathrm{logit}^{-1}(\mathrm{Intercept}+A1) \; \neq \; \mathrm{logit}^{-1}(\mathrm{Intercept}) + 
+\mathrm{logit}^{-1}(A1) 
+(\#eq:10-15)
+\end{equation}
+$$
+
+```{r, collapse = TRUE}
+# intercept + adult (bad)
+inverse_logit (0.86) + inverse_logit (2.65)
+
+# intercept + adult (good)
+inverse_logit (0.86 + 2.65)
+```
+
+### Using logistic models to understand classification {#c10-classification}
+
+$$
+\begin{equation}
+\begin{split}
+y = a + b \cdot x \\
+0 = a + b \cdot x \\
+-a = b \cdot x \\ 
+-a/b = x
+\end{split}
+(\#eq:10-16)
+\end{equation}
+$$
+
+```{r}
+samples = fixef (model_gender_vtl, summary = FALSE)
+```
+
+```{r, collapse = TRUE}
+# calculate overall boundary = -a/b
+boundary = -samples[,"Intercept"] / samples[,"vtl"]
+```
+
+```{r, collapse = TRUE}
+# same but for adults
+boundary_adults = -(samples[,"Intercept"] + samples[,"A1"]) / 
+  (samples[,"vtl"] + samples[,"vtl:A1"])
+
+# now for children
+boundary_children = -(samples[,"Intercept"] - samples[,"A1"]) / 
+  (samples[,"vtl"] - samples[,"vtl:A1"])
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+boundaries_1 = posterior_summary (
+  cbind (boundary, boundary_adults, boundary_children)) 
+
+boundaries_1
+```
+
+```{r}
+# omit standard error column
+boundaries_1[,-2] + 13.4   # i.e. mean (exp_data$vtl_original)
+```
+
+```{r}
+line_parameters = attr (gender_vtl_hypothesis, "samples")
+```
+
+```{r, collapse = TRUE}
+# calculate boundary = -a/b
+boundary = -line_parameters[,1] / line_parameters[,4]
+boundary_adults = -line_parameters[,2] / line_parameters[,5]
+boundary_children = -line_parameters[,3] / line_parameters[,6]
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+boundaries_2 = posterior_summary (
+  cbind (boundary, boundary_adults, boundary_children)) 
+
+boundaries_2[,-2] + 13.4
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+boundaries_3 = bmmb::short_hypothesis (
+  model_gender_vtl,
+  c("-(Intercept) / (vtl) + 13.4= 0",                   # overall boundary
+    "-(Intercept + A1) / (vtl + vtl:A1) + 13.4 = 0",    # adult boundary
+    "-(Intercept - A1) / (vtl - vtl:A1)  + 13.4 = 0"))  # child boundary
+
+boundaries_3[,-5]
+```
+
+```{r F10-5, fig.width = 8, fig.height = 3, fig.cap = "(left) Points represent individual speakers in our data based on their VTL and the logit of the probability that they were identified as female. Lines indicate the overall relationship (black), the relationship expected for apparent children (green), and that expected for apparent adults (pink). Vertical lines indicate each line's x-intercept. Point colors indicate veridical speaker categories. (right) Territorial maps implied by each line presented in the left plot. Each map divides the VTL dimension into 'territories' associated with male and female responses.", echo = FALSE}
+
+################################################################################
+### Figure 10.5
+################################################################################
+
+
+knitr::include_graphics("_main_files/figure-html/Figure 10.5.jpg")
+
+# jpeg ("../wrong_plots/Figure 10.5.jpg",4800,1800,res=600)
+# 
+# tab = table (exp_data$S, exp_data$C_v)
+# mod_cat = apply (tab, 1,which.max)
+# 
+# muvtl = round (mean(exp_data$vtl),1)
+# 
+# aggd = aggregate (cbind ( height, A=="a", G=="f", vtl,f0, vtl) ~ S + C_v,
+#                       data = exp_data, FUN = mean)
+# aggd$C_v = factor(aggd$C_v)
+# 
+# cffs = gender_vtl_hypothesis[,1]
+# 
+# bounds = boundaries_1[,1]
+# 
+# par (mfrow = c(1,2), mar = c(4.1,4.1,1,1))
+# layout (mat = matrix(c(1,2,1,3,1,4,1,5),4,2,byrow=TRUE))
+# 
+# plot (aggd$vtl, bmmb::logit(aggd[,5]), cex =2, ylim = c(-5,5),xlab="",
+#       ylab = "Logit (P(F==1))", col = bmmb::cols[c(2:5)][mod_cat],pch=16,
+#       lwd=2, xlim =range (exp_data$vtl),cex.lab = 1.3,cex.axis=1.3,
+#       xaxt = 'n')
+# axis (at = -2:2, labels = (-2:2) + muvtl,
+#       cex.axis = 1.3, side=1)
+# abline (h=0,lty=3)
+# 
+# curve ( (cffs[1] + cffs[4]*x), xlim =range (exp_data$vtl), add = TRUE,
+#         col = 1, lwd=3)
+# curve ( (cffs[3] + cffs[6]*x), xlim =range (exp_data$vtl), add = TRUE,
+#         col = bmmb::cols[10], lwd=4, lty=1)
+# curve ( (cffs[2] + cffs[5]*x), xlim =range (exp_data$vtl), add = TRUE,
+#         col = bmmb::cols[14], lwd=4, lty=1)
+# 
+# legend (0.8,4.7, legend = c("Boys","Girls","Men","Women"),lwd=2,lty=0,
+#         col = bmmb::cols[2:5], bty='n',pch=16,pt.cex=1.5,cex=1.5)
+# 
+# abline (v = c(0.24,.655,-.99), col = c(1,bmmb::cols[14],bmmb::cols[10]),
+#         lwd=2,lty=3)
+# 
+# par (mar = c(.5,.5,.5,.5))
+# 
+# bound = bounds[3]
+# plot (0,xlim = c(-2,2),ylim=c(0,1),xaxt='n',yaxt='n',type='n')
+# rect(-3, -1, bound, 2, col=bmmb::cols[3])
+# rect(bound, -1, 3, 2, col=bmmb::cols[2])
+# text (c(-1.5,1.2),c(0.5,0.5), c("Girl","Boy"), cex = 2, col = 0)
+# abline (v = bounds[3], lwd = 4, col = bmmb::cols[10])
+# 
+# bound = bounds[1]
+# plot (0,xlim = c(-2,2),ylim=c(0,1),xaxt='n',yaxt='n',type='n')
+# rect(-3, -1, bound, 2, col=bmmb::cols[8])
+# rect(bound, -1, 3, 2, col=bmmb::cols[7])
+# text (c(-1.5,1.2),c(0.5,0.5), c("Female","Male"), cex = 2, col = 0)
+# abline (v = bounds[1], lwd = 3, col = 1)
+# 
+# bound = bounds[2]
+# plot (0,xlim = c(-2,2),ylim=c(0,1),yaxt='n',type='n',
+#       cex.axis = 1.3, xaxt = 'n')
+# rect(-3, -1, bound, 2, col=bmmb::cols[5])
+# rect(bound, -1, 3, 2, col=bmmb::cols[4])
+# text (c(-1.5,1.2),c(0.5,0.5), c("Woman","Man"), cex = 2, col = 0)
+# axis (at = -2:2, labels = (-2:2) + muvtl,
+#       cex.axis = 1.3, side=1)
+# abline (v = bounds[2], lwd = 4, col = bmmb::cols[14])
+# 
+# mtext (side=1, "Centered vocal-tract length (cm)", line = 3)
+# 
+# dev.off()
+```
+
+### Answering our research question
+
+## Measuring sensitivity and bias
+
+$$
+\begin{equation}
+\begin{split}
+\mathrm{H} = P(Female=1 | G_v= \mathrm{f} \,) \\
+\mathrm{FA} = P(Female=1 | G_v= \mathrm{m} \, )
+\end{split}
+(\#eq:10-17)
+\end{equation}
+$$
+
+```{r, eval = FALSE}
+H = mean(exp_data$Female[exp_data$G_v == "f"])
+FA = mean(exp_data$Female[exp_data$G_v == "m"])
+```
+
+```{r, collapse = TRUE}
+tapply(exp_data$Female, exp_data$G_v, mean)
+```
+
+$$
+\begin{equation}
+d' = z(H) - z(FA)
+(\#eq:10-18)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+d = \mathrm{logit}(H) - \mathrm{logit}(FA)
+(\#eq:10-19)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+c' = -\frac{1}{2} \, [\mathrm{logit}(H) + \mathrm{logit}(FA)]
+(\#eq:10-20)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+b = -c' = \frac{1}{2} \, [\mathrm{logit}(H) - \mathrm{logit}(FA)]
+(\#eq:10-21)
+\end{equation}
+$$
+
+```{r}
+# adult speaker data
+adults = exp_data[exp_data$A_v == "a",]
+
+# child speaker data
+children = exp_data[exp_data$A_v == "c",]
+```
+
+```{r, collapse = TRUE}
+# hit and false alarm rate, overall
+tapply (exp_data$Female, exp_data$G_v, mean)
+
+# hit and false alarm rate, for adult
+tapply (adults$Female, adults$G_v, mean)
+
+# hit and false alarm rate, for children
+tapply (children$Female, children$G_v, mean)
+```
+
+```{r F10-6, fig.width = 8, fig.height = 3, fig.cap = "(left) Hits and false alarm rates for the detection of speaker 'femaleness', averaged across all listeners. (right) Same as in the left plot, except as logits of the rates. The black point represents the average of hits and false alarms (the bias, $b$) and the distance between the green and red points reflects sensitivity ($d$).", echo = FALSE}
+
+################################################################################
+### Figure 10.6
+################################################################################
+
+
+par (mfrow = c(1,2), mar = c(4,4,1,1))
+
+p1 = (tapply (exp_data$Female, exp_data$G_v, mean))
+p2 = (tapply (adults$Female, adults$G_v, mean))
+p3 = (tapply (children$Female, children$G_v, mean))
+
+plot (c(1,1), p1, type = 'b', pch=16, xlim = c(0.8,3.2), ylim = c(0,1),
+      ylab= "P(F==1)", col=c(1,1),xaxt='n',xlab='')
+#points (1, mean(p1), cex=1.5,pch=16)
+points (c(1,1), p1, col=c(3,2), pch=16,cex=1.5)
+lines (c(2,2), p2, type = 'b', pch=16)
+points (c(2,2), p2, col=c(3,2), pch=16,cex=1.5)
+#points (2, mean(p2), cex=1.5,pch=16)
+lines (c(3,3), p3, type = 'b', pch=16)
+#points (3, mean(p3), cex=1.5,pch=16)
+points (c(3,3), p3, col=c(3,2), pch=16,cex=1.5)
+abline (h = 0.5)
+axis (side=1,at=1:3, labels=c("All","Adults","Chidren"))
+
+legend (2.3, 0.9, legend=c("H","FA"),col=c(3,2),pch=16,bty='n',pt.cex=1.3)
+
+p1 = bmmb::logit (tapply (exp_data$Female, exp_data$G_v, mean))
+p2 = bmmb::logit (tapply (adults$Female, adults$G_v, mean))
+p3 = bmmb::logit (tapply (children$Female, children$G_v, mean))
+
+plot (c(1,1), p1, type = 'b', pch=16, xlim = c(0.8,3.2), ylim = c(-4,2.5),
+      ylab= "Logit (P(F==1))", col=c(1,1),xaxt='n',xlab='')
+points (1, mean(p1), cex=1.5,pch=16)
+points (c(1,1), p1, col=c(3,2), pch=16,cex=1.5)
+lines (c(2,2), p2, type = 'b', pch=16)
+points (2, mean(p2), cex=1.5,pch=16)
+points (c(2,2), p2, col=c(3,2), pch=16,cex=1.5)
+lines (c(3,3), p3, type = 'b', pch=16)
+points (3, mean(p3), cex=1.5,pch=16)
+points (c(3,3), p3, col=c(3,2), pch=16,cex=1.5)
+axis (side=1,at=1:3, labels=c("All","Adults","Chidren"))
+
+abline (h = 0)
+```
+
+### Data and research questions
+
+```{r, warning=FALSE, message=FALSE}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+data (exp_data)
+
+# our dependent variable
+exp_data$Female = as.numeric (exp_data$G == 'f')
+
+# make a copy of vtl
+exp_data$vtl_original = exp_data$vtl
+# center vtl
+exp_data$vtl = exp_data$vtl - mean (exp_data$vtl)
+
+# create veridical gender predictor 
+exp_data$F_v = ifelse (exp_data$G_v=="f", 1,-1)
+```
+
+### Description of the model
+
+```{r, eval = FALSE}
+prior = c(set_prior("student_t(3, 0, 3)", class = "Intercept"),
+                 set_prior("student_t(3, 0, 3)", class = "b"),
+                 set_prior("student_t(3, 0, 3)", class = "sd"),
+                 set_prior("lkj_corr_cholesky (2)", class = "cor"))
+```
+
+$$
+\begin{equation}
+\begin{split}
+Female_{[i]} \sim \mathrm{Bernoulli}(p_{[i]}) \\
+p_{[i]} = \mathrm{logistic} (z_{[i]}) \\
+z_{[i]} = b_{[i]} + d_{[i]}  \\ 
+b_{[i]} = \mathrm{Intercept} + A_v + A_v \colon L_{[\mathsf{L}_{[i]}]} + L_{[\mathsf{L}_{[i]}]} + S_{[\mathsf{S}_{[i]}]} \\ 
+d_{[i]} =  F_v + F_v \colon A_v + F_v \colon L_{[\mathsf{L}_{[i]}]} + F_v \colon A_v \colon L_{[\mathsf{L}_{[i]}]}  \\ \\
+\textrm{Priors:} \\
+S_{[\bullet]} \sim \mathrm{Normal}(0,\sigma_{S}) \\ 
+\begin{bmatrix} L_{[\bullet]} \\ A_v \colon L_{[\bullet]} \\ F_v \colon L_{[\bullet]} \\ A \colon F_v \colon L_{[\bullet]} \\ \end{bmatrix}	
+\sim \mathrm{MVNormal} \left(\, \begin{bmatrix} 0\\ 0 \\ 0 \\ 0 \\ \end{bmatrix}, \mathrm{\Sigma} \right) \\ \\
+Intercept \sim \mathrm{t}(3, 0, 3) \\
+A, VTL, A \colon VTL \sim \mathrm{t}(3, 0, 3) \\
+\sigma_{L}, \sigma_{A_v \colon L}, \sigma_{F_v \colon L} , \sigma_{A_v  \colon F_v \colon L}, \sigma_{S} \sim \mathrm{t}(3, 0, 3) \\ 
+R \sim \mathrm{LKJCorr} (2)
+\end{split}
+(\#eq:10-22)
+\end{equation}
+$$
+
+### Fitting and interpreting the model
+
+```{r, eval = FALSE}
+# Fit the model yourself
+model_gender_dt =
+  brm (Female ~ F_v*A_v + (F_v*A_v|L) + (1|S), data=exp_data, 
+       chains=4, cores=4, family="bernoulli", 
+       warmup=1000, iter = 5000, thin = 4,  
+       prior = c(set_prior("student_t(3, 0, 3)", class = "Intercept"),
+                 set_prior("student_t(3, 0, 3)", class = "b"),
+                 set_prior("student_t(3, 0, 3)", class = "sd"),
+                 set_prior("lkj_corr_cholesky (2)", class = "cor")))
+```
+```{r, include = TRUE, eval = FALSE}
+# Or download it from the GitHub page:
+model_gender_dt = bmmb::get_model ('10_model_gender_dt.RDS')
+```
+```{r, include = FALSE}
+# saveRDS (model_gender_dt, '../models/10_model_gender_dt.RDS')
+model_gender_dt = readRDS ('../models/10_model_gender_dt.RDS')
+```
+
+```{r}
+fixef (model_gender_dt)
+```
+
+```{r, cache = TRUE, collapse = TRUE}
+gender_dt_hypothesis = bmmb::short_hypothesis (
+  model_gender_dt,
+  hypothesis = c("Intercept = 0",           # overall bias
+                 "Intercept + A_v1 = 0",    # adult bias
+                 "Intercept - A_v1 = 0",    # child bias
+                 "2*(F_v) = 0",             # overall sensitivity
+                 "2*(F_v + F_v:A_v1) = 0",  # adult sensitivity
+                 "2*(F_v - F_v:A_v1) = 0")) # child sensitivity
+```
+
+```{r, eval = FALSE}
+# listener-dependent biases for veridical adults
+biases_adult = bmmb::short_hypothesis (
+  model_gender_dt,
+  hypothesis = c("Intercept+A_v1 = 0"),group="L", scope="coef")
+```
+
+```{r F10-7, fig.width = 8, fig.height = 3, fig.cap = "(left) Average bias and sensitivity and the 'simple effects' of bias and sensitivity across levels of veridical adultness. (middle) Bias and sensitivity for adult speakers, presented individually for each listener. (right) Bias and sensitivity for child speakers, presented individually for each listener.", echo = FALSE}
+
+#############################################################################
+### Figure 10.7
+#############################################################################
+
+biases1 = bmmb::short_hypothesis (
+  model_gender_dt,
+  hypothesis = c("Intercept+A_v1 = 0"),group="L", scope="coef")
+biases2 = bmmb::short_hypothesis (
+  model_gender_dt,
+  hypothesis = c("Intercept-A_v1 = 0"),group="L", scope="coef")
+
+sensitivities1 = bmmb::short_hypothesis (
+  model_gender_dt,
+  hypothesis = c("2*(F_v+F_v:A_v1) = 0"),group="L", scope="coef")
+sensitivities2 = bmmb::short_hypothesis (
+  model_gender_dt,
+  hypothesis = c("2*(F_v-F_v:A_v1) = 0"),group="L", scope="coef")
+
+
+par (mar = c(4,4.2,1,.2))
+layout (m=t(c(1,2,3)), widths = c(.30,.4,.4))
+bmmb::brmplot (gender_dt_hypothesis[1:3,], ylim = c(-3,13), col = bmmb::cols[7],
+               nudge = -.01, labels="", ylab = "Logits",cex.lab=1.2,cex.axis=1.2)
+bmmb::brmplot (gender_dt_hypothesis[4:6,], add = TRUE, col = bmmb::cols[8], 
+               nudge = .01, labels="")
+axis (side = 1, at = 1:3, labels = c("All","Adults","Children"),cex.axis=1.2)
+
+par (mar = c(4,.1,1,.2))
+bmmb::brmplot (biases1, ylim = c(-3,13), col = bmmb::cols[7],yaxt='n',
+               labels=1:15, cex.lab=1.2,cex.axis=1.2)
+bmmb::brmplot (sensitivities1, add = TRUE, col = bmmb::cols[8], labels="")
+
+par (mar = c(4,.1,1,.2))
+bmmb::brmplot (biases2, ylim = c(-3,13), col = bmmb::cols[7],yaxt='n',
+               labels = 1:15,cex.lab=1.2,cex.axis=1.2)
+bmmb::brmplot (sensitivities2, add = TRUE, col = bmmb::cols[8], pch=16, labels="")
+
+legend (5, 11, legend =c("Sensitivity", "Bias"), pch=16,lwd=2,
+        col = bmmb::cols[c(8,7)], cex = 1.5, bty='n')
+```
+
+### Answering our research questions
+
+```{r T10-1, echo = FALSE}
+tmp_hyp = gender_dt_hypothesis[,1:4]
+rownames(tmp_hyp) = c("Overall Bias","Adult Bias","Child Bias",
+                      "Overall Sensitivity","Adult Sensitivity","Child Sensitivity")
+
+knitr::kable (tmp_hyp, digits=2,caption = "Posterior means, standard errors, and 2.5% and 97.5% quantiles for bias and sensitivity under different conditions.")
+```
+
+```{r F10-8, fig.width = 8, fig.height = 2.75, fig.cap = "Distribution of boys, girls, men, and women in our speaker data according to their vocal-tract length.", echo = FALSE}
+
+################################################################################
+### Figure 10.8
+################################################################################
+
+tmp = bmmb::exp_data
+par (mfrow = c(1,1), mar = c(4,4,1,1))
+
+plot (density (tmp$vtl[tmp$C_v=="b"]), xlim = c(11,16),
+      ylim = c(0,1.3),lwd=2,col=cols[2],main="",xlab="Vocal-Tract Length (cm)")
+polygon (density (tmp$vtl[tmp$C_v=="b"]),
+       lwd=2,col=cols[2])
+polygon (density (tmp$vtl[tmp$C_v=="g"]),
+       lwd=2,col=cols[3])
+polygon (density (tmp$vtl[tmp$C_v=="w"]),
+       lwd=2,col=cols[5])
+polygon (density (tmp$vtl[tmp$C_v=="m"]),
+       lwd=2,col=cols[4])
+
+legend (13.7,1.2,legend = c("boys","girls","men","women"),col=bmmb::cols[2:5],
+        pch=16,bty='n',cex=1.0)
+
+```
+
+```{r}
+xtabs ( ~ adults$C_v + adults$C)
+```
+
+## Exercises
+
+## References
+
+## Plot Code
+
+```{r , echo = FALSE}
+labs = knitr::all_labels()
+labs = labs[grep ("F", labs)]
+```
+
+```{r , ref.label=labs, eval=FALSE}
+```
