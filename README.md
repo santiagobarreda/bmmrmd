@@ -8,5 +8,4 @@ Santiago Barreda & Noah Silbert
 [<img alt="cover" width="400" src="https://raw.githubusercontent.com/santiagobarreda/bmmrmd/main/docs/_main_files/figure-html/cover.png"/>](https://www.amazon.com/Bayesian-Multilevel-Models-Repeated-Measures/dp/1032259639)
 
   
- *expected spring 2023* 
 
