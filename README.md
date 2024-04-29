@@ -1,7 +1,7 @@
 # Bayesian multilevel models for repeated measures data: A conceptual and practical introduction in R
 Santiago Barreda & Noah Silbert
  
-[Bookdown Version](https://santiagobarreda.github.io/bmmrmd/)
+[Bookdown Version](https://santiagobarreda.com/bmmrmd/)
 
 [On Amazon](https://www.amazon.com/Bayesian-Multilevel-Models-Repeated-Measures/dp/1032259639)
   
