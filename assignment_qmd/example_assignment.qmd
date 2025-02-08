@@ -1,0 +1,110 @@
+---
+title: Paper Title
+format: docx
+author:
+  - name: Researcher Name
+    orcid: 
+    corresponding: true
+    email: researcher@stateu.edu
+    affiliations:
+      - State University
+keywords:
+  - TBD
+date: last-modified
+bibliography: references.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl
+number-sections: true
+abstract: An example assignment. You dont actually need to include an abstract, I am just including this in the qmd file as an example. 
+---
+
+
+```{r setup, include=FALSE}
+library (brms)
+library (bmmb)
+options (contrasts = c('contr.sum','contr.sum'))
+data (exp_data)
+
+model_four_groups = bmmb::get_model ('7_model_four_groups.RDS')
+```
+
+# Introduction {#sec-intro}
+
+In the paper I will use our experimental data to investigate how apparent speaker category affects the perception of apparent speaker height. It is expected that listeners will identify adult males as tallest, adult females as second tallest, and children as shortest. There is no clear expectation regarding the relative heights of boys and girls, though gender stereotypes might leads listeners to identify boys as taller despite the lack of any actual difference in height for children of this age. 
+
+# Methods {#sec-methods}
+
+Our data consists of height judgments provided by 15 listeners for tokens of 'heed' produced by 139 speakers for a total of 2085 observations, one per speaker per listener. For each trial, listeners were asked to estimate the height of speakers in feet and inches (converted to cm for the analysis), and to determine whether the speaker was an adult female, and adult male, a boy, or a girl.  
+
+## Analysis {#sec-analysis}
+
+Results will be analyzed with a Bayesian multilevel model using the brms package [@brms], and Stan [@stan] in R [@rlang]. Our model predicts apparent speaker height as a function of a single fixed-effect predictor, apparent speaker category. Speaker category was coded as a sum-coded factor with four levels: boy, girl, man, woman. The model also included random by-listener intercepts and effects for apparent speaker category, and random by-speaker intercepts. The model formula in standard R formula syntax is seen in @eq-eq1. 
+
+$$
+\text{height} \sim Category + (Category|Listener) + (1|Speaker)
+$${#eq-eq1}
+
+Or presented as code:
+
+`height ~ Category + (Category|Listener) + (1|Speaker)`
+
+# Results and Discussion {#sec-results}
+
+The distribution of apparent height judgments as a function of apparent speaker category responses is presented in @fig-fig1. 
+
+```{r fig-fig1}
+#| echo: false
+#| dpi: 600
+#| fig.width: 8
+#| fig.height: 2.7
+#| id: fig-fig1
+#| fig-cap: "Figure 1 - Distribution of apparent height judgments as a function of apparent speaker category: boys (b), girls (g), mean (m), and women (w)."
+
+par (mar = c(3,4.1,1,1))
+boxplot (height ~ C, data = exp_data, xlab='', ylab = 'Apparent Heioght (cm)',
+         cex.lab= 1.2, cex.axis=1.2, col = bmmb::cols[2:5])
+```
+
+@tbl-tbl1 presents information regarding the posterior distributions of our model fixed effects.
+
+```{r, echo = FALSE}
+#| label: tbl-tbl1
+#| tbl-cap: Table 1 - Fixed effect posterior means, the standard deviation (s.d.) of the posterior, and the 2.5% and 97.5% credible intervals (CI) of the posterior distributions.
+
+fixed_effects = fixef (model_four_groups)
+colnames (fixed_effects) = c("Mean","s.d.","2.5%CI","97.5%CI")
+
+knitr::kable(fixed_effects, digits = 2)
+```
+  
+    
+```{r, include = FALSE}
+# normally this would not be included but I wanted to show how I calculated
+# and formatted the effects I report in the text and plot below
+effects1 = bmmb::short_hypothesis (model_four_groups, 
+                        c("C1=0","C2=0","C3=0","-(C1+C2+C3)=0"))
+
+effects2 = bmmb::short_hypothesis (model_four_groups, 
+                        c("C1-C2=0","C3- -(C1+C2+C3)=0"))
+bmmb::forpaper (effects2)
+```
+
+@fig-fig2(a) presents the effects for apparent speaker category. Clearly, there are large differences based on speakers based on apparent speaker category, in particular between adults and children. Figure 2b presents the difference between the effects for apparent boys and girls, and between apparent men and women. Effectively, this is testing for an effect for gender for children, and for adults separately. We can see that there are clear differences between apparent men and women (mean = `r round(effects2[2,1],2)`, s.d. = `r round(effects2[2,2],2)`, 95% C.I = [`r round(effects2[2,3],2)`, `r round(effects2[2,1],2)`]). However, the difference between boys and girls is smaller in magnitude (mean = 2.76, s.d. = 1.9, 95% C.I = [-0.97, 6.55]). 
+
+
+```{r}
+#| echo: false
+#| dpi: 600
+#| fig.width: 8
+#| fig.height: 2.7
+#| id: fig-fig2
+#| fig-cap: "(a) Posterior means and 95% credible intervals for the effects for apparent speaker category. (b) Posterior means and 95% credible intervals for difference between selected effects for apparent speaker category."
+
+par (mar = c(4,4,1,1), mfrow = c(1,2))
+brmplot (effects1, lab = c("boy","girl","man","woman"), cex.lab=1.3,cex.axis=1.3)
+text (1,15,"(a)", cex = 1.3)
+brmplot (effects2, lab = c("boy-girl","man-woman"), cex.lab=1.3,cex.axis=1.3)
+text (1,11,"(b)", cex = 1.3)
+```
+
+
+# References
